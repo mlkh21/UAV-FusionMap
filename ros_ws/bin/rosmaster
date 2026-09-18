@@ -1,0 +1,3 @@
+#!/bin/bash
+# roslaunch通过PATH启动master；显式遵守项目Conda解释器，不改系统shebang。
+exec "${UFM_PYTHON:?请通过sim01_env.sh启动}" /opt/ros/noetic/bin/rosmaster "$@"

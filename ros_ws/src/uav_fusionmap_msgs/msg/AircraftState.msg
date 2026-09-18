@@ -1,0 +1,10 @@
+uint8 GROUND_TRUTH=0
+uint8 ESTIMATED=1
+ObservationHeader header
+float64[3] position
+float64[4] orientation_xyzw
+float64[3] linear_velocity
+string body_frame_id
+string velocity_frame_id
+uint8 state_source
+Quality quality

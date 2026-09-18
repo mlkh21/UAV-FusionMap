@@ -1,0 +1,3 @@
+bool confidence_available
+float32 confidence
+Uncertainty uncertainty

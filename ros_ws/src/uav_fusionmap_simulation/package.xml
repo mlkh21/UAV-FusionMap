@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_fusionmap_simulation</name><version>0.1.0</version>
+  <description>仿真源状态与采样时钟的薄ROS包装。</description>
+  <maintainer email="maintainer@example.invalid">UAV-FusionMap Technical Lead</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend><depend>rosgraph_msgs</depend><depend>mavros_msgs</depend>
+  <depend>diagnostic_msgs</depend><depend>uav_fusionmap_msgs</depend>
+  <exec_depend>mavros</exec_depend>
+</package>

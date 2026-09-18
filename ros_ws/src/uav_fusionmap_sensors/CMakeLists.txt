@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(uav_fusionmap_sensors)
+find_package(catkin REQUIRED COMPONENTS rospy rosgraph_msgs diagnostic_msgs uav_fusionmap_msgs)
+catkin_package()
+catkin_install_python(PROGRAMS scripts/state_adapter_node.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

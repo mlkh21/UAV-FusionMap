@@ -1,0 +1,9 @@
+<launch>
+  <!-- 独立契约fixture；不启动仿真源，clock由fixture唯一发布。 -->
+  <arg name="run_id" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_sensors" type="state_adapter_node.py" name="state_adapter" output="screen" required="true">
+    <rosparam command="load" file="$(env UFM_ROOT)/configs/sim01_state.yaml" />
+    <param name="run_id" value="$(arg run_id)" />
+  </node>
+</launch>

@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(uav_fusionmap_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation)
+catkin_python_setup()
+add_message_files(FILES ObservationHeader.msg Uncertainty.msg Quality.msg AircraftState.msg)
+generate_messages()
+catkin_package(CATKIN_DEPENDS message_runtime)

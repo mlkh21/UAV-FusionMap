@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_fusionmap_sensors</name><version>0.1.0</version>
+  <description>源飞行状态的坐标适配与接收时钟门控薄ROS包装。</description>
+  <maintainer email="maintainer@example.invalid">UAV-FusionMap Technical Lead</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend><depend>rosgraph_msgs</depend>
+  <depend>diagnostic_msgs</depend><depend>uav_fusionmap_msgs</depend>
+</package>

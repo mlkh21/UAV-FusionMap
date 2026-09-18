@@ -1,0 +1,39 @@
+--- a/include/mavlink_interface.h
++++ b/include/mavlink_interface.h
+@@ -231,13 +231,13 @@
+   std::atomic<bool> tx_in_progress;
+   std::deque<MsgBuffer> tx_q;
+ 
+-  bool hil_mode_;
+-  bool hil_state_level_;
++  bool hil_mode_ = false;
++  bool hil_state_level_ = false;
+ 
+   bool baro_updated_;
+   bool diff_press_updated_;
+   bool mag_updated_;
+-  bool imu_updated_;
++  bool imu_updated_ = false;
+ 
+   double temperature_;
+   double pressure_alt_;
+--- a/src/mavlink_interface.cpp
++++ b/src/mavlink_interface.cpp
+@@ -226,7 +226,7 @@
+ }
+ 
+ void MavlinkInterface::SendSensorMessages(int time_usec) {
+-  mavlink_hil_sensor_t sensor_msg;
++  mavlink_hil_sensor_t sensor_msg{};
+ 
+   sensor_msg.time_usec = time_usec;
+ 
+@@ -280,7 +280,7 @@
+ 
+ void MavlinkInterface::SendGpsMessages(const SensorData::Gps &data) {
+   // fill HIL GPS Mavlink msg
+-  mavlink_hil_gps_t hil_gps_msg;
++  mavlink_hil_gps_t hil_gps_msg{};
+   hil_gps_msg.time_usec = data.time_utc_usec;
+   hil_gps_msg.fix_type = data.fix_type;
+   hil_gps_msg.lat = data.latitude_deg;

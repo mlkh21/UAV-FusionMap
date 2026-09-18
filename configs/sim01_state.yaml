@@ -1,0 +1,14 @@
+# 首次接口冒烟门槛；不是高速飞行性能预算（PERF-01另定）。
+schema_version: '0.1'
+sysid: 1
+compid: 1
+# ROS1参数服务器XML-RPC整数为32位；纳秒阈值以十进制字符串传输，节点转int。
+warmup_stable_sim_ns: '10000000000'
+startup_timeout_wall_s: 60.0
+pending_limit: 100
+pending_timeout_wall_s: 0.5
+source_timeout_wall_s: 2.0
+quaternion_norm_tolerance: 0.001
+# 仅本run估计局部参考和虚拟机体轴；不声明真实硬件/场景注册。
+odom_origin_policy: px4_estimator_local_origin
+body_origin_policy: source_body_virtual_flu

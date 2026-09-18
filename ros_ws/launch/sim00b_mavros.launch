@@ -1,0 +1,15 @@
+<launch>
+  <!-- SIM-00B仅传输与诊断；仿真采样时钟接入属于后续SIM-01。 -->
+  <node pkg="mavros" type="mavros_node" name="mavros" output="screen" required="true">
+    <param name="fcu_url" value="udp://127.0.0.1:14540@127.0.0.1:14580" />
+    <param name="gcs_url" value="" />
+    <param name="fcu_protocol" value="v2.0" />
+    <param name="target_system_id" value="1" />
+    <param name="target_component_id" value="1" />
+    <rosparam param="plugin_whitelist">[sys_status, sys_time, command, imu, local_position]</rosparam>
+    <param name="time/timesync_mode" value="PASSTHROUGH" />
+    <param name="time/publish_sim_time" value="false" />
+    <param name="conn/system_time_rate" value="0.0" />
+    <param name="conn/timesync_rate" value="0.0" />
+  </node>
+</launch>

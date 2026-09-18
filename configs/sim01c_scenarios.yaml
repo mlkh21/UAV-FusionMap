@@ -1,0 +1,272 @@
+# SIM-01C故障链和倍速现状实测配置；不是PERF-01高速飞行性能预算。
+# 方案来源：docs/SIM01C_FAULT_CLOCK_PLAN.md。
+schema_version: '0.1'
+state_config: configs/sim01_state.yaml
+
+# 以下值只用于启动前断言生产配置未漂移；source/sensors仍直接加载state_config，
+# 本文件不成为第二份ROS业务参数来源。
+required_production_thresholds:
+  warmup_stable_sim_ns: '10000000000'
+  startup_timeout_wall_s: 60.0
+  pending_limit: 100
+  pending_timeout_wall_s: 0.5
+  source_timeout_wall_s: 2.0
+
+fixture_input:
+  sysid: 1
+  compid: 1
+  encoding: pymavlink_v20_common_to_mavros_msg
+  topic: /mavlink/from
+
+safety:
+  independent_master_required: true
+  port_release_required: true
+  cleanup_timeout_s: 5.0
+  terminal_drain_s: 0.5
+  max_unexpected_warn_error: 0
+  forced_kill_allowed: false
+
+# allowed_diagnostics是逐节点、逐message白名单；level使用ROS DiagnosticStatus名称。
+# 心跳诊断可重复，故障message的精确计数由expected约束。
+# SourceTimeline内部单调起点和各路_last_receive不对外发布；下列receipt_proxy窗口以监督器
+# 收到首个PREPARING诊断或driver最后发送台账为可观测代理，包含ROS传输/轮询误差，不能
+# 解释成对内部起点或内部receipt的直接测量。
+scenarios:
+  F0:
+    driver_action: no_input_after_source_start
+    master_port: 11351
+    wall_safety_cutoff_s: 70.0
+    precondition: source_started
+    expected:
+      terminal_code: startup_timeout
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      # 周期诊断的首个可见PREPARING可能比内部起点晚约一个发布周期；该窗口只约束
+      # 订阅观测代理。另以监督器完成/state_clock节点发现的receipt代理核对60秒生产阈值。
+      terminal_window_from_first_preparing_diagnostic_receipt_proxy_wall_s: [58.5, 60.5]
+      terminal_window_from_source_node_lookup_receipt_proxy_wall_s: [59.5, 60.5]
+      terminal_timestamp_ns: '0'
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        startup_timeout: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F1:
+    driver_action: stop_imu_keep_odometry
+    master_port: 11352
+    wall_safety_cutoff_s: 20.0
+    precondition: active_with_valid_output
+    expected:
+      terminal_code: imu_timeout
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      terminal_window_from_last_valid_imu_driver_publish_receipt_proxy_wall_s: [2.0, 2.5]
+      terminal_timestamp_equals_last_clock: true
+      clock_advances_while_imu_stopped: false
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+        pending_timeout: [WARN]
+        imu_timeout: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F2:
+    driver_action: stop_odometry_keep_imu
+    master_port: 11353
+    wall_safety_cutoff_s: 20.0
+    precondition: active_with_valid_output
+    expected:
+      terminal_code: odometry_timeout
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      terminal_window_from_last_valid_odometry_driver_publish_receipt_proxy_wall_s: [2.0, 2.5]
+      terminal_timestamp_equals_last_clock: true
+      clock_advances_until_terminal: true
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+        odometry_timeout: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F3:
+    driver_action: pause_both_then_resume_after_terminal
+    master_port: 11354
+    wall_safety_cutoff_s: 20.0
+    precondition: active_with_valid_output
+    expected:
+      terminal_code: imu_timeout
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      terminal_window_from_last_valid_imu_driver_publish_receipt_proxy_wall_s: [2.0, 2.5]
+      terminal_timestamp_equals_last_clock: true
+      clock_constant_while_paused: true
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+      recovery_valid_increment: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+        imu_timeout: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F4:
+    driver_action: regress_imu_time_usec
+    master_port: 11355
+    wall_safety_cutoff_s: 20.0
+    precondition: active_with_valid_output
+    expected:
+      terminal_code: imu_regression_or_reordering
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      terminal_max_from_injection_wall_s: 0.5
+      terminal_timestamp_equals_last_clock: true
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+        imu_regression_or_reordering: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F5:
+    driver_action: change_odometry_reset_counter
+    master_port: 11356
+    wall_safety_cutoff_s: 20.0
+    precondition: active_with_valid_output
+    expected:
+      terminal_code: estimator_reset
+      source_fault_diagnostic_count: 1
+      source_terminal_count: 1
+      sensors_terminal_count: 1
+      terminal_max_from_injection_wall_s: 0.5
+      terminal_timestamp_equals_last_clock: true
+      reset_sample_valid_increment: 0
+      gate_locked: true
+      pending_count: 0
+      max_post_terminal_valid: 0
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+        estimator_reset: [ERROR]
+        'timeline:FAULT': [ERROR]
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_gate_locked: [ERROR]
+
+  F6:
+    driver_action: sensors_only_clock_regression
+    master_port: 11357
+    wall_safety_cutoff_s: 20.0
+    precondition: sensors_gate_advanced_with_valid_output
+    expected:
+      local_error_code: clock_regression
+      local_error_diagnostic_count: 1
+      source_terminal_count: 0
+      sensors_terminal_count: 0
+      regressed_clock_valid_increment: 0
+      cleanup_start_max_from_error_wall_s: 0.5
+      gate_locked: true
+      pending_count: 0
+      accepted_states: 2
+      published_states: 1
+      max_post_error_valid: 0
+    allowed_diagnostics:
+      sensors/state_adapter:
+        clock_gate: [OK]
+        clock_regression: [ERROR]
+        clock_gate_locked: [ERROR]
+
+  F7:
+    driver_action: new_normal_run_after_F3
+    master_port: 11358
+    wall_safety_cutoff_s: 20.0
+    precondition: F3_terminal_manifest_available
+    expected:
+      source_terminal_count: 0
+      sensors_terminal_count: 0
+      min_new_run_valid_count: 1
+      distinct_run_id_from_predecessor: true
+      distinct_clock_id_from_predecessor: true
+      old_run_valid_increment: 0
+      old_terminal_reappeared_count: 0
+      gate_locked: false
+    allowed_diagnostics:
+      simulation/state_clock:
+        'timeline:PREPARING': [WARN]
+        'timeline:ACTIVE': [OK]
+      sensors/state_adapter:
+        clock_gate: [OK]
+
+# 使用实际PX4/JSBSim/MAVROS、未解锁静止场景。actual_factor由共同窗口内
+# 仿真clock跨度/单调墙钟跨度计算；容差仅判断仿真节奏冒烟，不承诺实时性能。
+speed_smoke:
+  tolerance_fraction: 0.15
+  warmup_source_span_ns: '5000000000'
+  measurement_min_source_span_ns: '20000000000'
+  source_safety_limit_ns: '120000000000'
+  static_unarmed_required: true
+  strict_clock_increase_required: true
+  source_timestamp_rewrite_allowed: false
+  terminal_count: 0
+  cases:
+    half:
+      requested_factor: 0.5
+      master_port: 11359
+      wall_safety_cutoff_s: 120.0
+    nominal:
+      requested_factor: 1.0
+      master_port: 11361
+      wall_safety_cutoff_s: 120.0
+    double:
+      requested_factor: 2.0
+      master_port: 11360
+      wall_safety_cutoff_s: 120.0
+  matrix:
+    selection_rule: first_clock_at_or_after_first_valid_source_plus_warmup_then_first_clock_at_or_after_c0_plus_measurement_span
+    planned_runs:
+      - {global_index: 1, batch: A, batch_index: 1, scenario: SPEED_05, requested_factor: 0.5}
+      - {global_index: 2, batch: A, batch_index: 2, scenario: SPEED_1, requested_factor: 1.0}
+      - {global_index: 3, batch: A, batch_index: 3, scenario: SPEED_2, requested_factor: 2.0}
+      - {global_index: 4, batch: B, batch_index: 1, scenario: SPEED_2, requested_factor: 2.0}
+      - {global_index: 5, batch: B, batch_index: 2, scenario: SPEED_1, requested_factor: 1.0}
+      - {global_index: 6, batch: B, batch_index: 3, scenario: SPEED_05, requested_factor: 0.5}
+      - {global_index: 7, batch: C, batch_index: 1, scenario: SPEED_1, requested_factor: 1.0}
+      - {global_index: 8, batch: C, batch_index: 2, scenario: SPEED_05, requested_factor: 0.5}
+      - {global_index: 9, batch: C, batch_index: 3, scenario: SPEED_2, requested_factor: 2.0}

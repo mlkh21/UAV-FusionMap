@@ -1,0 +1,12 @@
+<launch>
+  <arg name="run_id" />
+  <arg name="config" default="$(env UFM_ROOT)/configs/sim01_state.yaml" />
+  <arg name="audit_path" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_simulation" type="state_clock_node.py" name="state_clock" output="screen" required="true">
+    <rosparam command="load" file="$(arg config)" />
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="audit_path" value="$(arg audit_path)" />
+    <param name="input_topic" value="/mavlink/from" />
+  </node>
+</launch>
