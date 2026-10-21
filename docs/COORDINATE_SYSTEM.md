@@ -1,6 +1,6 @@
 # 坐标系统与变换规范
 
-版本：v0.1；更新日期：2026-09-16；责任角色：system_architect / sensor_engineer。
+版本：v0.1；更新日期：2026-10-14；责任角色：system_architect / sensor_engineer。
 状态：坐标约定已定义；SIM-01A NED/FRD状态适配已实现并有确定性测试，
 实际传感器安装外参与场景全局注册仍未验证。
 
@@ -46,6 +46,11 @@ T的左上3×3为旋转，右上3×1为以m表示的平移，末行为[0,0,0,1]�
 - Radar到odom：T_odom_radar(t) = T_odom_body(t) × T_body_radar。
 - 模型体素到odom：T_odom_model(t) = T_odom_body(t) × T_body_model。
 - 训练监督LiDAR到Body：T_body_training_lidar；只用于训练样本对齐和标签生成。
+  SENS-TRAIN-01 schema `0.2`对非零扫描先将每条射线按采集时刻转换到odom，再用
+  `T_odom_training_lidar(t_scan_mid)`逆变换到扫描中点的`training_lidar`坐标；记录同时
+  保留原始点、逐点时间和插值状态sample_id。该补偿仅属于训练fixture；2026-10-13
+  已接入训练ROS JSON记录路径，非在线TF或实机标定，见
+  [验证记录](../experiments/2026-10-13-sens-train-motion-ros.md)。
 - 源外参方向相反时必须求逆，不只取负平移。
 
 静态外参登记calibration_id、source_frame、target_frame、有效期及质量；动态变换
@@ -67,6 +72,11 @@ TF树。inference配置中不得出现training_lidar生产者或消费者。
 箭头表示父子坐标关系，不表示业务层调用。每条边只能有一个权威来源。
 Body动态状态和map/odom注册由sensors的状态适配对接已有状态源；安装外参由sensors
 标定配置提供；ros_ws只负责将这些定义承载为实际变换消息。
+
+T-14当前由同一个`state_adapter_node`按开关可选发布`nav_msgs/Odometry`兼容镜像和
+动态`odom -> base_link` TF。两者直接使用同一条AircraftState的采样时间、位置和姿态，
+不新增定位来源；默认配置关闭，mapping仍不得以Odometry替代AircraftState或观测时刻
+SpatialContext。该软件fixture验证不等于实机外参或定位质量验收。
 
 world保持为有明确定义的仿真源。world到odom的关系在运行记录中明确声明；只有已
 配置并验证同原点同轴时才能使用单位变换。真值关系与估计关系不能同时争夺同一条边。
@@ -106,6 +116,13 @@ Occupancy与Map中的origin是网格最小角的位姿。索引为XYZ，体素�
 转换到地图；不能把网格索引直接当米制坐标。C,Z,X,Y到XYZ的转置必须明确验证。
 
 滚动Local Map可以改变origin/coverage，但header.frame_id仍为odom，revision需更新。
+2026-10-14可选基础实现按观测`SpatialContext.T_mapping_body`在odom中的位置
+和初始锚点整格平移，体素轴始终与odom对齐；观测网格原点必须落在同一整格
+格点，其index通过观测原点对应的物理坐标换算到当前窗口。偏航只影响上游
+Radar点的观测时刻坐标投影，不让地图随航向旋转。失效变换或断流不移动窗口；
+odom若发生定位跳变/重置必须终止当前run并用新实例和run_id重建，不能将
+不同连续性域的原点当成同一个地图。实现及边界见
+[EXP-20261014-011](../experiments/2026-10-14-local-map-rolling.md)。
 Scene Map使用map时，定位跳变要触发明确的重新注册、子地图切换或重建策略，不能
 继续把新旧姿态当成同一连续参考系。具体策略在对应阶段验收。
 
@@ -131,3 +148,12 @@ TerrainPrior注册在Phase 4的DEM任务中单独验证。
 - 时间样例：运动状态下两次采集同一静态障碍，经各自观测时刻变换后应重合到允许误差内。
 
 上述为后续测试要求，不表示已经完成实际传感器标定或动态变换验证。
+
+2026-10-10最小训练fixture已按具名仿真安装参数验证：
+`T_odom_training_lidar(t)=T_odom_body(t)*T_body_training_lidar`，
+同理组合`T_body_radar`、`T_body_thermal_optical`；参数为子坐标中的齐次列点映到父
+坐标、行优先16数、平移单位m。odom采用ENU、body采用FLU、热相机采用optical
+轴定义；Radar和training_lidar有不同的具名平移。单障碍两时刻运动投影、
+相机像素及LiDAR首命中在odom中对齐的证据见
+[EXP-20261010-001](../experiments/2026-10-10-sens-train-01-fixture.md)。
+这不提供实机标定或在线training_lidar TF发布权。

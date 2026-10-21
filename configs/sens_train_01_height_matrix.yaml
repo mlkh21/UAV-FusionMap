@@ -1,0 +1,19 @@
+# Independent training-only vertical coverage fixture; not physical LiDAR calibration.
+schema_version: '0.1'
+mode: training_data_generation
+base_config: configs/sens_train_01_motion_fixture.yaml
+anchor_timestamp_ns: 1000000000
+reference_timestamps_ns: [1000000000, 1010000000, 1020000000]
+numerical_tolerance_m: 0.000001
+ray_time_offsets_ns: [0, 50000000, 100000000, 150000000, 200000000]
+rays_lidar:
+  - [0.9902680687415704, 0.0, 0.13917310096006544]  # +8 deg
+  - [1.0, 0.0, 0.0]
+  - [0.9902680687415704, 0.0, -0.13917310096006544] # -8 deg
+  - [0.9805806756909201, 0.19611613513818404, 0.0]
+  - [1.0, 0.0, 0.0]
+cases:
+  - {case_id: elevated_hit, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 0.0, forward_center_z_m: 1.0}
+  - {case_id: lower_hit, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 0.0, forward_center_z_m: -0.6}
+  # Valid horizontal rays miss the high obstacle; no-return is not free.
+  - {case_id: vertical_no_echo, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 0.0, forward_center_z_m: 1.0, lidar_rays_lidar: [[1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]}

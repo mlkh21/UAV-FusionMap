@@ -1,6 +1,6 @@
 # 工程决策记录
 
-版本：v0.1；更新日期：2026-09-18；维护角色：system_architect / Technical Lead。
+版本：v0.1；更新日期：2026-10-13；维护角色：system_architect / Technical Lead。
 状态：记录初始化、候选与构建决定；正式运行选型仍待验收。
 
 ## 1. 使用方式
@@ -383,3 +383,316 @@ R-13关闭。该处置不改变修复前RED结论，也不将历史文件声明�
 和时空预算仍为第一优先级。本决定接受SIM-SPEED-01实施范围及技术矩阵结果，不越过
 上述证据保全门禁，也不代表SIM-01D、完整Phase 1、35—70m/s地图更新、Radar—IR感知
 或训练监督LiDAR已经验证。
+
+## ADR-P014 PERF-01-A功能级闭环实施
+
+日期：2026-09-20；状态：已实施（短时技术验证）；主责任：Technical Lead。
+依据：用户09-18授权先提交Git、继续除归档外的任务，并在09-20继续实施。
+
+决定：使用独立静止source fixture和Radar/IR占位输入建立最小SensorBundle→Occupancy→
+MapSnapshot闭环，按DATA_FORMAT §12落实受限ROS编码。业务仍各归其层；simulation不再
+导入sensors fixture，地图只消费Occupancy及context。新消息无历史已验收消费者，统一
+重新生成ROS消息后运行；不修改既有AircraftState编码。暂不宣称已实现完整设备合同。
+
+ROS运行器统一管理观察窗口、连接就绪、固定样本数、排空和清理；本机monotonic只用于
+性能事件，业务采样纳秒保留。丢帧以未闭合根样本计算；禁止以重复拒绝抵消其他样本丢失。
+map采用严格递增时间与最近样本去重、固定odom格网、有限稀疏cell；完整滚动窗口后续另验。
+
+验证：122项契约通过；两次160样本短时闭环通过，最终运行800事件和六路各160消息、
+进程/端口清理通过。具体负载和命令见[实施记录](../experiments/2026-09-20-perf01a-integration.md)。
+本次完成不关闭PERF-01、SIM-01D或ENV-03；09-18旧零事件报告被重建的偏差已披露，
+尚无用户接受处置，不用本次新运行结果替代该处置。
+
+2026-09-20后续实施：新增完整IR和固定同步故障profile，ROS字段不变。
+实际大图run出现40→39样本，改用已有StateClockGate保留多条等待clock状态，容量/超时
+门槛不变；IR像素独立容器复制替代逐元素deepcopy。时延起点扩为fixture生成开始，
+报告注明计时范围，场景功能通过与20ms诊断分别输出。六个短场景功能检查通过，
+完整IR感知P99=30.376ms仍超目标；见[EXP-20260920-002](../experiments/2026-09-20-perf01a-load-faults.md)。
+
+2026-09-20分段与对照后续：依据用户明确要求，沿用PerfEvent兼容增加20个可选计时阶段，
+各业务发布后发送已捕获的单调时间区间，业务消息字段和架构不变。full/light维持相同
+订阅、完整身份/计数/时间与丢帧检查，仅full遍历像素；报告明确light的像素校验缺项。
+publish开始至回调只能解释为消息承载混合区间，不能称为纯网络延迟；逐样本连续分解，
+不累计嵌套区间或独立P99。最大区间的4MiB读缓冲试调未显示稳定收益，保留64KiB默认。
+134项契约和22个短run功能检查通过，但18个正式大图20ms诊断均失败，PERF-01仍进行中。
+依据与复现见[EXP-20260920-003](../experiments/2026-09-20-perf01a-segmented-timing.md)。
+
+2026-09-20线格式成本后续：依据用户“按你说的做”，在项目进程内测量真实生成消息
+serialize/deserialize，正常退出后以独立小型审计文件核对身份、数量和线格式区间。
+不修改ROS系统包、消息字段或算法。新增metadata观察模式明确取消IR/bundle旁路订阅，
+独立IR无连接时只验证发布尝试，bundle实际交付由sensor/perception两端核对；所有模式
+维持map/occupancy等低载荷检查，不把缺失消费记录当作零丢帧。
+
+整链基础资源采样记录本次进程树CPU/RSS、主机负载与代表CPU频率，活动窗口与采样自身
+开销显式记录。第一版高开销硬件轮询矩阵保留为探索结果，第二版正式对照不混用其统计。
+单个生成代码NumPy接收候选保持线格式及Python容器，三对端到端降幅中位数0.950%，
+低于预登记10%筛选条件，决定不改standard默认，仅保留候选复现入口。
+15个正式run均未达20ms，PERF-01、机载资源与SIM-01D验收不关闭。
+证据见[EXP-20260920-004](../experiments/2026-09-20-perf01a-wire-cost.md)。
+
+## ADR-015 异步匹配边界与高速运动时空一致性基线
+
+日期：2026-09-23；状态：已实施（功能级运动基线，PERF-01仍阻塞）；主责任：integration_engineer。
+依据：用户授权补齐大图失败记录并推进35/50/70m/s运动基线及PERF-01等待策略评估。
+
+保留5ms Radar/IR门限、10ms历史位姿年龄、40ms采样截止及500ms墙钟缓存上限。
+预登记oracle以理想1x到达为假设；实际迟到改变采用数量与墙钟过期仅改变拒绝理由分别
+记录，但均不豁免原oracle失败。历史失败目录和报告不重建。
+
+运动fixture沿world_ned北向匀速，p_ned=(v*t,0,0)，R_ned_frd=I，v_body=(v,0,0)。
+经现有适配后p_odom=(0,v*t,0)，Radar到Body仅采用已命名fixture单位外参；固定世界
+障碍物以odom/ENU同原点表达，采样时逆旋转生成相对点。真值仅由生成器及独立评测使用，
+不加到业务消息。无FOV、噪声、转弯、扫描去畸变或物理可探测性验收。
+
+当前策略为最近历史位姿而非插值。直线运动误差为v*pose_age，上限0.35/0.50/0.70m；
+连续坐标一致性、体素归属、误差预算分别报告，不能把误差预算内的体素漂移当成严格重合。
+地图拒绝期间保留最后观测时间，老化不增加revision、不制造free，新有效输入恢复新鲜度。
+
+提前配对候选`exact`只用于每流采样时刻唯一的fixture：同刻有效IR、同刻有效状态均已
+到达且通过原门控时，时间距离0已是最优，不必等40ms。只处理Radar有序队首；其余仍
+走原截止/墙钟拒绝。默认`deadline`对照保留；候选不能声称任意乱序设备流已验证。
+接收审计增加锁等待、业务decode与缓存处理耗时，发布到回调仍为含序列化/反序列化的
+混合区间，不能命名为纯网络延迟。通过短run不关闭高速实时、SIM-01D或机载验收。
+实际小图和大图结果、格网边界RED及保留的oracle失败见
+[EXP-20260923-001](../experiments/2026-09-23-perf01a-motion.md)。
+
+### ADR-015补充：2026-09-23边界量化与异步线格式复核
+
+地图核对以消息携带Radar点和历史位姿变换所得连续odom坐标按半开格网`floor`
+量化；理想静态世界坐标仅用于连续世界误差及`v*pose_age`预算。临界点不容差
+吸附、不以理想体素覆盖实际结果。独立核对Occupancy索引和MapSnapshot索引；
+不改变对外格网几何、时空接口或地图实现。修订后的实验解释及历史失败并存。
+可选真实ROS编解码探针含观测开销，发送serialize到接收deserialize起点仅为
+复制/队列/传输/调度混合区间。大图recovery严格oracle仍失败，尚无可接受的
+双时钟预期规则，不借修改理由或门限让失败转绿。见
+[EXP-20260923-002](../experiments/2026-09-23-perf01a-boundary-wire.md)。
+
+### ADR-015补充：2026-09-23跨话题状态排空和双时钟诊断
+
+在runner宣布本次异步完成前，要求源实际状态数量全部到达/发布、状态门控
+pending=0以及最后真实收到的clock覆盖源审计的终点；只读汇总由matcher
+状态参数发布，纳秒值按十进制字符串绕开ROS XML-RPC的32位整数限制。
+未完成则有界失败，不合成clock。双时钟`wall_clock_carryover`仅作为基于
+实际IR收据与matcher决策时刻的差异解释，不能豁免原预登记oracle失败。
+修后证据及两次接入RED详见
+[EXP-20260923-003](../experiments/2026-09-23-perf01a-clock-drain.md)。
+
+### ADR-015待确认提案：2026-09-24双时钟理由边界
+
+候选规则不是已接受验收变更：仅在IR真实接收、同run/clock身份、决定时未达
+500ms墙钟上限、最终`wall_timeout`，且相对于Radar超出5ms和理想1x过期时，
+允许**解释**`infrared_unavailable`与`radar_ir_timeout`拒绝理由差异。
+仍需确认是否将这种有证据的差异作为新的预登记验收条件；在获确认前
+继续严格逐样本匹配原oracle，保留全部旧失败。若采纳，也不得豁免采用数量、
+消息顺序、时钟覆盖、地图、丢帧或20ms目标。2026-09-24固定配置recovery
+一次run恰好在Radar19决定前wall超时而严格通过，证实旧理由差异非必现；
+见[EXP-20260924-001](../experiments/2026-09-24-perf01a-dual-clock-preflight.md)。
+
+## ADR-016 2026-10-10训练监督最小fixture与时空合同
+
+用户确认项目计划中的IFACE-01训练时空子范围和SENS-TRAIN-01隔离训练支路；
+实施依据为[已确认方案](SENS_TRAIN_01_IMPLEMENTATION_PLAN.md)。选择具名
+`sens_train_01_simulated_mount_v1`仿真安装外参，`T_odom_training_lidar(t) =
+T_odom_body(t) · T_body_training_lidar`；状态唯一权威仍为AircraftState。
+采集参考时刻为Radar扫描/IR曝光/LiDAR扫描中点；仅此fixture扫描时长为零，
+相对Radar偏移至多5ms、使用历史状态年龄至多10ms，超出或身份不符即拒绝。
+目标网格在`training_lidar`，仅可证明的射线首回波之前标free、首回波标occupied，
+其余unknown；无回波不自动推自由。IR热点需实际投影落显式配置像素。
+
+独立训练launch发布Radar/IR公共帧与`/uav/training/lidar_supervision`
+`std_msgs/String`版本化JSON记录；仅训练记录器消费监督，不新增公共ROS消息，
+不修改在线SensorBundle、推理或地图图。字典中的数值与外参是**功能级fixture**，
+绝非真实标定、物理雷达功率或热辐射测量。详见
+[EXP-20261010-001](../experiments/2026-10-10-sens-train-01-fixture.md)。
+后续若转换为公共LiDAR消息、改变同步策略或引入正式标定，须重新审查公共消费者
+并单独确认；本决策不关闭IFACE-01全部子项、PERF-01或科研对照试验。
+
+### ADR-016补充：2026-10-10无设备时的最小合同扩展
+
+正式平台/物理采样时钟/功耗数据未就绪时，保留PERF-01阻塞且不替换验收门槛。
+SENS-TRAIN-01新增双障碍双射线fixture：必须有严格正长度的实体内穿透才给
+首回波；数值级擦边保持unknown；多个射线射到同一体素时已证实的occupied
+不被另一射线沿程free覆盖。两个IR热点分别受标定投影校验；每次运行仍须图隔离。
+
+IFACE-01仅增加**离线fixture子集**的PointCloud2解码/业务适配，明示字段名、
+位置单位、Doppler正方向/参考系、强度量纲和run/clock身份。当前公共RadarPoint
+无逐点时间槽，因此非零扫描或未知原始字段一律拒绝，不悄悄丢掉可能的时间信息。
+现有ROS公共消息和在线话题图不变；真实设备规格与时钟转换方案形成前，不启用
+测量来源或将fixture输入写成实际驱动。证据见
+[EXP-20261010-002](../experiments/2026-10-10-iface01-sens-train-multiray.md)。
+
+### ADR-016补充：2026-10-12非零扫描训练fixture合同
+
+正式平台、物理传感器时钟和功耗输入仍未就绪，因此本补充不推进PERF-01，也不改变
+公共ROS消息。SENS-TRAIN-01在离线纯函数范围增加schema `0.2`：非零LiDAR扫描必须
+声明偶数纳秒扫描时长、从0到总时长有序覆盖的逐点时间偏移，并提供同一run/clock内
+完整覆盖扫描起止的有效估计AircraftState历史。每条回波先在其采集时刻用
+`T_odom_training_lidar(t)`求交，再转换到扫描中点；记录原始坐标、补偿坐标、逐点时间
+和插值状态sample_id，位置线性插值、姿态最短弧SLERP。
+
+本次只通过功能级两障碍/三射线fixture审计：两束回波经补偿后占据标签稳定，第三束
+无回波保持unknown；缺历史、乱序、时间偏移未覆盖、v0.1承载非零扫描均fail-closed。
+ROS v0.1零时长训练图、在线SensorBundle、perception、定位和mapping不变。该结果
+不等于真实设备逐点时钟、真实标定、实时性能或研究模型质量验收；对照试验仍放在
+工程数据门禁和接口闭合之后。
+
+### ADR-016补充：2026-10-13训练记录逐射线时间审计
+
+为避免把“没有回波”误写成“没有采集时间”，训练记录必须保存配置中全部射线的有序
+`ray_time_offsets_ns`。有回波点使用唯一`ray_index`引用时间槽；无回波射线不生成点，
+但其时间槽仍保留，且不产生free标签。记录验证器拒绝缺失/不一致时间槽、重复射线
+返回和畸形点结构。历史v0.1零时长记录可兼容缺失偏移并按全零解释，新写入记录显式
+保存偏移列表。该补充仍是离线纯函数记录合同，不新增公共ROS字段，不推进PERF-01，
+也不改变LiDAR不进入在线SensorBundle、perception、定位和mapping的边界。
+
+## ADR-017 2026-10-13 ARS548与Mid-360型号特定设备时间合同
+
+**状态：已接受（字段合同）；实机时钟验证未完成。**
+
+用户已明确项目使用Continental ARS548毫米波雷达和Livox Mid-360激光雷达。本次按
+型号公开协议/驱动消息核对可直接取得的时间字段，结论如下：
+
+1. ARS548的`DetectionList`保留`timestamp_seconds`、`timestamp_nanoseconds`和
+   `timestamp_syncstatus`作为列表级时间；检测记录没有逐点时间。因此工程适配只输出
+   列表级观测时刻，检测点的`point_time_ns`与偏移必须为不可用，不能用ROS接收时刻或
+   列表时间复制冒充逐点采样。
+2. Mid-360的`CustomMsg.timebase`和`CustomPoint.offset_time`可展开为每点时间；原始
+   UDP包的`time_type`及设备状态用于区分启动时间、PTP/gPTP和GPS。由于`CustomMsg`
+   不带`time_type`，驱动消息单独到达时只能保留逐点时间，不能确认同步来源。
+3. 新增`sensors/ufm_sensors/device_time_adapter.py`作为纯函数字段适配器，身份必须
+   包含`run_id`、`clock_id`、`sample_id`和`frame_id`；新增定向测试覆盖时间展开、
+   计数/顺序/范围错误和缺失同步类型。该模块不估计跨设备偏移，不启动设备，不改变
+   ROS公共消息和在线SensorBundle。
+4. Mid-360仍严格属于训练监督输入；本决策不允许LiDAR进入在线感知、定位、地图或
+   Radar+IR模型输入。正式PERF-01、功耗、实机同步残差及对照试验继续保持独立门槛。
+
+资料链接与字段语义见[数据格式4.1](DATA_FORMAT.md#41-型号特定设备时间字段审查-2026-10-13)。
+
+## ADR-018 2026-10-13 设备时间落盘与映射状态分离
+
+**状态：已接受（记录合同）；真实设备回放未完成。**
+
+设备到位前先固定`device_time_record_v1`，每条解码记录必须同时保存设备采集时间、
+主机接收时间、接收时钟域、设备身份和原始payload。`device_timestamp_ns`来自
+ARS548检测列表时间或Mid-360首点/逐点展开；`receive_timestamp_ns`只用于接收审计，
+禁止覆盖采集时间。
+
+`time_mapping_status`固定为`unmapped`，offset、drift和误差上界必须保持空值，直到
+取得同一公共时钟或可审查的PPS/PTP/gPTP/原始包证据。Mid-360的原始`time_type`只能
+标记来源类别，`time_sync_verified`仍为false；ARS548没有逐检测时间，不生成伪造偏移。
+
+实现放在`sensors/ufm_sensors/device_time_record.py`，输入审计为纯函数，不新增ROS
+消息、不启动真实驱动，不改变Mid-360仅训练监督的边界。收到实机记录后，先做离线
+字段回放、设备/主机时钟残差和丢包/重复审计，再评审ROS记录器与非零扫描训练路径。
+
+## ADR-019 2026-10-13 硬件缺失时独立推进非零扫描ROS训练闭环
+
+**状态：已接受（用户“继续”确认的软件子范围）；完整训练任务未验收。**
+
+真实设备/实测记录缺失只阻塞相关设备验收，不阻塞仿真软件开发。沿用训练独立图和
+JSON schema `0.2`，将既有逐点时间/运动补偿接入ROS记录路径；不等待真实Mid-360
+记录，不把仿真时钟当作设备时钟，不修改研究仓库、公共消息或在线SensorBundle。
+
+训练源增加覆盖首尾扫描的状态，sensors维护有界历史，仅当状态和clock共同覆盖
+扫描末端才生成样本；状态身份/顺序或clock不合法拒绝，输入停滞时明确停止。
+ROS节点直接读取同一配置快照，避免XML-RPC整型上限且保持纳秒精度。具名仿真标定
+的排他有效期延长到2.2s，只为覆盖最后扫描末端2.1s，不增加真实标定声明。
+
+验收以实际ROS传输、独立JSONL回读、五类收据、解析几何oracle及图隔离为证据；
+原有两个零时长入口回归，首轮XML-RPC失败目录保留。详见
+[EXP-20261013-005](../experiments/2026-10-13-sens-train-motion-ros.md)。
+此决定补充ADR-018的仿真执行顺序，真实设备记录审计要求不变；正式PERF-01仍阻塞，
+后续优先几何/运动场景和数据统计，对照试验留到工程数据门禁之后。
+
+## ADR-020 2026-10-13 训练场景统计与体素边界数值稳定性
+
+**状态：已接受（用户“继续”确认的场景/统计子范围）；实机与完整数据质量未验收。**
+
+通过独立离线矩阵扩充几何/运动场景，使用具名运动学源、既有训练状态缓存/生成
+函数及JSON记录合同；不修改ROS图、在线SensorBundle、研究模型或PERF配置。评测
+只调用公开入口，独立面交点与解析位姿核对数据，避免用生产射线/插值私有函数
+作为oracle。每次新输出目录隔离run身份，保留全部配置、源状态、标签与失败报告。
+
+35/50m/s场景复现同一表面因约1e-15m舍入跨过网格整数边界，产生伪重复occupied。
+训练索引在8倍float64机器epsilon的缩放误差内先吸附整数，再floor，其余保持floor；
+真实1e-9m边界两侧保持区别。此修复仅稳定数值边界，不改变射线擦边、FOV、量程、
+时间同步、未知区域语义或公共schema，也不回写任何历史实验。
+
+覆盖率统计按每帧网格单元计数，不当作唯一世界体素覆盖、感知召回或训练充分性；
+无回波误差为空值，几何残差为理想fixture数值一致性，非设备测量精度。偏航源是
+平移叠加姿态变化，不代表动力学一致的固定翼转弯。通过结果与失败见
+[EXP-20261013-006](../experiments/2026-10-13-sens-train-scene-statistics.md)。
+
+## ADR-021 2026-10-13 ROS训练fixture偏航与插值验收
+
+**状态：已接受（训练支路软件子范围）；非实机、非正式性能、非模型质量验收。**
+
+在不改变公共Radar/IR消息、在线SensorBundle、研究模型或PERF-01配置的前提下，训练
+专用ROS源支持配置声明的运动学fixture profile。新增小角速度偏航配置，保留原有
+直线、single和multiray入口行为；200ms监督扫描继续由唯一`/clock`和状态源覆盖首尾。
+50ms和150ms射线槽通过状态历史插值，所有射线槽仍落盘，无回波槽不产生点或自由空间。
+
+runner按配置核对旋转状态、body速度、Radar/IR收据、原始/补偿点、逐点sample_id、
+occupied/free/unknown标签和图隔离；偏航验收必须有非零角速度及插值回波。该profile
+仅表示北向平移叠加独立偏航，不代表固定翼动力学转弯或PX4估计。真实ARS548、Mid-360
+记录、设备时钟残差、标定和功耗仍按IFACE-01/PERF-01单独验收。
+
+实际ROS run与旧入口回归见[EXP-20261013-007](../experiments/2026-10-13-sens-train-yaw-ros.md)。
+下一步为T-14的Odometry兼容镜像/唯一TF设计与契约测试；对照试验仍放在真实数据和模型
+质量门禁之后。
+
+## ADR-022 2026-10-14 AircraftState派生Odometry与唯一TF
+
+**状态：已接受（软件兼容镜像子范围）；真实定位质量与设备协方差未验收。**
+
+保留`AircraftState`为唯一定位权威和完整状态合同。在已有`state_adapter_node`内增加
+默认关闭的`publish_odom`与`broadcast_tf`开关：由同一条适配状态分别派生
+`/uav/localization/odom`和动态`odom -> base_link`，不新增定位目录、不新增第二个
+状态适配器、不让mapping订阅Odometry。镜像直接保留AircraftState采样纳秒和odom/base_link
+帧语义；未知质量不填造协方差，terminal/unavailable不产生几何消息。
+
+采用ROS标准`nav_msgs/Odometry`是兼容工具需要，消息本身规定pose使用header.frame_id、
+twist使用child_frame_id，符合当前odom/base_link边界。[ROS aerial interface REP-147](https://github.com/ros-infrastructure/rep/blob/master/rep-0147.rst)
+也将`nav_msgs/Odometry`作为航空器通用里程计接口。实机定位来源、真实协方差、外部
+时钟和长期TF缓存仍待后续记录审计。
+
+验证见[EXP-20261014-008](../experiments/2026-10-14-t14-odom-tf.md)。
+
+## ADR-023 2026-10-14 基础地图单点查询ROS承载
+
+**状态：已接受；固定网格单点查询软件子范围已完成，完整地图能力仍开放。**
+
+复用已有SparseLocalMap及地图节点，在新增MapQuery.srv/MapQueryResult.msg中承载
+DATA_FORMAT §9.1单点子集。查询默认关闭，启用时与地图更新共用实例与锁，不新建
+旁路地图缓存；消息扩展为新增类型，不改变已有MapSnapshot及历史bag字段。
+协议保留缺失概率/索引/观测时间/quality的显式可用性，五类状态不互相降格成free。
+合法身份/坐标/地图不匹配返回unavailable，畸形请求明确以service error拒绝。
+不自动查TF、不消费AircraftState/LiDAR、不以当前处理时间刷新地图。
+
+阈值必须成对显式配置；未配置时查询仍返回有效历史概率但不猜测占据/自由分类。
+fixture的0.3/0.7不构成飞行默认值。当前只做单点和固定odom轴对齐网格，区域查询、
+滚动窗口、概率累计和规划控制另行确认。验证与失败产物见
+[EXP-20261014-010](../experiments/2026-10-14-local-map-query-ros.md)：三种fixture模式、
+338项全仓轻量测试和旧PERF-01-A真实ROS入口回归通过；首轮公共`/clock`连接图误判目录
+保留。该决定不关闭正式PERF-01，也不批准滚动地图、概率融合或对照试验；下一步须另行
+确认滚动局部地图具体方案。
+
+## ADR-024 2026-10-14 可选基础滚动Local Map
+
+**状态：已接受；仅完成软件fixture子范围，Phase 4与正式性能门槛未关闭。**
+
+在用户确认后，沿用原有`SparseLocalMap`及ROS节点，以默认关闭的
+`rolling_enabled`/`rolling_grid`开关启用观测时刻body位置驱动的轴对齐odom
+整格移动窗口；不变更OccupancyObservation、MapSnapshot、MapQuery字段。
+原因：有限cell缓存淘汰只能控制条目数，不能移动固定coverage，飞行越界后新观测
+必然无法纳入地图。配置初始origin为格点锚，以shape/resolution确定固定大小窗口；
+每次有效观测按观测SpatialContext位置移动，重叠cell重映射并保留时间/质量，
+移出部分清除，新范围默认为unknown。输入格网需为同一锚点整格且odom轴对齐；
+变换不合法、乱序、重复冲突或身份域变化不得部分移动。断流不移动，旧单元
+按查询时刻老化；新run/clock由外部重启地图实例；大位移无重叠直接淘汰。
+
+固定入口与旧查询默认不变，可关闭滚动开关恢复；回退仅限本新增实现及fixture，
+保留旧实验和未提交工作。风险：当前没有自动odom重置检测/定位质量证据、
+任意倾斜输入重采样、历史版本查询及真实机载RSS/时延验收；不增加mapping
+对AircraftState、Odometry、Radar/IR、LiDAR的订阅，不推进概率累计、DEM或控制。
+测试和失败run详见[EXP-20261014-011](../experiments/2026-10-14-local-map-rolling.md)。

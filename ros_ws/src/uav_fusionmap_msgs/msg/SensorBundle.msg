@@ -1,0 +1,8 @@
+ObservationHeader header
+RadarFrame radar
+InfraredFrame infrared
+AircraftState state
+SpatialContext context
+string calibration_id
+int64 radar_ir_delta_ns
+int64 pose_age_ns

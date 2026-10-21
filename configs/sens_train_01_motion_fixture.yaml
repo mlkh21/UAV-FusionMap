@@ -1,0 +1,54 @@
+# SENS-TRAIN-01: nonzero-scan motion-compensation fixture; not a physical calibration.
+mode: training_data_generation
+schema_version: '0.2'
+scene:
+  scene_id: sens_train_01_motion_two_boxes_v1
+  obstacles_odom:
+    - obstacle_id: forward_box
+      center_m: [0.0, 6.0, 0.2]
+      size_m: [0.5, 0.5, 0.5]
+      ir_pixel: [2, 1]
+    - obstacle_id: oblique_box
+      center_m: [-0.9, 6.0, 0.2]
+      size_m: [0.4, 0.4, 0.4]
+      ir_pixel: [1, 1]
+calibration:
+  calibration_id: sens_train_01_simulated_mount_v1
+  status: fixture_only
+  valid_from_ns: 0
+  # Exclusive end; covers the last fixture scan ending at 2.1 s.
+  valid_until_ns: 2200000000
+  # Row-major T_parent_child: column points in child to parent, metres.
+  T_body_radar: [1, 0, 0, 0.2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  T_body_training_lidar: [1, 0, 0, 0.5, 0, 1, 0, 0, 0, 0, 1, 0.2, 0, 0, 0, 1]
+  # optical x=body -y, optical y=body -z, optical z=body +x.
+  T_body_thermal_optical: [0, 0, 1, 0.15, -1, 0, 0, 0, 0, -1, 0, 0.05, 0, 0, 0, 1]
+time:
+  max_pair_offset_ns: 5000000
+  max_pose_age_ns: 10000000
+radar:
+  max_range_m: 8.0
+  fov_horizontal_deg: 30.0
+  fov_vertical_deg: 20.0
+infrared:
+  width: 5
+  height: 3
+  fx: 6.0
+  fy: 2.0
+  cx: 2.0
+  cy: 1.0
+  background_fixture_intensity: 0.4
+  hotspot_fixture_intensity: 0.9
+lidar:
+  frame_id: training_lidar
+  scan_duration_ns: 200000000
+  # Offsets are from scan_start, sorted, and must span the declared fixture scan.
+  ray_time_offsets_ns: [0, 100000000, 200000000]
+  max_range_m: 8.0
+  fov_horizontal_deg: 30.0
+  fov_vertical_deg: 20.0
+  # The middle ray has no return; its coverage must remain unknown.
+  rays_lidar: [[1.0, 0.0, 0.0], [0.9805806756909201, -0.19611613513818404, 0.0], [0.9805806756909201, 0.19611613513818404, 0.0]]
+  grid_origin_m: [0.0, -2.0, -2.0]
+  grid_resolution_m: [0.5, 0.5, 0.5]
+  grid_shape: [16, 10, 8]

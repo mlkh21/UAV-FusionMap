@@ -1,0 +1,53 @@
+# PERF-01-A固定功能级场景；注入窗口按序号[10,20)，随后恢复。
+# 不代表硬件频率、实际相机曝光/丢帧模型或独立Radar20Hz/IR50Hz调度。
+schema_version: '0.1'
+scenarios:
+  small:
+    ir_resolution: [2, 2]
+    fault: none
+  parameterized:
+    ir_resolution: [4, 3]
+    fault: none
+    fake_radar:
+      fov_deg: [120.0, 30.0]
+      max_range_m: 6.0
+      position_noise_std_m: 0.01
+      power_noise_std: 0.05
+      scan_duration_ns: 0
+    fake_infrared:
+      background_value: 0.4
+      noise_std: 0.01
+      exposure_duration_ns: 0
+      hotspots:
+        - {x_px: 1, y_px: 1, radius_px: 1, value: 0.5}
+    sensor_noise_seed: 23
+  full_ir:
+    ir_resolution: [640, 512]
+    fault: none
+  sync_boundary:
+    ir_resolution: [2, 2]
+    fault: ir_offset
+    ir_offset_ns: -5000000
+    start_sequence: 10
+    stop_sequence: 20
+    expected_rejection: ''
+  sync_timeout:
+    ir_resolution: [2, 2]
+    fault: ir_offset
+    ir_offset_ns: -6000000
+    start_sequence: 10
+    stop_sequence: 20
+    expected_rejection: radar_ir_timeout
+  ir_missing:
+    ir_resolution: [2, 2]
+    fault: ir_missing
+    start_sequence: 10
+    stop_sequence: 20
+    expected_rejection: infrared_unavailable
+  pose_stale:
+    ir_resolution: [2, 2]
+    fault: pose_age
+    pose_age_ns: 11000000
+    start_sequence: 10
+    stop_sequence: 20
+    expected_rejection: pose_age_exceeded

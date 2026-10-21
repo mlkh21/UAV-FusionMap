@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(uav_fusionmap_mapping)
+find_package(catkin REQUIRED COMPONENTS rospy uav_fusionmap_msgs)
+catkin_package()
+catkin_install_python(PROGRAMS scripts/perf01a_map_node.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

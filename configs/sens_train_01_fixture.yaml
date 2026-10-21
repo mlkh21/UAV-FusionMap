@@ -1,0 +1,46 @@
+# SENS-TRAIN-01: functional fixture only; not a physical installation calibration.
+mode: training_data_generation
+schema_version: '0.1'
+scene:
+  scene_id: sens_train_01_box_v1
+  obstacles_odom:
+    - obstacle_id: box_1
+      center_m: [0.0, 4.0, 0.2]
+      size_m: [0.5, 0.5, 0.5]
+      ir_pixel: [2, 1]
+calibration:
+  calibration_id: sens_train_01_simulated_mount_v1
+  status: fixture_only
+  valid_from_ns: 0
+  valid_until_ns: 2100000000
+  # Row-major T_parent_child: column points in child to parent, metres.
+  T_body_radar: [1, 0, 0, 0.2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  T_body_training_lidar: [1, 0, 0, 0.5, 0, 1, 0, 0, 0, 0, 1, 0.2, 0, 0, 0, 1]
+  # optical x=body -y, optical y=body -z, optical z=body +x.
+  T_body_thermal_optical: [0, 0, 1, 0.15, -1, 0, 0, 0, 0, -1, 0, 0.05, 0, 0, 0, 1]
+time:
+  max_pair_offset_ns: 5000000
+  max_pose_age_ns: 10000000
+radar:
+  max_range_m: 6.0
+  fov_horizontal_deg: 30.0
+  fov_vertical_deg: 20.0
+infrared:
+  width: 5
+  height: 3
+  fx: 2.0
+  fy: 2.0
+  cx: 2.0
+  cy: 1.0
+  background_fixture_intensity: 0.4
+  hotspot_fixture_intensity: 0.9
+lidar:
+  frame_id: training_lidar
+  scan_duration_ns: 0
+  max_range_m: 6.0
+  fov_horizontal_deg: 30.0
+  fov_vertical_deg: 20.0
+  rays_lidar: [[1.0, 0.0, 0.0]]
+  grid_origin_m: [0.0, -2.0, -2.0]
+  grid_resolution_m: [0.5, 0.5, 0.5]
+  grid_shape: [14, 8, 8]

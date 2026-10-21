@@ -1,0 +1,29 @@
+# Offline functional acceptance matrix, not a physical sensor or flight model.
+schema_version: '0.1'
+mode: training_data_generation
+base_config: configs/sens_train_01_motion_fixture.yaml
+anchor_timestamp_ns: 1000000000
+reference_timestamps_ns: [1000000000, 1010000000, 1020000000]
+# Numerical consistency only, not measured sensor/flight accuracy.
+numerical_tolerance_m: 0.000001
+voxel_coverage_oracle: positive_length
+ray_time_offsets_ns: [0, 50000000, 100000000, 150000000, 200000000]
+rays_lidar:
+  - [1.0, 0.0, 0.0]
+  - [1.0, 0.0, 0.0]
+  - [0.9805806756909201, 0.19611613513818404, 0.0]
+  - [0.9805806756909201, -0.19611613513818404, 0.0]
+  - [1.0, 0.0, 0.0]
+cases:
+  - {case_id: static_single, geometry: single, speed_mps: 0.0, yaw_rate_deg_s: 0.0}
+  - {case_id: static_two, geometry: two, speed_mps: 0.0, yaw_rate_deg_s: 0.0}
+  - {case_id: translation, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 0.0}
+  - {case_id: translation_yaw, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 20.0}
+  - {case_id: negative_yaw, geometry: two, speed_mps: 0.0, yaw_rate_deg_s: -20.0}
+  - {case_id: speed_35, geometry: two, speed_mps: 35.0, yaw_rate_deg_s: 0.0}
+  - {case_id: speed_50, geometry: two, speed_mps: 50.0, yaw_rate_deg_s: 0.0}
+  - {case_id: speed_70, geometry: two, speed_mps: 70.0, yaw_rate_deg_s: 0.0}
+  - {case_id: near_two, geometry: near, speed_mps: 1.0, yaw_rate_deg_s: 0.0}
+  - {case_id: occluded, geometry: occluded, speed_mps: 1.0, yaw_rate_deg_s: 0.0}
+  - {case_id: range_cutoff, geometry: two, speed_mps: 1.0, yaw_rate_deg_s: 0.0, lidar_range_m: 2.0}
+  - {case_id: empty, geometry: empty, speed_mps: 1.0, yaw_rate_deg_s: 0.0}

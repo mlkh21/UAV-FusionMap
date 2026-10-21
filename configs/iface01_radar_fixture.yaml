@@ -1,0 +1,15 @@
+# IFACE-01 PointCloud2 fixture contract, not a real-device profile.
+mode: fixture_only
+frame_id: radar_fixture
+x_field: x_m
+y_field: y_m
+z_field: z_m
+position_unit: m
+doppler_field: vr_mps
+doppler_unit: m/s
+doppler_positive: away
+doppler_reference: sensor_relative
+power_field: snr_db
+power_quantity: signal_to_noise_ratio
+power_unit: dB
+scan_reference: midpoint

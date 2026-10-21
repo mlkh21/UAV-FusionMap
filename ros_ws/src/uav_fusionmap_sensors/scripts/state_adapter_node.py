@@ -6,12 +6,16 @@ import time
 
 import rospy
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+from geometry_msgs.msg import TransformStamped
+from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
+import tf2_ros
 from uav_fusionmap_msgs.msg import AircraftState
 from ufm_ros_contract import from_ros_state, to_ros_state
 from ufm_ros_contract.audit import PublicationAudit
 from ufm_sensors.state_adapter import adapt_state
 from ufm_sensors.clock_gate import StateClockGate
+from ufm_sensors.odom_mirror import build_odom_mirror
 
 
 def main():
@@ -22,6 +26,10 @@ def main():
     gate = StateClockGate(run_id, pending_limit=rospy.get_param('~pending_limit'),
                           pending_timeout_wall_s=rospy.get_param('~pending_timeout_wall_s'))
     state_pub = rospy.Publisher('/uav/sensors/state', AircraftState, queue_size=100)
+    publish_odom = bool(rospy.get_param('~publish_odom', False))
+    broadcast_tf = bool(rospy.get_param('~broadcast_tf', False))
+    odom_pub = rospy.Publisher('/uav/localization/odom', Odometry, queue_size=100) if publish_odom else None
+    tf_broadcaster = tf2_ros.TransformBroadcaster() if broadcast_tf else None
     diag_pub = rospy.Publisher('/uav/diagnostics', DiagnosticArray, queue_size=20)
     lock = threading.RLock()
     audit = PublicationAudit(rospy.get_param('~audit_path', ''))
@@ -38,6 +46,32 @@ def main():
         for state in states:
             msg = to_ros_state(state)
             state_pub.publish(msg)
+            if ((publish_odom or broadcast_tf)
+                    and state['header']['status'] != 'unavailable'):
+                mirror = build_odom_mirror(state)
+                stamp = rospy.Time(state['header']['timestamp'] // 1_000_000_000,
+                                   state['header']['timestamp'] % 1_000_000_000)
+                if publish_odom:
+                    odom = Odometry()
+                    odom.header.stamp = stamp
+                    odom.header.frame_id = mirror['frame_id']
+                    odom.child_frame_id = mirror['child_frame_id']
+                    odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z = mirror['position']
+                    odom.pose.pose.orientation.x, odom.pose.pose.orientation.y = mirror['orientation_xyzw'][:2]
+                    odom.pose.pose.orientation.z, odom.pose.pose.orientation.w = mirror['orientation_xyzw'][2:]
+                    odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z = mirror['linear_velocity']
+                    odom.pose.covariance = mirror['pose_covariance']
+                    odom.twist.covariance = mirror['twist_covariance']
+                    odom_pub.publish(odom)
+                if broadcast_tf:
+                    transform = TransformStamped()
+                    transform.header.stamp = stamp
+                    transform.header.frame_id = mirror['frame_id']
+                    transform.child_frame_id = mirror['child_frame_id']
+                    transform.transform.translation.x, transform.transform.translation.y, transform.transform.translation.z = mirror['position']
+                    transform.transform.rotation.x, transform.transform.rotation.y = mirror['orientation_xyzw'][:2]
+                    transform.transform.rotation.z, transform.transform.rotation.w = mirror['orientation_xyzw'][2:]
+                    tf_broadcaster.sendTransform(transform)
             try:
                 audit.record('/uav/sensors/state', msg)
             except Exception:

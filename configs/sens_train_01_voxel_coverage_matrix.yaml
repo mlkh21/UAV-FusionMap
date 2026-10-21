@@ -1,0 +1,30 @@
+# Deterministic short-chord coverage fixture; functional geometry only.
+schema_version: '0.1'
+mode: training_data_generation
+base_config: configs/sens_train_01_motion_fixture.yaml
+anchor_timestamp_ns: 1000000000
+reference_timestamps_ns: [1000000000, 1010000000, 1020000000]
+numerical_tolerance_m: 0.000001
+voxel_coverage_oracle: positive_length
+ray_time_offsets_ns: [0, 200000000]
+rays_lidar:
+  - [0.9950362049768564, 0.0995135708597354, 0.0]
+  - [0.9950362049768564, 0.0995135708597354, 0.0]
+cases:
+  - case_id: short_voxel_chord_positive
+    geometry: voxel_coverage
+    speed_mps: 0.0
+    yaw_rate_deg_s: 0.0
+    ray_slope: 0.10001
+    obstacle_center_range_m: 5.8
+    obstacle_size_m: [0.1, 0.5, 0.5]
+  - case_id: short_voxel_chord_negative
+    geometry: voxel_coverage
+    speed_mps: 0.0
+    yaw_rate_deg_s: 0.0
+    ray_slope: -0.10001
+    obstacle_center_range_m: 5.8
+    obstacle_size_m: [0.1, 0.5, 0.5]
+    lidar_rays_lidar:
+      - [0.9950362049768564, -0.0995135708597354, 0.0]
+      - [0.9950362049768564, -0.0995135708597354, 0.0]

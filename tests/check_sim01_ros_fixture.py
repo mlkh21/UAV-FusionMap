@@ -4,16 +4,24 @@ import json
 import sys
 import threading
 import time
+import argparse
 from pathlib import Path
 
 import rospy
+from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
+from tf2_msgs.msg import TFMessage
 from uav_fusionmap_msgs.msg import AircraftState
 from ufm_ros_contract import to_ros_state, from_ros_state
 
 
 def main():
-    run, run_id = Path(sys.argv[1]), sys.argv[2]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('run')
+    parser.add_argument('run_id')
+    parser.add_argument('--t14-compat', action='store_true')
+    args = parser.parse_args()
+    run, run_id = Path(args.run), args.run_id
     rospy.init_node('sim01a_fixture', disable_signals=True)
     lock, received = threading.Lock(), []
     stream = (run/'fixture-states.jsonl').open('x')
@@ -25,7 +33,16 @@ def main():
             received.append(value)
             stream.write(json.dumps(value)+'\n')
 
+    odometry, transforms = [], []
+    def receive_odom(msg):
+        odometry.append(msg)
+    def receive_tf(msg):
+        transforms.extend(msg.transforms)
     sub = rospy.Subscriber('/uav/sensors/state', AircraftState, receive, queue_size=100)
+    compat_subscribers = []
+    if args.t14_compat:
+        compat_subscribers = [rospy.Subscriber('/uav/localization/odom', Odometry, receive_odom, queue_size=100),
+                              rospy.Subscriber('/tf', TFMessage, receive_tf, queue_size=100)]
     pub = rospy.Publisher('/uav/sim/state', AircraftState, queue_size=100)
     clock = rospy.Publisher('/clock', Clock, queue_size=100)
     source = dict(header=dict(schema_version='0.1', timestamp=2000000000,
@@ -67,6 +84,20 @@ def main():
             if received:
                 check(received[0]['position']==[2.,1.,-3.] and received[0]['linear_velocity']==[4.,-5.,-6.],
                       'actual ROS axis conversion')
+        if args.t14_compat:
+            check(wait(lambda: len(odometry) == 1 and len(transforms) == 1), 'T-14 mirror and TF receive')
+            if odometry and transforms:
+                odom = odometry[0]
+                transform = transforms[0]
+                check(odom.header.stamp.to_nsec() == 2_000_000_000 and
+                      odom.header.frame_id == 'odom' and odom.child_frame_id == 'base_link',
+                      'Odometry timestamp and frames')
+                check(transform.header.stamp.to_nsec() == odom.header.stamp.to_nsec() and
+                      transform.header.frame_id == 'odom' and transform.child_frame_id == 'base_link',
+                      'TF timestamp and frames')
+                check(odom.pose.covariance[0] == -1.0 and odom.twist.covariance[0] == -1.0,
+                      'Odometry unknown covariance')
+        initial_odom_count, initial_tf_count = len(odometry), len(transforms)
         pub.publish(to_ros_state(source))
         time.sleep(.1)
         check(count()==1,'duplicate does not publish twice')
@@ -91,6 +122,9 @@ def main():
         pub.publish(to_ros_state(future))
         time.sleep(.2)
         check(count()==2,'terminal clears pending and locks run')
+        if args.t14_compat:
+            check(len(odometry) == initial_odom_count and len(transforms) == initial_tf_count,
+                  'terminal state produces no geometry mirror')
         with lock:
             if len(received)>1:
                 check(received[-1]['header']['reason']=='terminal:fixture_failure' and
@@ -101,6 +135,8 @@ def main():
         errors.append(type(exc).__name__ + ': ' + str(exc))
     finally:
         sub.unregister()
+        for compat_subscriber in compat_subscribers:
+            compat_subscriber.unregister()
         with lock:
             stream.close()
         result=dict(passed=not errors and len(checks)>=11,errors=errors,checks=checks,received_states=count(),python=sys.executable)

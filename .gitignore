@@ -2,7 +2,7 @@
 /.runtime/*
 !/.runtime/CATKIN_IGNORE
 
-# 原有本机会话配置不进入工程提交。
+# 原有本机会话配置
 /.codex/
 
 # ROS构建输出；首选位置为.runtime/ros。
@@ -12,7 +12,12 @@
 /ros_ws/logs/
 /ros_ws/.catkin_tools/
 /ros_ws/.catkin_workspace
+/.catkin_workspace
 
 # Python运行生成物；源码、配置和测试仍逐文件纳入版本管理。
 __pycache__/
 *.py[cod]
+
+# 实验测试脚本及记录
+experiments/
+tests/

@@ -1,0 +1,13 @@
+uint8 TRANSFORM_UNAVAILABLE=0
+uint8 TRANSFORM_AVAILABLE=1
+int64 reference_timestamp
+string clock_id
+string mapping_frame_id
+string source_frame_id
+float64[16] T_mapping_source
+uint8 T_mapping_source_status
+float64[16] T_mapping_body
+uint8 T_mapping_body_status
+string calibration_id
+string state_source
+Uncertainty pose_uncertainty

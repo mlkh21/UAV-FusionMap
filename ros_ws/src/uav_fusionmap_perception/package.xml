@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_fusionmap_perception</name>
+  <version>0.1.0</version>
+  <description>UAV-FusionMap无模型占位感知薄包装。</description>
+  <maintainer email="maintainer@example.invalid">UAV-FusionMap Technical Lead</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>uav_fusionmap_msgs</depend>
+</package>

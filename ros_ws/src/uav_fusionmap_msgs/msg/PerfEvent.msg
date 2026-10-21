@@ -1,0 +1,11 @@
+# 单调墙钟只用于性能观测，不替换业务header.timestamp。
+string run_id
+string sample_id
+string parent_sample_id
+string stage
+uint64 monotonic_ns
+uint64 metric_value_ns
+int64 business_timestamp
+string clock_id
+string status
+string reason

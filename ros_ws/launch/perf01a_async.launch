@@ -1,0 +1,29 @@
+<launch>
+  <arg name="run_id" />
+  <arg name="duration_s" default="10.0" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_simulation" type="perf01a_async_source_node.py" name="perf01a_source" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="duration_s" value="$(arg duration_s)" />
+  </node>
+  <node pkg="uav_fusionmap_sensors" type="perf01a_async_producer_node.py" name="perf01a_radar" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="duration_s" value="$(arg duration_s)" />
+    <param name="kind" value="radar" />
+  </node>
+  <node pkg="uav_fusionmap_sensors" type="perf01a_async_producer_node.py" name="perf01a_infrared" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="duration_s" value="$(arg duration_s)" />
+    <param name="kind" value="infrared" />
+  </node>
+  <node pkg="uav_fusionmap_sensors" type="perf01a_async_matcher_node.py" name="perf01a_sensor" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="duration_s" value="$(arg duration_s)" />
+  </node>
+  <node pkg="uav_fusionmap_perception" type="perf01a_placeholder_node.py" name="perf01a_perception" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+  </node>
+  <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py" name="perf01a_mapping" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+  </node>
+</launch>

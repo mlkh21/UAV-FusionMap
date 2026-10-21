@@ -1,0 +1,9 @@
+int32 x
+int32 y
+int32 z
+float32 probability
+bool observed
+int64 last_observed_timestamp
+float32 confidence
+bool confidence_available
+Uncertainty uncertainty

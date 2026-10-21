@@ -1,0 +1,21 @@
+# SIM-01D跨越32位微秒边界的连续运行配置。
+# 纳秒值使用字符串，避免ROS1参数服务器32位整数限制。
+schema_version: '0.1'
+state_config: configs/sim01_state.yaml
+
+# 2147483647 us = 2147483647000 ns；有效窗口继续到2400源秒。
+boundary_ns: '2147483647000'
+min_valid_span_ns: '2400000000000'
+# 给窗口结束保留120源秒安全裕量，Recorder在source_limit之前停止。
+source_limit_ns: '2520000000000'
+
+wall_limit_s: 2700.0
+startup_timeout_s: 60.0
+drain_timeout_s: 5.0
+writer_queue_limit: 10000
+max_gap_ns: '500000000'
+min_clock_hz: 40.0
+min_state_hz: 10.0
+
+# 使用独立Master；启动前必须确认下列端口均空闲。
+live_master_port: 11371

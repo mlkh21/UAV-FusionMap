@@ -25,6 +25,8 @@ reference_sensors:
     model: "ARS548"
     status: "reference_identity_only"
     frequency_hz: null
+    fixture_frequency_hz: 20.0
+    fixture_frequency_semantics: "PERF-01-A功能级占位频率，不代表ARS548配置"
     fov_deg:
       horizontal: 120.0
       vertical: 30.0
@@ -39,6 +41,8 @@ reference_sensors:
     variant: "non-radiometric 640; 9.1mm F1.0 lens provisional"
     resolution: [640, 512]
     frame_rate_hz: 50.0
+    fixture_frequency_hz: 20.0
+    fixture_frequency_semantics: "PERF-01-A功能级占位频率，不代表热像核心硬件帧率"
     fov_deg:
       horizontal: 48.1
       vertical: 38.4
@@ -93,6 +97,16 @@ timing_contract:
   max_p99_latency_ms: 20.0
   max_timeout_rate: 0.01
   max_drop_rate: 0.01
+
+# 正式PERF-01测量入口；null和pending表示仍是工程参考预算，不得作为机载验收。
+formal_measurement:
+  status: "pending_confirmation"
+  target_platform_id: null
+  start_endpoint: null
+  end_endpoint: null
+  sampling_clock_source: null
+  clock_domain_mapping: null
+  continuous_duration_s: null
 
 map_budget:
   resolution_m: 0.5

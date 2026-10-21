@@ -1,0 +1,25 @@
+# DATA_FORMAT v0.1 single-point subset; status is separate from numeric availability.
+uint8 OCCUPIED=0
+uint8 FREE=1
+uint8 UNKNOWN=2
+uint8 STALE=3
+uint8 UNAVAILABLE=4
+string map_id
+uint64 revision
+string run_id
+string clock_id
+string frame_id
+int64 query_timestamp
+float64[3] point
+int32[3] index
+bool index_available
+uint8 status
+string reason
+float32 probability
+bool probability_available
+float32 confidence
+bool confidence_available
+Uncertainty uncertainty
+bool observed
+int64 last_observed_timestamp
+bool last_observed_timestamp_available

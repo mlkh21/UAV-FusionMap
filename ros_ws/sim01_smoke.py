@@ -16,7 +16,11 @@ import xmlrpc.client
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--fixture',action='store_true')
+    parser.add_argument('--t14-compat',action='store_true',
+                        help='enable optional Odometry/TF mirror in isolated state fixture')
     args=parser.parse_args()
+    if args.t14_compat and not args.fixture:
+        parser.error('--t14-compat requires --fixture')
     root=Path(__file__).resolve().parents[1]
     runtime=root/'.runtime'
     run_id=('sim01a-fixture-' if args.fixture else 'sim01a-live-')+datetime.datetime.now().strftime('%Y%m%dT%H%M%S%f')
@@ -30,7 +34,7 @@ def main():
     env=dict(os.environ,ROS_MASTER_URI='http://127.0.0.1:11331',ROS_IP='127.0.0.1',
              ROS_HOME=str(run/'ros-home'),ROS_LOG_DIR=str(run/'ros-logs'),
              HEADLESS='1',PX4_SIM_MODEL='rascal',PX4_SIM_SPEED_FACTOR='1',MAVLINK20='1')
-    manifest=dict(run_id=run_id,run=str(run),fixture=args.fixture,python=sys.executable,
+    manifest=dict(run_id=run_id,run=str(run),fixture=args.fixture,t14_compat=args.t14_compat,python=sys.executable,
                   supervisor_pid=os.getpid(),ros_master_uri=env['ROS_MASTER_URI'],commands=[],errors=[],armed_commands=False,
                   px4_commit='1c8ab2a0d7db2d14a6f320ebd8766b5ffaea28fa',
                   bridge_commit='68de2cc63ded9a0d6641d45e9eb3ed2b43454cba',patch='SIM00B-INIT-01')
@@ -124,11 +128,15 @@ def main():
             raise RuntimeError('ROS master startup timeout')
         if not args.fixture:
             observer=spawn('observer',[sys.executable,str(root/'tests/check_sim01_live.py'),str(run),run_id])
-        spawn('state_nodes',[sys.executable,'/opt/ros/noetic/bin/roslaunch',str(run/launch),'run_id:='+run_id,
-                             'config:='+str(run/'sim01_state.yaml')] if not args.fixture else
-                            [sys.executable,'/opt/ros/noetic/bin/roslaunch',str(run/launch),'run_id:='+run_id])
+        state_command=[sys.executable,'/opt/ros/noetic/bin/roslaunch',str(run/launch),'run_id:='+run_id]
         if args.fixture:
-            observer=spawn('observer',[sys.executable,str(root/'tests/check_sim01_ros_fixture.py'),str(run),run_id])
+            state_command += ['publish_odom:=true','broadcast_tf:=true'] if args.t14_compat else []
+        else:
+            state_command += ['config:='+str(run/'sim01_state.yaml')]
+        spawn('state_nodes',state_command)
+        if args.fixture:
+            observer_args=['--t14-compat'] if args.t14_compat else []
+            observer=spawn('observer',[sys.executable,str(root/'tests/check_sim01_ros_fixture.py'),str(run),run_id]+observer_args)
         else:
             spawn('bridge',[str(runtime/'build/jsbsim-bridge-init01/jsbsim_bridge'),'rascal','-s',
                             str(runtime/'src/px4-v1.13.3/Tools/jsbsim_bridge/scene/LSZH.xml')])

@@ -1,0 +1,23 @@
+<launch>
+  <!-- Training-only graph: no inference, SensorBundle, localization or mapping. -->
+  <arg name="run_id" />
+  <arg name="output_path" />
+  <arg name="config_path" />
+  <arg name="count" default="20" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_simulation" type="sens_train_01_source_node.py" name="sens_train_01_source" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="count" value="$(arg count)" />
+    <param name="config_path" value="$(arg config_path)" />
+  </node>
+  <node pkg="uav_fusionmap_sensors" type="sens_train_01_fake_lidar_node.py" name="sens_train_01_fake_lidar" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="config_path" value="$(arg config_path)" />
+    <param name="count" value="$(arg count)" />
+  </node>
+  <node pkg="uav_fusionmap_sensors" type="sens_train_01_recorder_node.py" name="sens_train_01_recorder" output="screen">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="output_path" value="$(arg output_path)" />
+    <param name="config_path" value="$(arg config_path)" />
+  </node>
+</launch>

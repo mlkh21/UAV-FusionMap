@@ -1,0 +1,9 @@
+ObservationHeader header
+string map_id
+uint64 revision
+MapCell[] cells
+float64[3] resolution
+int32[3] shape
+float64[3] origin
+float64[6] coverage
+string[] source_types

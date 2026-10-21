@@ -2,10 +2,14 @@
   <arg name="run_id" />
   <arg name="config" default="$(env UFM_ROOT)/configs/sim01_state.yaml" />
   <arg name="audit_path" />
+  <arg name="publish_odom" default="false" />
+  <arg name="broadcast_tf" default="false" />
   <param name="use_sim_time" value="true" />
   <node pkg="uav_fusionmap_sensors" type="state_adapter_node.py" name="state_adapter" output="screen" required="true">
     <rosparam command="load" file="$(arg config)" />
     <param name="run_id" value="$(arg run_id)" />
     <param name="audit_path" value="$(arg audit_path)" />
+    <param name="publish_odom" value="$(arg publish_odom)" />
+    <param name="broadcast_tf" value="$(arg broadcast_tf)" />
   </node>
 </launch>

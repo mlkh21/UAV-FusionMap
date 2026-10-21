@@ -1,0 +1,137 @@
+# PERF-01-A独立功能级采样；不是硬件频率或飞行验收参数。
+# runner将defaults与scenarios[name]深合并后传给纯业务API。
+# timestamp/arrival为运行起点起的仿真ns；now_ns为调用方单调墙钟ns。
+schema_version: 'perf01a.async.v1'
+defaults:
+  pairing_policy: deadline
+  speed_mps: 0
+  # 固定世界点为odom/ENU同原点真值，仅用于运动fixture生成和独立评价。
+  obstacles_odom: [[1.25, 4.32, 0.25], [-2.25, 6.32, 0.75]]
+  radar_frequency_hz: 20
+  infrared_frequency_hz: 50
+  # 与当前ROS source一致的oracle基线；不是由matcher生成的clock/state。
+  state_frequency_hz: 100
+  clock_period_ns: 1000000
+  source_drain_ns: 200000000
+  max_delta_ns: 5000000
+  max_pose_age_ns: 10000000
+  max_wait_ns: 40000000
+  max_wall_wait_ns: 500000000
+  radar_capacity: 8
+  infrared_capacity: 16
+  state_capacity: 64
+  producer_capacity: 16
+  # 短run账本只存标量元数据；达到预算显式报错，调用方须finish并结束run。
+  audit_capacity: 100000
+  ir_resolution: [2, 2]
+  # 以下是可逆的功能级参数；null/0保持历史固定fixture行为，不是硬件标定。
+  fake_radar:
+    fov_deg: null                 # [水平deg, 垂直deg]；null表示不门控
+    max_range_m: null             # m；null表示不门控
+    position_noise_std_m: 0.0     # m，独立高斯标准差
+    power_noise_std: 0.0          # arbitrary，独立高斯标准差
+    scan_duration_ns: 0           # ns，scan_end - scan_start
+  fake_infrared:
+    background_value: 0.5         # fixture_intensity
+    noise_std: 0.0                # fixture_intensity，独立高斯标准差
+    exposure_duration_ns: 0       # ns，exposure_end - exposure_start
+    hotspots: []                  # [{x_px,y_px,radius_px,value}]，value为fixture_intensity增量
+  sensor_noise_seed: 17           # 整数；跨进程重复生成使用同一序列
+  radar_phase_ns: 0
+  infrared_phase_ns: 0
+  # 零注入到达延迟；两路独立采样并非零实际传输/回调耗时，后者由ROS接收记录量测。
+  radar_delay_ns: 0
+  infrared_delay_ns: 0
+  fault: none
+  fault_start_ns: 500000000
+  fault_stop_ns: 1000000000
+  recovery_start_ns: 1200000000
+  jitter_ns: 2000000
+  seed: 17
+  reorder_radar_delay_ns: 80000000
+  reorder_infrared_delay_ns: 30000000
+  overflow_extra_radar_count: 12
+  overflow_interval_ns: 1000000
+scenarios:
+  normal: {}
+  # 参数化功能场景：相位使首个扫描/曝光半窗仍落在run内；不代表硬件标定。
+  parameterized_sensors:
+    radar_phase_ns: 2000000
+    infrared_phase_ns: 4000000
+    fake_radar:
+      fov_deg: [120.0, 30.0]
+      max_range_m: 6.0
+      # 静态地图严格oracle要求点不跨0.5m格；位置噪声由单元测试单独覆盖。
+      position_noise_std_m: 0.0
+      power_noise_std: 0.05
+      scan_duration_ns: 2000000
+    fake_infrared:
+      background_value: 0.4
+      noise_std: 0.01
+      exposure_duration_ns: 4000000
+      hotspots:
+        - {x_px: 1, y_px: 1, radius_px: 0, value: 0.5}
+        - {x_px: 0, y_px: 0, radius_px: 0, value: 0.2}
+    sensor_noise_seed: 23
+  # SENS-IR-01的无噪声值守恒oracle；不代表真实IR标定或物理量。
+  ir_value_transport:
+    radar_phase_ns: 2000000
+    infrared_phase_ns: 4000000
+    fake_radar:
+      fov_deg: [120.0, 30.0]
+      max_range_m: 6.0
+      position_noise_std_m: 0.0
+      power_noise_std: 0.0
+      scan_duration_ns: 2000000
+    fake_infrared:
+      background_value: 0.4
+      noise_std: 0.0
+      exposure_duration_ns: 4000000
+      hotspots:
+        - {x_px: 1, y_px: 1, radius_px: 0, value: 0.5}
+    ir_resolution: [4, 3]
+    sensor_noise_seed: 23
+  parameterized_position_noise:
+    radar_phase_ns: 2000000
+    infrared_phase_ns: 4000000
+    map_oracle: radar_points
+    fake_radar:
+      fov_deg: [120.0, 30.0]
+      max_range_m: 6.0
+      position_noise_std_m: 0.01
+      power_noise_std: 0.05
+      scan_duration_ns: 2000000
+    fake_infrared:
+      background_value: 0.4
+      noise_std: 0.01
+      exposure_duration_ns: 4000000
+      hotspots:
+        - {x_px: 1, y_px: 1, radius_px: 0, value: 0.5}
+        - {x_px: 0, y_px: 0, radius_px: 0, value: 0.2}
+    sensor_noise_seed: 23
+  phase_offset:
+    infrared_phase_ns: 5000000
+  pose_offset:
+    radar_phase_ns: 5000000
+    infrared_phase_ns: 5000000
+  jitter:
+    fault: jitter
+  out_of_order:
+    fault: out_of_order
+  missing:
+    fault: missing
+  overflow:
+    fault: overflow
+  recovery:
+    fault: missing
+    fault_stop_ns: 1300000000
+    recovery_start_ns: 1500000000
+# normal零相位在整秒短run中一半Radar可配对，另一半因10ms偏差被拒绝。
+# phase_offset所有配对恰为5ms边界。jitter只在窗口内扰动采样(保留为原timestamp)。
+# out_of_order窗口内偶数Radar延迟80ms、序号%3==0的IR延迟30ms。
+# missing窗口内所有IR声明省略；drop条目仍在计划内用于核账。
+# overflow保留20Hz基线，额外注入501..512ms的12条Radar，arrival=timestamp；
+# 这些条目带injected_burst=true，合并排序后sequence连续。容量8在首截止前溢出5条，
+# 不要求同刻所有回调原子投递。IR仍50Hz。恢复按timestamp判断，不按sequence奇偶。
+# recovery的800ms IR断流超过500ms缓存等待上限，1.5s起独立核验新样本恢复。
+# 默认2秒及以上run包含恢复区间；恢复仍服从normal的一半配对预期。

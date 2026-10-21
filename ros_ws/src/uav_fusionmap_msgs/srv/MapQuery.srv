@@ -1,0 +1,10 @@
+# Non-negative int64 nanoseconds; point is XYZ metres in frame_id.
+string map_id
+string frame_id
+string run_id
+string clock_id
+int64 query_timestamp
+float64[3] point
+int64 max_age_ns
+---
+MapQueryResult result

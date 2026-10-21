@@ -1,8 +1,9 @@
 # 开发计划与阶段验收
 
-版本：v0.1；更新日期：2026-09-18；责任角色：project_manager / Technical Lead。
-状态：工程计划基线；SIM-00A/B、SIM-01A/B/C及SIM-SPEED-01已完成，
-SIM-01D、PERF-01与Phase 1仍待验收。
+版本：v0.2；更新日期：2026-10-16；责任角色：project_manager / Technical Lead。
+状态：工程计划基线；SIM-00A/B、SIM-01A/B/C、SIM-SPEED-01及SIM-01D已完成；
+PERF-01、ENV-03与完整Phase 1仍阻塞。10-05完成SENS-IR-01功能级短测和
+SIM-01D独立持续性验收，不改阶段退出门槛。
 
 ## 1. 管理方式
 
@@ -28,6 +29,23 @@ SIM-01D、PERF-01与Phase 1仍待验收。
 允许在不改变阶段门槛的情况下使用占位接口进行小规模联调。
 真实感知未达标时，占位成功只证明工程链路，不能据此关闭Phase 3质量目标。
 DEM排在基础地图之后；阶段延期须评审范围和时间，不能直接跳过基础阶段。
+截至2026-10-04，PERF-01原定09-20预算确认日期已逾期；Phase 1的10-15
+退出日期存在风险。Phase 2可以提前做有边界的传感器验证，但不得以此倒填Phase 1通过；
+若门槛届时仍未满足，保留阻塞状态并另行评审日期与范围，不自动顺延或降格验收。
+2027年3月仍是原交付目标，不因文档重排自动获得可实现性承诺。
+2026-10-15已执行[Phase 1正式退出复核](PHASE1_EXIT_REVIEW_20261015.md)：
+仿真子项已有归档通过证据，但PERF-01正式输入与ENV-03独立副本/恢复仍阻塞；
+完整Phase 1未通过原目标日的退出，不自动调整本表日期或宣称Phase 2替代其验收。
+当日退出复核仅同步审查状态；新日期/范围另见下述同日复审。
+同日[日期/范围复审](PHASE1_DATE_SCOPE_REVIEW_20261015.md)维持原门槛：
+没有可信的硬件/外部恢复可执行日期，新Phase 1退出日待输入及用户确认，
+不是本表日期的自动顺延。允许提前实施的Phase 2软件验证见
+[EXP-20261015-001](../experiments/2026-10-15-iface01-sens-train-audit.md)，
+不改变本表Phase 2原开始日，也不解除PERF-01或ENV-03。
+同日后续[EXP-20261015-002](../experiments/2026-10-15-iface-replay-training-ray-m1-resource.md)
+增加只读设备JSONL回放、训练已知场景离轴false-free拒绝，以及默认关闭的
+M1软件fixture进程RSS诊断；不改变阶段原日期、公共接口或正式阶段门槛，
+未取得真实设备输入/目标平台资源与功耗证据，M1和Phase 1仍阻塞。
 
 ## 3. Phase 0任务与当前交付
 
@@ -42,30 +60,98 @@ DEM排在基础地图之后；阶段延期须评审范围和时间，不能直�
 INIT任务的实际状态与证据见[PROJECT_STATUS](../PROJECT_STATUS.md)和
 [EXPERIMENT_LOG](EXPERIMENT_LOG.md)。本阶段不编写算法、运行节点或执行模型训练。
 
-## 4. 下一批任务
+## 4. 下一批任务与2026-10-08优先级复核
 
 ENV-01已于2026-09-11完成只读核查，见[环境清单](../configs/ENVIRONMENT_INVENTORY.md)。
 ENV-02已于同日交付[候选版本与最小验证方案](SIMULATION_VALIDATION_PLAN.md)，
 证据见[EXP-20260911-003](../experiments/2026-09-11-simulation-plan-review.md)。
 SIM-00A于09-12完成依赖准备与独立构建，见[构建证据](../experiments/2026-09-12-sim00a-build.md)。
-ENV-03的忽略/保存规则已落地，第二副本及恢复工作未完成；SIM-01A/B已完成，SIM-01C
-与SIM-SPEED-01已于09-17正式关闭；SIM-01D、PERF-01及后续任务仍按各自门槛推进。
-按根AGENTS在确认的具体范围内连续完成，不改变原阶段退出门槛。
+ENV-03的忽略/保存规则已落地，第二副本及恢复工作未完成且外部归档未获授权；
+SIM-01A/B已完成，SIM-01C与SIM-SPEED-01已于09-17正式关闭。10-03端点短测
+三条大图P99分别为58.745/78.635/53.507 ms，均未达20 ms，且物理采样时钟
+不可用；10-04热点ROS短测虽通过，但现有观察器仅核对IR时间戳、尺寸和像素数量，
+没有核对热点/背景数值。证据分别见[端点探针](../experiments/2026-10-03-perf01a-endpoint-probe.md)、
+[热点短测](../experiments/2026-10-04-fake-ir-hotspots.md)及
+[`perf01a_async_run.py`](../ros_ws/perf01a_async_run.py)。
+因此PERF-01保持全项目首位，插入小范围IR数值守恒门禁；SIM-01D独立验收，
+SENS-TRAIN-01在IR门禁后推进。若同一人承担多项任务，按以下次序分配时间，
+不假设角色等于实际并行人力。计划变更只调整执行次序与增加验证，不改变公共接口、
+已确认指标、阶段或历史结果；按根AGENTS对各实施范围分别确认。
+10-05 [SENS-IR-01独立ROS值级短测](../experiments/2026-10-05-sens-ir-value-transport.md)
+通过（100帧发布IR、20帧被Bundle采用且逐像素/时间/身份闭合）；额外观察订阅
+仅供功能级验收，不作为PERF-01性能样本。随后完成[SIM-01D跨边界持续性验收](../experiments/2026-10-05-sim01d-continuity.md)，
+有效跨度为`2400004000000 ns`，bag回读、checker、排空与清理均通过；不改变PERF-01预算阻塞。
+10-06完成[PERF-01正式输入与证据预检](../experiments/2026-10-06-perf01-formal-preflight.md)：
+当前x86开发机不是参考Jetson目标平台，未发现真实ARS548/Micro III Lite输入、外部功耗和设备
+采样时钟证据；正式门禁仍为`reference_only`。新增预检只读取manifest，拒绝fixture频率、
+仿真时间和`/clock`替代物理测量，不启动正式ROS性能运行。
+10-08完成[证据内容数值预检](../experiments/2026-10-08-perf01-metric-preflight.md)：
+六类JSON证据须按同一run/航速/时钟域逐样本及汇总数值对账；空文件、仅`passed=true`、
+伪造或超标P99、同步/年龄、丢帧/超时和功耗超限均拒绝。未新增ROS/机载性能证据，
+正式输入阻塞不变。
+10-08新增[三航速大图ROS短测](../experiments/2026-10-08-perf01a-three-speed-fixture.md)
+均失败：每档40 Radar/100 IR均有收据，但40 Radar全被严格拒绝、0地图闭合，
+P99无有效样本；XML-RPC可选空配置的启动错误已以最小修复并保留失败记录。
+须先预登记可控传输/时钟调度候选并复测严格oracle；不能据资源采样和清理成功
+补写性能通过，设备和外部功耗等正式输入仍缺失。
+随后[零噪声IR fixture生成候选](../experiments/2026-10-08-perf01a-zero-noise-candidate.md)
+在不改5ms同步、40ms严格匹配和20ms目标下恢复35/50/70m/s三档大图功能闭合：
+每档20采用/20严格拒绝及20个Bundle/占据/地图闭合；开发机回调到占据P99分别
+49.703/49.834/60.720ms，均未达标。旧失败保留；下一步转向已闭合样本的实际
+等待/传输分段和目标机硬件正式起止点，不重复把fake IR生成优化当作设备性能。
+同日[正式证据追加审阅](../experiments/2026-10-08-perf01-evidence-audit.md)
+补齐设备时钟身份、非有限误差和聚集/倒序采样负例；合成`formal_ready`仍不能
+鉴定真实仪表来源，标称周期的保守帧间距门禁需等待设备抖动合同确认。
+可选[70m/s匹配/线格式探针](../experiments/2026-10-08-perf01a-probe-after-fastpath.md)
+的同帧联接成功但P99仍44.872ms，最慢帧IR线格式与调度混合成本清晰；
+此前无探针`ready_to_encode`长尾未重现。探针有额外开销，不能用本run
+宣称相对无探针优化或替正式20ms实测。
+10-09[IR回调一次临时拷贝候选](../experiments/2026-10-09-perf01a-ir-decode-copy.md)
+以同口径A-B-B-A四条2秒开发机ROS大图短测验证：严格oracle和地图闭合
+四次全通过，端到端P99中位数降幅仅7.83%，低于预登记10%采纳门槛；
+默认开关保持关闭。下一步先确认正式平台/设备/设备时钟和20ms起止点；
+缺硬件时可继续同帧分析等待与ROS传输长尾，但不得改严格门限、
+将探针run替正式验收、追加任意长测或把局部解码提速写成PERF-01达标。
 
 | 编号 | 任务 | 主责任角色 | 目标日期 | 完成条件 |
 | --- | --- | --- | --- | --- |
 | ENV-01 | 只读核查现有OS、ROS、PX4、JSBSim、桥接、CPU/GPU及已有环境 | simulation_engineer | 2026-09-18（实际09-11完成） | 已交付安装事实、可复用资产与缺项清单；不是仿真/GPU运行通过 |
 | ENV-02 | 选择并记录候选版本组合与最小仿真验证方案 | system_architect | 2026-09-20（实际09-11完成） | ADR-006决定优先验证候选；已交付维护周期、依赖处理、独立构建、状态/时钟源及步骤；ADR-P001运行冻结另验 |
-| PERF-01 | 确认航速、算力、场景和接口预算 | Technical Lead | 2026-09-20 | 下节关键参数获得数值、来源与验证方法，或明确阻塞项 |
-| ENV-03 | 版本和产物管理基线（进行中） | project_manager | 2026-09-20 | 提交范围/流转/忽略/保存规则已落地；第二副本目标待定，10-15前恢复验收；实际提交另按授权 |
+| PERF-01 | 确认航速、算力、场景和接口预算（全项目第一优先级；进行中，正式输入阻塞） | Technical Lead | 原定2026-09-20，已逾期；10-15阶段复核 | [正式预检](../experiments/2026-10-06-perf01-formal-preflight.md)确认当前主机和设备证据不足，仍需20 ms正式起止点、跨设备时钟、目标平台/IR镜头/同步、资源功耗和连续性证据；原5 ms门限、严格拒绝理由与20 ms目标不变；开发机短测P99超标，不得判机载达标 |
+| ENV-03 | 版本和产物管理基线（进行中；外部副本未获授权） | project_manager | 原定2026-09-20，已逾期；10-15复核 | 提交范围/流转/忽略/保存规则已落地；首次提交已有基线；第二副本及恢复验收待单独授权，未授权时仅记录本机单副本风险 |
 | SIM-00A | 最小依赖准备与隔离构建（已完成） | simulation_engineer | 2026-09-23（实际09-12完成） | JSBSim/MAVROS/geoid在项目目录准备，PX4/桥接构建及依赖检查通过；未安装到系统或启动仿真 |
 | SIM-00B | 无界面Rascal遥测短测（已完成） | simulation_engineer | 2026-09-25（实际09-12完成） | 用户确认初始化修复后，独立重建/消息回归/120.056秒遥测及清理通过；不解锁、不起飞 |
-| SIM-01 | 最小飞行状态到ROS的记录/回放（A/B/C完成，D待验收） | simulation_engineer | 2026-10-01；持续性10-15前 | C的故障链及短窗倍速已验收；D仍须完成至少40分钟跨边界持续性，Phase 1不提前关闭 |
+| SIM-01 | 最小飞行状态到ROS的记录/回放（A/B/C已完成） | simulation_engineer | 2026-10-01（A/B/C已完成） | C的故障链与短窗倍速已验收；不代替D的持续性门槛 |
+| SENS-IR-01 | 同一IR帧的热点/背景数值守恒短测（已完成） | sensor_engineer | 2026-10-08计划门槛（实际10-05） | [独立ROS验收](../experiments/2026-10-05-sens-ir-value-transport.md)：按IR sample_id对齐100帧原始发布与20个Bundle采用帧，全像素、热点/背景和曝光时间闭合；旧passed=true不作为完成证据 |
+| SIM-01D | 跨32位微秒边界的持续性验收（已完成） | simulation_engineer | 2026-10-15原阶段目标（实际10-05完成） | [独立长测](../experiments/2026-10-05-sim01d-continuity.md)有效跨度`2400004000000 ns`并跨越边界；实时记录、bag回读、状态/时钟和清理对账通过；不代替PERF-01 |
 | SIM-SPEED-01 | 倍速缺陷修复（已完成） | simulation_engineer | 2026-10-01前（实际09-17正式关闭） | 两行修复及独立候选0.5/1/2倍九run技术矩阵通过；用户接受已披露偏差，完整保留历史记录且不尝试恢复 |
 | SIM-01C | 异常与时钟场景（已完成） | integration_engineer | 2026-10-01前（实际09-17正式关闭） | F0—F7与短窗倍速验收通过；不含SIM-01D、PERF-01、高速地图、感知或LiDAR验收 |
-| IFACE-01 | 定位权威、驱动载荷与业务契约细化 | system_architect | 2026-10-15 | 保留AircraftState；明确可选Odometry镜像、PointCloud2→RadarFrame适配和唯一TF责任；接口测试方案通过 |
-| SENS-TRAIN-01 | fake Radar/IR与LiDAR训练监督方案 | sensor_engineer | 2026-11-10 | training/inference配置、时间与外参、target/observed mask、记录清单及防泄漏测试通过；实现另按具体方案确认 |
+| IFACE-01 | 定位权威、驱动载荷与业务契约细化（进行中，T-14软件子范围通过） | system_architect | 2026-10-15 | [ARS548/Mid-360型号设备时间合同](../experiments/2026-10-13-device-time-contract.md)、[设备时间记录审计](../experiments/2026-10-13-device-time-record-audit.md)和[T-14兼容镜像](../experiments/2026-10-14-t14-odom-tf.md)通过；真实设备回放/采样时钟误差、公共逐点时间、真实协方差与正式平台仍阻塞 |
+| SENS-TRAIN-01 | 同场景fake Radar/IR与仅训练LiDAR监督（进行中，ROS直线/偏航和离线统计子范围已完成） | sensor_engineer | 2026-11-10原阶段目标 | [ROS偏航闭环](../experiments/2026-10-13-sens-train-yaw-ros.md)、[ROS直线闭环](../experiments/2026-10-13-sens-train-motion-ros.md)与[12场景/36记录统计](../experiments/2026-10-13-sens-train-scene-statistics.md)通过；20组ROS偏航记录含插值/无回波槽，旧入口回归及315项轻量测试通过；真实设备/规模/研究模型质量未验收 |
+| MAP-QUERY-01 | 固定Local Map单点查询ROS承载（软件子范围已完成） | mapping_engineer | 2026-10-14实际完成；不改变Phase 4原日期 | [EXP-20261014-010](../experiments/2026-10-14-local-map-query-ros.md)三种fixture模式、消息构建、图隔离、并发只读和清理通过；滚动窗口、概率累计、真实输入和机载性能未验收 |
+| MAP-ROLL-01 | 基础滚动Local Map（软件fixture子范围已完成） | mapping_engineer | 2026-10-14用户确认后开展；不改变Phase 4原日期 | [EXP-20261014-011](../experiments/2026-10-14-local-map-rolling.md)：整格平移、重叠/淘汰/unknown、偏航、身份/时序、断流恢复、活跃cell上限、ROS短测和固定模式回归；未关闭正式资源上限、设备时钟、概率融合或Phase 4 |
 | ALG-01 | 研究后端接入前置条件清单 | perception_engineer | 2026-11-10 | 核对缺失CLI、权重、归一化、标定、参考系和环境；不阻塞占位链路 |
+
+### 4.1 执行顺序与验收关口
+
+| 顺序 | 当前状态与直接下一步 | 独立门槛和证据 |
+| --- | --- | --- |
+| P0-1 PERF-01 | 进行中；预算、manifest及证据数值预检完成；10-08零噪声候选恢复三航速功能闭合但P99仍49.703/49.834/60.720ms；10-09 IR 借用列表 A-B-B-A仅降7.83%，未采纳为默认且四次均超20ms；下一步同帧定位等待/线格式长尾，优先确认正式平台/真实传感器/20ms起止点/物理采样时钟及功耗证据 | 保持开发机Radar回调→占据就绪P99诊断与正式设备采样年龄分开；不得改严格拒绝理由和5 ms同步门限，空P99不能判通过，不合并不同样本分位数；20 ms目标不变，达标需目标平台和资源/功耗证据。正式单run证据还必须通过[数值预检](../ros_ws/perf01_formal_preflight.py)，不把合成正例当作实测 |
+| P0-2 SENS-IR-01 | 已完成；10-05独立ROS短测、像素oracle与失败目录保留 | [EXP-20261005-001](../experiments/2026-10-05-sens-ir-value-transport.md)按run/clock/IR sample_id/frame_id、采样/曝光时间、热点/背景及全图像素核对100帧发布、20个Bundle采用；`float32[]`绝对容差1e-6，严格拒绝/排空/清理通过。该观察器额外订阅，不用于PERF-01性能判定 |
+| P0-3 SIM-01D | 已完成；10-05独立端口/PID前检后运行专用候选并完成收尾 | [validation.json](../.runtime/runs/sim01d-live-20261005T231430430819/validation.json)、[writer-closed.json](../.runtime/runs/sim01d-live-20261005T231430430819/writer-closed.json)和[cleanup-audit.json](../.runtime/runs/sim01d-live-20261005T231430430819/cleanup-audit.json)均通过；有效跨度、边界前后样本、排空和端口/PID清理闭合，原始产物保留。该结果不关闭PERF-01或ENV-03 |
+| P1-1 IFACE-01 | 进行中；设备时间合同、记录审计、受限PointCloud2合同、非零扫描训练合同、T-14 fixture及fake Radar值级fixture验证了字段/时间/状态边界，**无真实raw在线节点或设备驱动** | AircraftState保留身份与失效语义；Odometry/TF为同节点可选镜像；真实设备记录回放、跨设备时钟误差、真实协方差和正式平台仍需实测，不用fixture冒充实测 |
+| P1-2 SENS-TRAIN-01 | 进行中；[ROS直线/偏航路径](../experiments/2026-10-13-sens-train-yaw-ros.md)、[离线几何/运动统计](../experiments/2026-10-13-sens-train-scene-statistics.md)及[高度/无回波矩阵](../experiments/2026-10-16-iface-radar-height.md)已通过；在线图不变 | 继续训练数据覆盖与契约边界；真实设备时钟、标定与数据规模另列阻塞；训练监督不进入在线SensorBundle、forward、定位、mapping，不提前对照试验 |
+| P1-4 MAP-QUERY-01 / MAP-ROLL-01 | 固定单点查询及可选基础滚动网格的软件子范围已完成；旧入口默认固定 | 独立正式输入、资源/时延和Phase 4关口仍待验收；不把fixture单点服务或活跃cell限额写成完整地图查询、真实内存性能或正式飞行验收 |
+| P1-3 ENV-03 | 进行中但外部副本阻塞；project_manager保持已落实的保存规则，等待新的归档授权 | 10-15前评审单副本风险；无授权不复制外部资产、不写恢复验收通过，Phase 1仍记录未闭合 |
+| P2 ALG-01及后续 | 计划；研究后端、地图高级特性不得抢占当前门禁 | disabled/placeholder、Local Map先行；真实融合质量、机载部署、DEM/飞行各自独立验收 |
+
+SENS-IR-01和SIM-01D不新增IR物理温度或模型质量结论，也不引入LiDAR；
+PERF-01的20 ms、目标平台资源、真实模型质量和Phase 1退出状态仍分别待验。
+
+2026-10-13用户确认在无硬件/实测记录条件下继续非零扫描ROS训练闭环，
+[ADR-019](DECISION_LOG.md#adr-019-2026-10-13-硬件缺失时独立推进非零扫描ros训练闭环)
+记录此独立软件执行顺序。正式PERF-01管理优先级和原项目日期不变，不让外部设备
+输入阻塞无依赖软件子任务；不引用开题计划时间，也不提前开展科研对照试验。
 
 ENV-01已知条件：用户交互终端选择Foxy(1)/Noetic(2)，两者均有安装及独立环境加载证据；
 现有PX4 v1.13.3桥接使用ROS 1/catkin，JSBSim开发安装和MAVROS未在所查范围发现。
@@ -139,11 +225,14 @@ RED目录的`scenario-result.json`以相同失败语义重写并改变mtime，�
 历史run保护门禁。2026-09-17用户明确接受该已披露偏差，要求保留完整记录、
 不伪造原时间且不尝试恢复；SIM-SPEED-01与SIM-01C因此正式关闭。
 32位微秒越界仍归R-10/SIM-01D，不能用本九run关闭。PERF-01仍是管理顺序第一项。
-SIM-01D和Phase 1仍未完成；本次没有验证35—70m/s地图更新、Radar—IR感知或训练监督LiDAR。
+截至该SIM-SPEED-01实施记录时，SIM-01D和Phase 1仍未完成；本次没有验证35—70m/s地图更新、Radar—IR感知或训练监督LiDAR。
+SIM-01D随后于2026-10-05单独完成，见本计划§4及[EXP-20261005-003](../experiments/2026-10-05-sim01d-continuity.md)。
 
 ## 5. 必须量化的性能与场景预算
 
-以下均为待确认项，不能把示例数字或研究数据集设置当作系统默认值。
+35/50/70 m/s航速点及ARS548参考视场/距离已确认；目标机载平台、IR镜头/同步、
+场景和其他质量/资源阈值仍有工程估计或待定值，不能把示例数字或研究数据集设置当成
+系统默认值，更不能把开发机20 ms失败诊断写成目标平台性能验收。
 
 | 参数组 | 需要确定的内容 | 主责任角色 | 确定时点/阻塞范围 |
 | --- | --- | --- | --- |
@@ -162,13 +251,15 @@ SIM-01D和Phase 1仍未完成；本次没有验证35—70m/s地图更新、Radar
 
 | 子阶段 | 交付 | 验收重点 |
 | --- | --- | --- |
-| M1 Local Map | 有界地图、明确frame/origin/resolution及查询 | 单帧已知几何、滚动范围、unknown、坐标变换 |
+| M1 Local Map | 有界地图、明确frame/origin/resolution及单点查询 | 已完成基础滚动整格odom网格fixture子范围；真实输入/物理资源/任意坐标变换及区域查询仍待后续独立验收 |
 | M2 Probability | 多帧更新、去重、老化 | 重复观测不重复累计，时间顺序、已知/未知/过期保持正确 |
 | M3 Uncertainty | 有来源和单位的质量表达/融合 | 缺失与已知区分，模型量与几何方差不混用 |
 | M4 Scene Map | 子地图管理和场景更新 | 定位跳变、跨子地图参考系、覆盖与资源边界 |
 | M5 DEM | 显式TerrainPrior接入 | 水平/垂直基准、no-data、时间和高度不确定性 |
 
 每个子阶段需有独立证据。研究仓库已有地图代码不自动满足这些条件。
+M1真实输入与进程资源/查询时延等尚缺项见[待执行验收矩阵](M1_INPUT_RESOURCE_GATE_20261015.md)；
+当前缺硬件与实测不提前批准M2/DEM或以活跃cell数推断正式内存达标。
 
 ## 7. 需求与测试对应
 
@@ -177,9 +268,9 @@ SIM-01D和Phase 1仍未完成；本次没有验证35—70m/s地图更新、Radar
 | 需求 | 测试 | 阶段 | 验收对象 |
 | --- | --- | --- | --- |
 | REQ-01 无研究模型运行 | T-01 | Phase 3/联调 | disabled/placeholder不依赖模型、权重或GPU |
-| REQ-02 标准字段及异常语义 | T-02 | Phase 2—4 | 有效值、单位、空值、模式来源、序列化往返 |
+| REQ-02 标准字段及异常语义 | T-02 | Phase 2—4 | 有效值、单位、空值、模式来源、序列化往返；SENS-IR-01实测同帧热点中心/背景像素守恒 |
 | REQ-03 坐标正确 | T-03 | Phase 1—4 | 已知旋转/平移、外参方向、模型布局、动态位姿 |
-| REQ-04 时间与同步 | T-04 | Phase 1—5 | 采集时刻、偏差、插值、暂停/回退、扫描时间 |
+| REQ-04 时间与同步 | T-04 | Phase 1—5 | 采集时刻、偏差、插值、暂停/回退、扫描时间；SENS-IR-01核对同sample_id的曝光时间及Bundle采样时间 |
 | REQ-05 未知区域保留 | T-05 | Phase 3—5 | 无回波、缺失输出、未知掩码均不伪造自由空间 |
 | REQ-06 真实Radar–IR融合与占据质量 | T-06 | Phase 3/5 | 有效模型输出、模态贡献、分层质量与失效行为 |
 | REQ-07 无跨层调用 | T-07 | 各代码阶段 | 依赖检查、节点职责和实际话题连接 |
@@ -198,5 +289,6 @@ SIM-01D和Phase 1仍未完成；本次没有验证35—70m/s地图更新、Radar
 任务完成后更新状态，架构变化记录决策，运行验证记录实验。
 
 main仅承载经过验收的基线，develop承载经过检查的集成，feature/*承载具体任务。
-目前仓库尚无首次提交；创建功能分支不等于已有可恢复的提交基线。
-数据、checkpoint、日志、结果和会话文件保留原位，首次提交前逐项核对，不能批量混入。
+当前feature/engineering-initialization已有首次提交`4bd0c33`，之后仍有大量未提交工作；
+提交基线不等于ENV-03第二份独立副本或恢复演练完成。数据、checkpoint、日志、
+结果和会话文件保留原位，每次后续提交前逐项核对清单，不能批量混入。

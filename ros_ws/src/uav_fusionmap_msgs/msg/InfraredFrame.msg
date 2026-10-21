@@ -1,0 +1,10 @@
+ObservationHeader header
+uint32 width
+uint32 height
+string encoding
+string value_unit
+float32[] image
+int64 exposure_start
+int64 exposure_end
+string calibration_id
+Quality quality

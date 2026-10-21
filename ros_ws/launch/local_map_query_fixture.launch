@@ -1,0 +1,14 @@
+<launch>
+  <arg name="run_id" />
+  <arg name="enable_query" default="true" />
+  <arg name="classify" default="true" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py" name="perf01a_mapping"
+        output="screen" required="true">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="enable_query" value="$(arg enable_query)" />
+    <!-- Fixture classification only; not flight defaults. -->
+    <param name="free_threshold" value="0.3" if="$(arg classify)" />
+    <param name="occupied_threshold" value="0.7" if="$(arg classify)" />
+  </node>
+</launch>
