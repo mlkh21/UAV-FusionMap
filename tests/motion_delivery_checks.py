@@ -27,7 +27,7 @@ def check_graph(graph):
                 raise ValueError('motion_training_graph')
 
 
-def verify_chain(run, rows, expected_count, profile):
+def verify_chain(run, rows, expected_count, profile, *, timestamps=None):
     bundles = [from_ros_bundle(SensorBundle().deserialize((run/r['wire']).read_bytes()))
                for r in rows.get('bundle', [])]
     observations = [r['value'] for r in rows.get('occupancy', [])]
@@ -37,7 +37,7 @@ def verify_chain(run, rows, expected_count, profile):
     sources = {r['value']['state']['header']['timestamp']:r['value']['state'] for r in rows['applied']}
     point_count = 0
     for number, (bundle, observation, snapshot) in enumerate(zip(bundles, observations, snapshots), 1):
-        stamp = number*100000000
+        stamp = number*100000000 if timestamps is None else timestamps[number-1]
         if any(v['header']['timestamp'] != stamp for v in (bundle, observation, snapshot)):
             raise ValueError('motion_chain_timestamp')
         if bundle['radar_ir_delta_ns'] != 0 or bundle['pose_age_ns'] != 0:

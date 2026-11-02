@@ -538,3 +538,11 @@ v2无applied_frame响应被拒绝；SW-03B应用前失败须报服务错误，�
 未来运行源从0起保存40秒内全部时刻，只有7525..10000每25步采样；准备期无ACK/Bundle不生成free或可用地图。
 SW-03B另验共同事务锁/同步帧安装、真实ACK发布者与run/clock/step绑定、单clock/state成功提交及唯一TF、
 期限/预算/故障/迟到/History/新run与旧入口兼容；不因本离线往返或旧10秒准备通过而自动开放长窗/控制。
+
+后续[SW-03B显式入口](SIM_FLIGHT_SW03B_DELIVERY_20261102.md)已实施上述独立三个v2端点，
+仅UFM_FLIGHT_SCENE编译产品装配；旧默认产品不启用新策略，错误v1/身份/注册/非有限等应用前报ROS服务错误。
+同步安装帧与实际ROS ACK仍为同进程基础设施/完成回路；10000步单一源clock/state只在成功事务后提交。
+准备期全状态/TF留证但无raw/ACK/Bundle，30.1秒起100组实际Radar/IR进入既有在线链，map仅收占据。
+7000/7250/7500只读查询核地面未armed/静稳/姿态门，执行器mode=1/16路及属性0逐步核，不能代替严格周期绑定。
+首采样/中途缺ACK、未就绪抑制和断连均在独立run验证，不把命令发送或进程结束当受控飞行/着陆。
+实际状态/TF权威仍为/sim_motion_host→/state_adapter，Gazebo clock仅诊断域；研究后端继续fail-closed。

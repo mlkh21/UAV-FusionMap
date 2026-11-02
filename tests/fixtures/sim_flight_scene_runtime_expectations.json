@@ -1,0 +1,21 @@
+{
+  "task": "SIM-FLIGHT-SW-03B",
+  "max_step": 10000,
+  "step_ns": 4000000,
+  "checkpoints": [125,250,500,1000,1500,2000,2500,5000,7000,7250,7500],
+  "ready_checkpoints": [7000,7250,7500],
+  "query_count": 150,
+  "first_capture_step": 7525,
+  "first_capture_ns": 30100000000,
+  "last_capture_ns": 40000000000,
+  "captures": 100,
+  "normal": {"fdm_steps":10000,"committed_step":10000,"bundles":100,"acks":200},
+  "missing_ir_ack": {"failed_step":7550,"committed_step":7549,"bundles":1,"raw_pairs":2},
+  "first_missing_ir_ack": {"failed_step":7525,"committed_step":7524,"bundles":0,"raw_pairs":1},
+  "disconnect": {"failed_step":126,"fdm_steps":125,"committed_step":125,"bundles":0},
+  "not_ready": {"stop_step":7500,"committed_step":7500,"bundles":0},
+  "source_time_probes": [[0.0,0,0],[4.028,1007,4028000],[29.996,7499,29996000],[30.096,7524,30096000],[39.996,9999,39996000],[40.0,10000,40000000]],
+  "source_time_reject": [[40.004,10001],[0.0040000015,1],[-0.004,0]],
+  "control_gate_accepted":false,
+  "binding_status":"unverified"
+}

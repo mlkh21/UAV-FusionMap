@@ -17,12 +17,20 @@ from ufm_scene_contract.codec import from_ros
 
 
 class LiveReceipts:
-    def __init__(self, run, extra_streams=()):
+    max_count=512
+    max_wire_bytes=16*1024*1024
+    scene_codec=staticmethod(from_ros)
+
+    def __init__(self, run, extra_streams=(), *, max_count=512, max_wire_bytes=16*1024*1024,
+                 scene_codec=from_ros, scene_namespace='/uav/scene',wire_directory=None):
         self.run = run
         self.lock = threading.RLock()
         self.rows = collections.defaultdict(list)
         self.errors = []
         self.total = 0
+        self.max_count,self.max_wire_bytes,self.scene_codec=max_count,max_wire_bytes,scene_codec
+        self.wire_directory=wire_directory
+        if wire_directory is not None:(run/wire_directory).mkdir(exist_ok=False)
         self.subscribers = []
         self.decoders = {kind:decoder for _, kind, _, decoder in extra_streams}
         for topic, kind, message in (
@@ -30,8 +38,8 @@ class LiveReceipts:
                 ('/uav/sensors/state', 'state', AircraftState), ('/tf', 'tf', TFMessage),
                 ('/uav/sensors/radar/raw', 'radar', PointCloud2),
                 ('/uav/sensors/infrared/raw', 'infrared', Image),
-                ('/uav/scene/capture_ack', 'ack', SceneCaptureAck),
-                ('/uav/scene/frame_applied', 'applied', SceneFrame)):
+                (scene_namespace+'/capture_ack', 'ack', SceneCaptureAck),
+                (scene_namespace+'/frame_applied', 'applied', SceneFrame)):
             self.subscribers.append(rospy.Subscriber(topic, message,
                 lambda msg, k=kind:self.receive(k, msg), queue_size=512, buff_size=4*1024*1024))
         for topic, kind, message, _ in extra_streams:
@@ -43,15 +51,16 @@ class LiveReceipts:
             if self.errors:
                 return
             try:
-                if len(self.rows[kind]) >= 512:
+                if len(self.rows[kind]) >= self.max_count:
                     raise ValueError('receipt_count_limit')
                 stream = io.BytesIO()
                 message.serialize(stream)
                 raw = stream.getvalue()
-                if self.total + len(raw) > 16*1024*1024:
+                if self.total + len(raw) > self.max_wire_bytes:
                     raise ValueError('receipt_byte_limit')
                 self.total += len(raw)
                 path = '%s-%03d.bin' % (kind, len(self.rows[kind]))
+                if getattr(self,'wire_directory',None):path=self.wire_directory+'/'+path
                 with (self.run / path).open('xb') as stream:
                     stream.write(raw)
                 row = dict(wall=time.monotonic(), caller=message._connection_header.get('callerid'), wire=path)
@@ -60,9 +69,9 @@ class LiveReceipts:
                 elif kind in ('source', 'state'):
                     row['value'] = from_ros_state(message)
                 elif kind == 'ack':
-                    row['value'] = from_ros('SceneCaptureAck', message)
+                    row['value'] = self.scene_codec('SceneCaptureAck', message)
                 elif kind == 'applied':
-                    row['value'] = from_ros('SceneFrame', message)
+                    row['value'] = self.scene_codec('SceneFrame', message)
                 elif kind == 'clock':
                     row['timestamp'] = message.clock.to_nsec()
                 elif kind == 'tf':

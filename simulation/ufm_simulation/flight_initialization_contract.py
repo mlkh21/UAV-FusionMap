@@ -167,14 +167,19 @@ def validate_ground(value):
 
 
 def validate_step(value):
+    validate_step_fields(value, PREFIX+'step.v1', PROFILE_ID, 2500)
+
+
+def validate_step_fields(value, schema_version, profile_id, max_steps):
+    """Shared physical fields; each caller owns its exact envelope and source bound."""
     bounded(value)
     fields(value,'schema_version run_id clock_id profile_id step_index source_step hil_sensor_time_us '
         'has_actuator actuator reason properties fdm wall kinematics_before kinematics_after '
         'ground_before ground_after binding_status control_gate_accepted')
-    if value['schema_version'] != PREFIX+'step.v1' or value['profile_id'] != PROFILE_ID:
+    if value['schema_version'] != schema_version or value['profile_id'] != profile_id:
         raise ValueError('initialization_step_version')
     identity(value); gate(value)
-    integer(value['step_index'],2500,1); integer(value['source_step'],2499)
+    integer(value['step_index'],max_steps,1); integer(value['source_step'],max_steps-1)
     if value['source_step'] != value['step_index']-1:
         raise ValueError('initialization_step_order')
     integer(value['hil_sensor_time_us'],2**64-1)

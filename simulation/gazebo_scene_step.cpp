@@ -7,6 +7,9 @@
 #include <uav_fusionmap_sim_scene_msgs/SceneStep.h>
 #include <uav_fusionmap_sim_scene_msgs/SceneCaptureAck.h>
 #include "scene_motion_context.h"
+#ifdef UFM_FLIGHT_SCENE
+#include "flight_scene/policy.h"
+#endif
 #include <chrono>
 #include <condition_variable>
 #include <cmath>
@@ -24,13 +27,25 @@ class FusionSceneStep : public ModelPlugin {
     if (!ros::isInitialized()) throw std::runtime_error("Gazebo ROS API required");
     model_ = model; world_ = model_->GetWorld(); world_->SetPaused(true);
     node_.reset(new ros::NodeHandle());
+#ifdef UFM_FLIGHT_SCENE
+    node_->getParam("/ufm_flight_scene/run_id", run_);
+#else
     node_->getParam("/ufm_scene_motion/run_id", run_);
+#endif
     if (run_.empty() || run_.size() > 110) throw std::runtime_error("motion run required");
+#ifdef UFM_FLIGHT_SCENE
+    node_->param("/ufm_flight_scene/drop_ack_kind", drop_, 0);
+    node_->param("/ufm_flight_scene/drop_ack_step", drop_step_, 7550);
+    applied_ = node_->advertise<Frame>("/uav/flight/scene/frame_applied", 1, true);
+    ack_ = node_->subscribe("/uav/flight/scene/capture_ack", 4, &FusionSceneStep::AckReceived, this);
+    service_ = node_->advertiseService("/uav/flight/scene/step", &FusionSceneStep::StepReceived, this);
+#else
     node_->param("/ufm_scene_motion/drop_ack_kind", drop_, 0);
     node_->param("/ufm_scene_motion/drop_ack_step", drop_step_, 250);
     applied_ = node_->advertise<Frame>("/uav/scene/frame_applied", 1, true);
     ack_ = node_->subscribe("/uav/scene/capture_ack", 4, &FusionSceneStep::AckReceived, this);
     service_ = node_->advertiseService("/uav/scene/step", &FusionSceneStep::StepReceived, this);
+#endif
     std::string geometry_case;
     node_->param<std::string>("/ufm_scene_motion/geometry_case", geometry_case, "");
     if (!geometry_case.empty()) {
@@ -50,7 +65,14 @@ class FusionSceneStep : public ModelPlugin {
   }
   bool Valid(const Frame& f) {
     const auto& s = f.state; const auto& h = s.header; const auto& u = s.quality.uncertainty;
-    if (f.protocol_version != 1 || f.step_index > 250 || f.registration_id != "jsbsim_cg_to_scene_enu_v1" ||
+#ifdef UFM_FLIGHT_SCENE
+    const bool domain = f.protocol_version == 2 && f.step_index <= 10000 &&
+      f.registration_id == "jsbsim_cg_to_flight_enu_v1";
+#else
+    const bool domain = f.protocol_version == 1 && f.step_index <= 250 &&
+      f.registration_id == "jsbsim_cg_to_scene_enu_v1";
+#endif
+    if (!domain ||
         h.run_id != run_ || h.clock_id != "sim:" + run_ || h.schema_version != "0.1" ||
         h.timestamp != int64_t(f.step_index)*4000000 || h.frame_id != "scene_world" ||
         h.sample_id != "scene.frame:"+run_+":"+std::to_string(f.step_index) ||
@@ -61,18 +83,33 @@ class FusionSceneStep : public ModelPlugin {
         u.source != "jsbsim_scene_truth_no_covariance_v1") return false;
     double norm = 0.;
     for (auto v : s.orientation_xyzw) { if (!std::isfinite(v)) return false; norm += v*v; }
-    if (std::abs(std::sqrt(norm)-1.) > 1e-12) return false;
+    if (std::abs(std::sqrt(norm)-1.) >
+#ifdef UFM_FLIGHT_SCENE
+        .001
+#else
+        1e-12
+#endif
+        ) return false;
     for (const auto* vector : {&s.position, &s.linear_velocity, &f.angular_velocity_flu})
       for (auto v : *vector) if (!std::isfinite(v)) return false;
+#ifdef UFM_FLIGHT_SCENE
+    if (!ufm_flight::geometry(f)) return false;
+#else
     if (s.position[2] <= .5 || std::hypot(std::hypot(s.position[0],s.position[1]),s.position[2]-8.) > 200.)
       return false;
+#endif
     return true;
   }
   void AckReceived(const ros::MessageEvent<Ack const>& event) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto& a = *event.getMessage();
     if (!waiting_ || locked_) return;
-    if (event.getPublisherName() != ros::this_node::getName() || a.protocol_version != 1 ||
+    if (event.getPublisherName() != ros::this_node::getName() || a.protocol_version !=
+#ifdef UFM_FLIGHT_SCENE
+        2 || !ufm_flight::capture(a.step_index) ||
+#else
+        1 ||
+#endif
         a.run_id != run_ || a.clock_id != "sim:"+run_ || a.step_index != pending_step_ ||
         (a.sensor_kind != 1 && a.sensor_kind != 2)) {
       error_ = "scene_ack_identity_or_source";
@@ -90,7 +127,12 @@ class FusionSceneStep : public ModelPlugin {
     auto fail = [&](const std::string& reason, bool terminal=false) {
       response.accepted = false; response.reason = reason;
       if (terminal) { std::lock_guard<std::mutex> lock(mutex_); locked_ = true; waiting_ = false; }
+#ifdef UFM_FLIGHT_SCENE
+      // An unapplied response has no version field. Use a service error, never a fake frame.
+      return response.has_applied_frame;
+#else
       return true;
+#endif
     };
     if (!serial.owns_lock()) return fail("scene_transaction_pending");
     if (locked_) return fail("scene_run_locked");
@@ -118,7 +160,12 @@ class FusionSceneStep : public ModelPlugin {
     model_->SetWorldPose(ignition::math::Pose3d(ignition::math::Vector3d(p[0],p[1],p[2]),
         ignition::math::Quaterniond(q[3],q[0],q[1],q[2])));
     applied_.publish(f);
-    const bool capture = f.step_index > 0 && f.step_index % 25 == 0;
+    const bool capture =
+#ifdef UFM_FLIGHT_SCENE
+        ufm_flight::capture(f.step_index);
+#else
+        f.step_index > 0 && f.step_index % 25 == 0;
+#endif
     {
       std::lock_guard<std::mutex> lock(mutex_);
       waiting_ = capture; pending_step_ = f.step_index; radar_ = infrared_ = false; error_.clear();
@@ -134,7 +181,7 @@ class FusionSceneStep : public ModelPlugin {
       return fail("scene_world_step_time", true);
     if (capture) {
       std::unique_lock<std::mutex> lock(mutex_);
-      const bool ready = condition_.wait_until(lock, started + std::chrono::seconds(f.step_index == 25 ? 3 : 1),
+      const bool ready = condition_.wait_until(lock, started + std::chrono::seconds(f.step_index == first_capture_step() ? 3 : 1),
           [&]{ return !error_.empty() || (radar_ && infrared_); });
       waiting_ = false;
       response.radar_captured = radar_; response.infrared_captured = infrared_;
@@ -146,7 +193,7 @@ class FusionSceneStep : public ModelPlugin {
         return true;
       }
     }
-    if (std::chrono::steady_clock::now() > started + std::chrono::seconds(f.step_index == 25 ? 3 : 1))
+    if (std::chrono::steady_clock::now() > started + std::chrono::seconds(f.step_index == first_capture_step() ? 3 : 1))
       return fail("scene_transaction_deadline", true);
     response.accepted = true;
     last_step_ = f.step_index; completed_ = true; last_bytes_ = data; last_response_ = response;
@@ -216,6 +263,13 @@ class FusionSceneStep : public ModelPlugin {
     return true;
   }
   physics::ModelPtr model_; physics::WorldPtr world_;
+  static uint64_t first_capture_step() {
+#ifdef UFM_FLIGHT_SCENE
+    return ufm_flight::first_capture;
+#else
+    return 25;
+#endif
+  }
   std::unique_ptr<ros::NodeHandle> node_;
   ros::ServiceServer service_, geometry_service_; ros::Subscriber ack_; ros::Publisher applied_;
   std::mutex serial_, mutex_; std::condition_variable condition_;

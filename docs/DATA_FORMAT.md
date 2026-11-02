@@ -733,3 +733,12 @@ ACK成功/失败均只接受采样步，measurement_timestamp必须为本步原�
 现有SceneStepResponse外层无版本，因此v2强制真实已应用v2帧，无帧失败在v2拒绝；
 应用前失败留SW-03B走服务错误，不能伪造applied_frame。旧v1无帧失败仍保持。
 固定profile/端点和严格wire扫描、真实genpy/交叉拒绝已验证；没有运行端点/插件或长窗执行。
+
+2026-11-02后续[SW-03B](SIM_FLIGHT_SW03B_DELIVERY_20261102.md)已新增显式运行消费者。
+私有sim_flight_scene_step.v1/terminal.v1记录同FDM原始物理/零执行器、source_step及实际wire时间，
+profile_id=sim-flight-scene-observe-v2；不得把旧初始化v1封套扩大到10000步。
+sim_flight_scene_query.v1/observation.v1为150次新只读准备计划，checkpoint按真实125..7500保留；
+payload只复用公开白名单原生字段解析，不改查询检查点或原文时间后交旧codec。
+三末准备点7000/7250/7500逐项验证，消费时间未知/绑定unverified/控制false仍明确保留。
+实际100个30.1..40秒采样已贯通同tick占据/地图和公共回放，完整故障/原生及最终回归见实验记录。
+准备期无观测/地图unavailable；失败tick raw可保留但不能生成后续Bundle或新公共成功clock/state。

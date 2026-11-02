@@ -55,6 +55,8 @@ class SceneRegistration:
 
 class SceneTransactions:
     """One pending and one completed frame; failure cannot be revived by a late reply."""
+    validate_frame = staticmethod(validate_frame)
+    validate_response = staticmethod(validate_response)
     def __init__(self, run_id):
         self.run_id = run_id
         self.pending = self.completed = self.receipt = None
@@ -66,7 +68,7 @@ class SceneTransactions:
         self.pending = None
 
     def begin(self, frame):
-        validate_frame(frame)
+        self.validate_frame(frame)
         if self.failed:
             raise ValueError('scene_run_locked')
         if frame['state']['header']['run_id'] != self.run_id:
@@ -89,7 +91,7 @@ class SceneTransactions:
         if self.failed or self.pending is None:
             raise ValueError('scene_no_pending_transaction')
         try:
-            validate_response(receipt, request=dict(frame=self.pending))
+            self.validate_response(receipt, request=dict(frame=self.pending))
             if not receipt['accepted']:
                 raise ValueError(receipt['reason'])
         except ValueError as exc:

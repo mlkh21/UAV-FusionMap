@@ -314,3 +314,10 @@ position为scene_world ENU，orientation为base_link FLU→scene_world，linear/
 旧8m注册jsbsim_cg_to_scene_enu_v1保持；本轮只校验字段/几何，不实现新ECEF转换或TF发布。
 scene_world→odom仍需显式注册与原state_adapter唯一TF，公共clock/state及实际装配留SW-03B。
 4ms/10000步保留从0起源时间，采样首帧30100000000ns而非100000000ns；禁止重置/裁剪准备期。
+
+后续[SW-03B](SIM_FLIGHT_SW03B_DELIVERY_20261102.md)已实现独立FlightRegistration，
+从同FDM初始原ECEF/大地纬度/经度固定ENU，原R_ecef_frd右乘FRD→FLU符号矩阵得到姿态，
+原UVW英尺每秒与PQR按FLU方向转换；不从PX4估计姿态构造第二定位源。
+初始位置[0,0,.5]，实际40秒末局部z约.309432m是自由地面接触结果，不回写姿态/AGL或固定CG。
+10001个公共clock/源state/适配state与TF按原4ms序列保留；失败采样的实际FDM/场景步不提交新业务tick。
+同tick context/唯一TF和原时间来源收据已实际核对，−4000us执行器差与严格绑定仍独立未验。

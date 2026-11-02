@@ -200,6 +200,16 @@ def _parameter(query, lines):
 
 def parse_native(query, stdout, stderr, returncode, layouts):
     validate_query(query)
+    return parse_native_payload(query['kind'], query['name'], stdout, stderr, returncode, layouts)
+
+
+def parse_native_payload(kind, name, stdout, stderr, returncode, layouts):
+    """Parse a whitelisted native payload without rewriting any query identity or time."""
+    if ((kind == 'topic' and name not in TOPICS) or
+            (kind == 'parameter' and name not in [p[0] for p in physical.PARAMETERS]) or
+            kind not in ('topic', 'parameter')):
+        raise ValueError('selector_payload_kind_or_name')
+    query = dict(kind=kind, name=name)
     text(stdout, 32768, raw=True); text(stderr, 32768, raw=True); integer(returncode,255,-255)
     if returncode or stderr or len(stdout.encode())+len(stderr.encode())>32768:
         raise ValueError('selector_client_error')

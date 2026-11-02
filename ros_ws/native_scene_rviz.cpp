@@ -22,6 +22,7 @@
 #include <QLabel>
 #include <ros/ros.h>
 #include <rosgraph_msgs/Clock.h>
+#include <sensor_msgs/Image.h>
 #include <csignal>
 #include <cstdlib>
 
@@ -53,12 +54,17 @@ int main(int argc, char** argv) {
   const char* directory = std::getenv("UFM_SCENE_FIGURES");
   const char* request_file = std::getenv("UFM_SCENE_CAPTURE_REQUEST");
   const bool guard = std::getenv("UFM_SCENE_CLOCK_GUARD") != nullptr;
+  const bool flight_view = std::getenv("UFM_FLIGHT_SCENE_VIEW") != nullptr;
   QLabel* source_status = guard ? new QLabel("Waiting for source clock",&frame) : nullptr;
   if (source_status) frame.statusBar()->addPermanentWidget(source_status);
   bool has_clock = false, history = false;
   ros::WallTime last_clock;
   uint64_t stamp_ns = 0;
+  uint64_t infrared_messages = 0, infrared_stamp_ns = 0;
   ros::NodeHandle node;
+  ros::Subscriber infrared_sub;
+  if (flight_view) infrared_sub = node.subscribe<sensor_msgs::Image>("/uav/sensors/infrared/raw", 2,
+      [&](const sensor_msgs::Image::ConstPtr& msg) {++infrared_messages;infrared_stamp_ns=msg->header.stamp.toNSec();});
   auto clock_sub = node.subscribe<rosgraph_msgs::Clock>("/clock", 2,
       [&](const rosgraph_msgs::Clock::ConstPtr& msg) {
         has_clock = true; last_clock = ros::WallTime::now(); stamp_ns = msg->clock.toNSec();
@@ -104,6 +110,7 @@ int main(int argc, char** argv) {
         {"file",base+".png"},{"history",history},{"clock_ns",QString::number(stamp_ns)},
         {"raw_displays_enabled",radar_enabled && infrared_enabled},
         {"radar_enabled",radar_enabled},{"infrared_enabled",infrared_enabled},
+        {"infrared_messages",QString::number(infrared_messages)},{"infrared_stamp_ns",QString::number(infrared_stamp_ns)},
         {"render_targets",targets},
         {"source_status",source_status ? source_status->text() : QString()}});
   };
@@ -134,6 +141,13 @@ int main(int argc, char** argv) {
       }
       frame.setWindowTitle(history ? "RViz - History: source clock stopped" : "RViz - JSBSim truth / Radar / IR / placeholder map");
       if (history) receipt("rviz-history-ready.json",QJsonObject{{"history",true},{"raw_displays_enabled",false}});
+    }
+    if (flight_view && has_clock && !history) {
+      auto* displays=frame.getManager()->getRootDisplayGroup();
+      for (int i=0;i<displays->numDisplays();++i) {
+        auto* display=displays->getDisplayAt(i);
+        if (display->getName().contains("IR intensity") && !display->isEnabled()) display->setEnabled(true);
+      }
     }
     receipt("rviz-ready.json",QJsonObject{{"ready",true}});
     if (request_file) {

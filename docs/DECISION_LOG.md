@@ -1513,3 +1513,19 @@ binding_status=unverified/control_gate_accepted=false保持，不自动进入SW-
   沿现有运动观测链进行实际验证，相关构建放`.runtime/ros`，旧报告和实验产物保留。
 - 验证：[工具/运行交付](REPORT_IMPROVEMENTS_20261030.md)、
   [EXP-20261030-017](../experiments/2026-10-30-report-terrain-radar-improvements.md)。
+
+## ADR-044后续 2026-11-02 SW-03B无控制长窗软件交接
+
+状态：已完成（单profile无控制观察软件范围）；主责任：integration_engineer。
+用户在SW-03A后明确继续，实施[SW-03B](SIM_FLIGHT_SW03B_DELIVERY_20261102.md)，
+实验见[EXP-20261102-002](../experiments/2026-11-02-sim-flight-scene-runtime.md)。
+独立宿主/时间生产副本、原生v2编译策略与端点、真实长窗准备/采样屏障及唯一clock/state/TF装配已交付。
+共享物理字段/原生正文纯校验与事务策略，旧封套/2500步时间函数、v1/25定义/default入口不扩大。
+7000/7250/7500三个准备点重验，150只读查询，首采样固定30.1秒，40秒100组；原时刻从0留存，
+准备期无观测不能解释为free，失败实际物理tick保留却不提交业务状态。
+5核心同533源码、4冻结故障/3旧实际兼容、原生六图/真实IR、独立wire/查询重读/公开进程回放及1130全仓通过，
+708自有PID无残留。4次工程失败/初次轻量回归错误均保留；首次旧兼容误用历史.runtime/sim-motion-build的
+目录偏差明确披露，测试包装只指定隔离.runtime/ros后重验，不改变旧生产默认入口或删除旧产品。
+9574零包actuator−HIL仍−4000us，未证明当前周期严格绑定/非零因果；mode/arming/离地及受控飞行未验收。
+下一项先交严格绑定/非零因果的具体准入方案与独立预期，不以本次软件通过直接发命令或进入SW-04运行。
+research继续fail-closed，真实设备/模型、DEM公共服务/注册/融合及正式PERF/完整阶段退出保持独立门槛。
