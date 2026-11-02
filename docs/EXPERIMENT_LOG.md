@@ -1,6 +1,6 @@
 # 验证与实验记录索引
 
-版本：v0.1；更新日期：2026-10-30；维护角色：experiment_manager。
+版本：v0.1；更新日期：2026-11-02；维护角色：experiment_manager。
 状态：初始化、环境、构建及SIM-01A/B/C有验收记录；SIM-SPEED-01九run技术矩阵通过，
 已披露的证据保全偏差于2026-09-17获用户接受，SIM-SPEED-01与SIM-01C已正式
 关闭；35/50/70m/s功能级小图运动短测及SIM-01D独立持续性已通过；PERF-01及完整Phase 1、
@@ -17,6 +17,7 @@
 
 | 编号 | 日期 | 类型 | 目的 | 状态与结论 | 证据 |
 | --- | --- | --- | --- | --- | --- |
+| EXP-20261102-001 | 2026-11-02 | 公共v2离线合同/实际ROS线格式 | SIM-FLIGHT-SW-03A独立合同/profile/端点声明 | 先冻结245组独立v2字节/20旧字节与100点采样表，28项新增定向、实际genpy往返/双向拒绝及25定义/59文件逐文本保护通过；本轮基线1090/最终1118全仓通过。无长窗/端点运行或控制，绑定unverified/控制false | [合同](SIM_FLIGHT_SW03A_CONTRACT_20261102.md)、[实验](../experiments/2026-11-02-sim-flight-v2-contract.md) |
 | EXP-20261030-019 | 2026-10-30 | 报告事实修正/来源复核/文档导出 | 澄清运动观测、占位地图记录与独立合成地图图像 | 删除笼统的场景—感知—地图“已有数据对应”结论；核实10占位输出/10快照/14查询及Radar点体素化性质，图6/9来自独立合成场景；同场景地图空间对应验证列入后续。新版16页9图，旧稿保留，仅文档核对 | [修订记录](../experiments/2026-10-30-report-map-claim-correction.md)、[Word/PDF](../experiments/report_assets/progress-map-clarified-20261030/README.md) |
 | EXP-20261030-018 | 2026-10-30 | 报告整体整编/Word-PDF排版核对 | 按四个工作方向贯通正文、减少零散标题与重复过渡 | 已归并为总体进展、四方向和下一阶段计划，无三级标题，2表9图；连续排版16页，高于同环境原报告14页；正文、嵌图和PDF文字核对通过，旧17页版保留。本轮仅文档，不新增业务运行或回归结论 | [正文](REPORT_20261029.md)、[Word/PDF](../experiments/report_assets/progress-integrated-20261030/README.md)、[记录](../experiments/2026-10-30-report-integrated-revision.md) |
 | EXP-20261030-017 | 2026-10-30 | 工具安装/真实高程/参数化Radar/实际运动与报告 | 修正地形、场景、回波与运动对照展示 | Rasterio/pyproj隔离安装；Copernicus四川201×201/49源查询一致及原生地表完成；30障碍物/每帧161～256点、10对/14查询/公开回放、两次实际原始字节复现、旧默认实际及1090全仓通过；17页9图Word/PDF交付，旧版保留。真实地形服务/地理注册/占据融合后续 | [使用交付](REPORT_IMPROVEMENTS_20261030.md)、[实验](../experiments/2026-10-30-report-terrain-radar-improvements.md)、[最新报告](../experiments/report_assets/progress-update-20261030/README.md) |

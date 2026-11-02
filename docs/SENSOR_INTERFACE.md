@@ -521,3 +521,20 @@ typed参数/四态缺失、PX4 land与JSBSim接触分别保留；没有新ROS话
 在同一Gazebo几何命中后按距离检测概率漏检，再加入距离/方位/俯仰/Doppler误差和点数预算。
 采集时间、原始PointCloud2字段、Doppler正向和任意强度语义保持；质量继续unavailable，不把工程σ当实物校准。
 无回波不生成free，在线仍只有Radar/IR；缺省旧配置不启用该模型。
+
+### 公共flight v2端点离线合同（2026-11-02）
+
+[SW-03A合同](SIM_FLIGHT_SW03A_CONTRACT_20261102.md)已冻结三端点及生成类型：
+
+| 用途 | 名称 | 类型 |
+| --- | --- | --- |
+| 服务 | /uav/flight/scene/step | uav_fusionmap_sim_scene_msgs/SceneStep |
+| 已应用帧镜像 | /uav/flight/scene/frame_applied | uav_fusionmap_sim_scene_msgs/SceneFrame |
+| 采样回执 | /uav/flight/scene/capture_ack | uav_fusionmap_sim_scene_msgs/SceneCaptureAck |
+
+本轮仅名称/类型和离线逻辑/codec，未创建端点、发布者/订阅者或命令客户端。
+旧/uav/scene/*仍只承载v1；ROS生成类型/MD5相同不构成语义互通，消费者必须用各自codec交叉拒绝。
+v2无applied_frame响应被拒绝；SW-03B应用前失败须报服务错误，真实应用后失败才返回带帧/部分收据的响应。
+未来运行源从0起保存40秒内全部时刻，只有7525..10000每25步采样；准备期无ACK/Bundle不生成free或可用地图。
+SW-03B另验共同事务锁/同步帧安装、真实ACK发布者与run/clock/step绑定、单clock/state成功提交及唯一TF、
+期限/预算/故障/迟到/History/新run与旧入口兼容；不因本离线往返或旧10秒准备通过而自动开放长窗/控制。

@@ -1,10 +1,20 @@
 # UAV-FusionMap 项目状态
 
-更新日期：2026-10-30；维护角色：Technical Lead。
+更新日期：2026-11-02；维护角色：Technical Lead。
 计划交付：2027年3月；阶段日期与退出条件见[开发计划](docs/DEVELOPMENT_PLAN.md)。
 原状态全文已保存在[历史快照](docs/PROJECT_HISTORY_20261027.md)，历史实验继续保留原位。
 
 ## 当前完成
+
+SIM-FLIGHT-SW-03A：已完成（公共flight v2离线合同/严格codec范围），见
+[合同/22文件清单](docs/SIM_FLIGHT_SW03A_CONTRACT_20261102.md)、
+[EXP-20261102-001](experiments/2026-11-02-sim-flight-v2-contract.md)。先保存独立输入/边界/拒绝预期与245组v2字节、20组旧字节，
+再实现ufm_flight_contract/固定观察profile/独立端点名称类型合同，复用真实Scene生成类型、显式protocol_version=2。
+冻结ground锚点/具名ENU、4ms/10000步与7525..10000共100采样点；28项新定向、真实genpy往返/双向拒绝、
+旧25定义/59文件保护通过。本轮基线1090项、最终全仓1118项均重跑通过。
+无版本的未应用失败响应在v2拒绝，未来应用前失败用服务错误、不伪造applied_frame；旧v1保持。
+未实现/启动长窗、插件端点/节点或控制；binding仍unverified、control_gate_accepted=false，下一项SW-03B另验。
+本轮按用户授权先提交既有基线e51c752，再独立提交SW-03A；不推送或改变ENV-03验收状态。
 
 报告更新（2026-10-30）：按用户确认完成真实高程独立读取/查询/RViz显示、显式分散场景与参数化Radar，
 补齐同次动力学运行的场景/点云/IR前后对照。报告随后按四个工作方向整体整编，
@@ -275,17 +285,17 @@ research模式继续明确不可用，不回退placeholder；本仓不修改同�
 | 完整Phase 2/3 | 进行中 | 真实设备、标定/时钟及真实Radar-IR后端质量；fixture子范围完成不关闭整阶段 |
 | GPU与硬件资源 | 阻塞 | 既有NVML/CUDA可用性及机载资源证据仍需独立验证；不妨碍CPU fixture |
 | 高速实时与地图资源 | 阻塞 | 35/50/70m/s只具功能级证据；默认异步40ms等待和正常场景一半Radar拒绝不构成20ms/低丢帧验收 |
-| 受控飞行准入 | 阻塞 | [INIT-TIME-SW-01](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)已通过单profile 10s/98采集/双末检查点准备门；严格执行器周期绑定/非零因果、长窗采样/命令/正常arming及真实离地仍未验收，控制false/绑定unverified。旧1008截断失败保留，下一项仅公共v2离线合同 |
+| 受控飞行准入 | 阻塞 | [INIT-TIME-SW-01](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)单profile准备与[SW-03A](docs/SIM_FLIGHT_SW03A_CONTRACT_20261102.md)公共v2离线合同已完成；长窗/插件采样属于SW-03B，严格执行器周期绑定/非零因果、命令/正常arming及真实离地仍未验收，控制false/绑定unverified；旧失败保留 |
 | 真实地形集成 | 进行中 | [独立真实高程读取/查询/显示](docs/REPORT_IMPROVEMENTS_20261030.md)已完成；真实数据profile/公共服务、地形与Gazebo空间注册和占据融合继续分步实施 |
 
 ## 下一步任务
 
-1. SIM-FLIGHT-SW-03A（计划；主责任integration_engineer）：按[原v2方案/本次交接](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md#6-下一任务与未验证能力)先冻结独立预期，再新增ufm_flight_contract离线逻辑/严格codec及独立端点合同，复用现有SceneFrame/SceneStep/SceneCaptureAck生成类型；v2/v1交叉拒绝、冻结ground注册/10000步与100个未来采样点，实际生成消息序列化/旧字节兼容和轻量回归。旧字段/入口/v1预算保持；本项不启动30/40s运行、插件端点/节点或控制，研究质量继续暂缓。
+1. SIM-FLIGHT-SW-03B（计划；主责任integration_engineer）：按[SW-03A第7节](docs/SIM_FLIGHT_SW03A_CONTRACT_20261102.md#7-sw-03b交接条件与未验证能力)另行实施新profile原生两侧/三个独立端点、应用前服务错误/后段失败、整数源时间10000步适配、长窗无控制准备与100点真实采样屏障；同tick地图/公开回放、唯一TF/clock/state、预算/故障/迟到/新run/History/清理及旧默认兼容均需实际证据。不得从离线合同或旧10秒结果自动放行；不自动进入SW-04。
 2. 报告改进已交付，真实高程服务与场景注册待独立具体方案；不重复已通过的演示、P3交接或客户端短测充作新任务。
 3. 真实设备到位后恢复IFACE-01及标定/时钟验收；PERF-01与ENV-03独立跟踪。研究模型质量按用户要求暂不安排，research继续fail-closed。
 
 各项范围、输入、交付、工时估计与验收见[详细计划](docs/STAGE_ADVANCE_PLAN_20261027.md)。
-后续提交仍逐文件审查并需单独授权；软件提前开发不表示完整阶段已通过。
+本轮用户已授权基线及SW-03A阶段提交，均逐文件核对；后续任务按其授权范围提交，不自动推送。软件提前开发不表示完整阶段已通过。
 
 建议仍在原Phase 2结束日2026-11-10复查外部输入风险；这是管理检查点，不是新的退出日期。
 自主控制、实飞和高真实性传感器物理仿真继续属于独立评审范围。

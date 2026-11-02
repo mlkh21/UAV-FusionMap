@@ -718,3 +718,18 @@ SensorBundle、研究forward、定位或地图。私有JSON不表示已冻结公
 交接同FDM真值/真实Radar/IR→Bundle→placeholder→M1→公开query/replay。
 新运动模式pose_age_ns=0及radar_ir_delta_ns=0经实际10帧核对；概率仍为fixture占位、质量缺失，
 不因真实动力学/真实渲染而改成model或measured质量证据。失败时未提交tick的raw不生成新占据。
+
+## 公共flight v2离线合同（2026-11-02）
+
+[SIM-FLIGHT-SW-03A](SIM_FLIGHT_SW03A_CONTRACT_20261102.md)新增独立ufm_flight_contract，
+复用现有SceneFrame/SceneStep/SceneCaptureAck真实生成类型，显式protocol_version=2；旧25定义及v1编码不改。
+SceneFrame严格限定0..10000步、timestamp=step×4000000ns、scene_world/ground_truth、
+注册jsbsim_cg_to_flight_enu_v1；ground初始锚点[0,0,.5]、z>.2m、距锚点≤250m。
+仅step>7500且step%25=0允许采样，共100点/30.1..40秒，原时间不裁剪。
+准备期response两采样时间均None，没有raw/ACK/Bundle不解释为空观测、free或地图可用。
+ACK成功/失败均只接受采样步，measurement_timestamp必须为本步原采集时间；没有实际采集时间时
+不能补造失败ACK，运行端须按未收到回执/事务失败处理。失败响应可以保留本步真实部分收据。
+所有嵌套对象精确键集，拒绝额外训练监督字段；confidence/uncertainty保持不可用，禁止补造质量。
+现有SceneStepResponse外层无版本，因此v2强制真实已应用v2帧，无帧失败在v2拒绝；
+应用前失败留SW-03B走服务错误，不能伪造applied_frame。旧v1无帧失败仍保持。
+固定profile/端点和严格wire扫描、真实genpy/交叉拒绝已验证；没有运行端点/插件或长窗执行。

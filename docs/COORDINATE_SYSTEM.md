@@ -305,3 +305,12 @@ NED/FRD/英制单位写入私有离线合同；米制速度/比力及支柱力�
 随后[INIT-TIME-SW-01](SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)已通过隔离发送前修复完成10s准备，原double源时刻和坐标/单位不改，
 发送整数由校验的source_step×4000产生；2509条源收据逐包核对，原失败wire不修正。
 末姿态sample7992000→9992000us、主实例5/IMU槽2，执行器仍早4000us，不能由准备通过推严格绑定/新定位或TF注册。
+
+2026-11-02 [SW-03A公共flight v2](SIM_FLIGHT_SW03A_CONTRACT_20261102.md#3-坐标时间与固定profile)
+离线冻结jsbsim_cg_to_flight_enu_v1：以初始化ECEF位置/大地纬度/经度固定ENU，CG虚拟FLU原点
+在scene_world初始锚点[0,0,.5]m；step0须恰为该锚点，其余帧z>.2m、距锚点三维≤250m。
+position为scene_world ENU，orientation为base_link FLU→scene_world，linear/angular velocity为base_link FLU。
+该局部z不是CG AGL或全球海拔，不能将419.2m地面基准或真实DEM直接相加形成未注册高度。
+旧8m注册jsbsim_cg_to_scene_enu_v1保持；本轮只校验字段/几何，不实现新ECEF转换或TF发布。
+scene_world→odom仍需显式注册与原state_adapter唯一TF，公共clock/state及实际装配留SW-03B。
+4ms/10000步保留从0起源时间，采样首帧30100000000ns而非100000000ns；禁止重置/裁剪准备期。

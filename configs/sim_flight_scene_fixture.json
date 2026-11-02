@@ -1,0 +1,40 @@
+{
+  "schema_version": "sim_flight_scene_fixture.v2",
+  "profile_id": "sim-flight-scene-observe-v2",
+  "fixture_only": true,
+  "simulation_only": true,
+  "observation_only": true,
+  "commands_enabled": false,
+  "protocol_version": 2,
+  "mode": "jsbsim_scene_truth",
+  "registration_id": "jsbsim_cg_to_flight_enu_v1",
+  "body_origin_policy": "jsbsim_cg_virtual_flu_v1",
+  "step_ns": 4000000,
+  "gazebo_step_ns": 1000000,
+  "duration_steps": 10000,
+  "capture_start_after_step": 7500,
+  "capture_period_steps": 25,
+  "scene_anchor_m": [0.0, 0.0, 0.5],
+  "min_scene_z_exclusive_m": 0.2,
+  "max_anchor_distance_m": 250.0,
+  "radar_mount_m": [0.8, 0.0, 0.0],
+  "thermal_optical_xyzw": [-0.5, 0.5, -0.5, 0.5],
+  "limits": {
+    "identity_bytes": 128,
+    "reason_bytes": 256,
+    "wire_bytes": 4096,
+    "receipts_per_stream": 12288,
+    "control_events": 4096,
+    "record_bytes": 16384,
+    "control_log_bytes": 67108864,
+    "subscribed_wire_bytes": 134217728,
+    "artifact_bytes": 536870912
+  },
+  "deadlines_ns": {
+    "startup": 60000000000,
+    "first_capture": 3000000000,
+    "transaction": 1000000000,
+    "session": 240000000000
+  },
+  "pairing_ns": {"radar_ir": 5000000, "pose_age": 0, "wait": 40000000}
+}

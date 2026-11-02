@@ -1,0 +1,77 @@
+{
+  "task": "SIM-FLIGHT-SW-03A",
+  "time_cases": [
+    [0, 0, false], [1, 4000000, false], [25, 100000000, false],
+    [250, 1000000000, false], [7499, 29996000000, false],
+    [7500, 30000000000, false], [7501, 30004000000, false],
+    [7524, 30096000000, false], [7525, 30100000000, true],
+    [7526, 30104000000, false], [7550, 30200000000, true],
+    [9975, 39900000000, true], [9999, 39996000000, false],
+    [10000, 40000000000, true]
+  ],
+  "capture_steps": [
+    7525,7550,7575,7600,7625,7650,7675,7700,7725,7750,
+    7775,7800,7825,7850,7875,7900,7925,7950,7975,8000,
+    8025,8050,8075,8100,8125,8150,8175,8200,8225,8250,
+    8275,8300,8325,8350,8375,8400,8425,8450,8475,8500,
+    8525,8550,8575,8600,8625,8650,8675,8700,8725,8750,
+    8775,8800,8825,8850,8875,8900,8925,8950,8975,9000,
+    9025,9050,9075,9100,9125,9150,9175,9200,9225,9250,
+    9275,9300,9325,9350,9375,9400,9425,9450,9475,9500,
+    9525,9550,9575,9600,9625,9650,9675,9700,9725,9750,
+    9775,9800,9825,9850,9875,9900,9925,9950,9975,10000
+  ],
+  "endpoints": {
+    "step": ["/uav/flight/scene/step", "uav_fusionmap_sim_scene_msgs/SceneStep"],
+    "frame_applied": ["/uav/flight/scene/frame_applied", "uav_fusionmap_sim_scene_msgs/SceneFrame"],
+    "capture_ack": ["/uav/flight/scene/capture_ack", "uav_fusionmap_sim_scene_msgs/SceneCaptureAck"]
+  },
+  "frame": {
+    "protocol_version": 2,
+    "step_index": 0,
+    "registration_id": "jsbsim_cg_to_flight_enu_v1",
+    "angular_velocity_flu": [0.0, 0.0, 0.0],
+    "state": {
+      "header": {
+        "schema_version": "0.1", "timestamp": 0,
+        "clock_id": "sim:flight-v2", "run_id": "flight-v2",
+        "sample_id": "scene.frame:flight-v2:0", "frame_id": "scene_world",
+        "source_type": "simulation", "status": "valid", "reason": ""
+      },
+      "position": [0.0, 0.0, 0.5],
+      "orientation_xyzw": [0.0, 0.0, 0.0, 1.0],
+      "linear_velocity": [0.0, 0.0, 0.0],
+      "body_frame_id": "base_link", "velocity_frame_id": "base_link",
+      "state_source": "ground_truth",
+      "quality": {
+        "confidence": null,
+        "uncertainty": {"status": "unavailable", "kind": "", "value": null,
+          "unit": "", "source": "jsbsim_scene_truth_no_covariance_v1"}
+      }
+    }
+  },
+  "reject_frame": [
+    ["protocol_version", 1], ["protocol_version", true], ["step_index", -1],
+    ["step_index", 10001], ["step_index", 1.0],
+    ["registration_id", "jsbsim_cg_to_scene_enu_v1"],
+    ["state.header.timestamp", 1], ["state.header.timestamp", false],
+    ["state.header.clock_id", "sim:other"], ["state.header.run_id", ""],
+    ["state.header.sample_id", "old"], ["state.header.frame_id", "odom"],
+    ["state.header.source_type", "measured"], ["state.header.status", "unavailable"],
+    ["state.header.schema_version", "2"], ["state.header.reason", "bad"],
+    ["state.body_frame_id", "body_frd"], ["state.velocity_frame_id", "scene_world"],
+    ["state.state_source", "estimated"], ["state.orientation_xyzw", [0,0,0,2]],
+    ["state.position", [0,0,8]], ["state.quality.confidence", 1.0],
+    ["state.quality.uncertainty.value", [0.0]],
+    ["angular_velocity_flu", [false,0,0]]
+  ],
+  "position_cases": [
+    [1, [250,0,0.5], true], [1, [250.000001,0,0.5], false],
+    [1, [0,0,0.2], false], [1, [0,0,0.200001], true],
+    [1, [0,0,250.5], true], [1, [0,0,250.500001], false],
+    [0, [0,0,0.500001], false]
+  ],
+  "absent_response": "reject_v2_even_with_request_binding",
+  "preapply_failure": "service_error_without_fabricated_applied_frame",
+  "not_executed": ["long_window", "runtime_endpoints", "commands", "flight"]
+}
