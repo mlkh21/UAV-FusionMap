@@ -1,6 +1,6 @@
 # 研究组件来源与接入登记
 
-版本：v0.1；核查日期：2026-09-11；责任角色：perception_engineer / mapping_engineer。
+版本：v0.1；核查日期：2026-10-23；责任角色：perception_engineer / mapping_engineer。
 状态：源码路径和关键调用链已静态核查；运行、预测质量与实时性能未验收。
 
 ## 1. 仓库位置和版本快照
@@ -60,8 +60,8 @@ Doppler有效性重建，不消费为系统confidence或uncertainty。不确定�
 
 | 项目 | 当前事实 | 接入前要求 |
 | --- | --- | --- |
-| 正式推理CLI | inference_ldm.sh、inference_cd.sh、inference_uniified.sh均调用缺失的scripts/diagnose_checkpoint_chain.py | 在研究仓库独立任务中处理并验证，或评审新的完整入口；不借测试脚本冒充生产入口 |
-| 模型运行 | 本次未加载权重、未执行生成 | 核对权重、归一化、阈值、标定、数据协议和环境后进行小样本验证 |
+| 正式推理CLI | 三个 launcher 均调用缺失的`scripts/diagnose_checkpoint_chain.py`；该文件可从研究提交`7b22149`精确恢复，测试目录有一致副本；用户授权的临时恢复验证已通过真实LDM/CD链 | 正式文件当前已删除，需在研究仓库正式变更中恢复后才可启用；不在UAV-FusionMap伪造入口，不借测试脚本冒充生产入口 |
+| 模型运行 | 本仓未加载权重、未执行生成；研究仓库已有离线结果显示当前候选质量不足 | 先替换或修复研究候选并完成独立质量门；未通过前不得接入 |
 | 时间/坐标 | 研究网格为model_lidar逻辑参考系，文件身份需关联真实时间 | 明确model_lidar到Body/Radar关系及观测时刻变换；不要求在线LiDAR |
 | 训练监督 | LiDAR只生成target/observed mask，不能进入forward | 独立记录training_lidar时间/外参/覆盖并做输入标签防泄漏检查 |
 | 严格地图模式 | 要求观测掩码、位姿和推理记录 | 不省略合同；地图只消费模型OccupancyObservation，不消费LiDAR监督 |
@@ -77,9 +77,35 @@ CLI证据：[inference_ldm.sh](../../4D-Radar-Diffusion/diffusion_consistency_ra
 
 1. 固定要评估的源码状态、环境与输入输出协议，不移动原仓库。
 2. 先通过系统占位接口验证时间、坐标、未知和地图消费。
-3. 独立验证研究后端小样本加载和生成，记录质量、耗时及内存。
-4. 接入perception适配器，验证三种模式使用同一系统契约。
-5. mapping对研究地图原型独立评估；高级功能仍按Local Map开始逐项验收。
+3. 先对候选checkpoint执行独立质量审计；当前16帧Radar+IR LDM结果已被否决，不能把
+   LiDAR目标自编码上界或4帧CD smoke当作部署质量证据。
+4. 仅在候选通过质量门、checkpoint加载和坐标契约后，验证研究后端小样本加载和生成，
+   记录质量、耗时及内存。
+5. 再接入perception适配器，验证三种模式使用同一系统契约；研究失败不得fallback。
+6. mapping对研究地图原型独立评估；高级功能仍按Local Map开始逐项验收。
 
 运行方式是后续决策，未默认安装研究依赖或选择进程内/独立进程接入。
 研究算法不可用时不阻塞系统基础模块和占位链路。
+
+## 6. 2026-10-23前置审计补充
+
+UAV-FusionMap新增只读 `perception/ufm_perception/research_preflight.py`，检查研究
+launcher、`inference.py`、checkpoint-chain CLI、VAE/LDM权重、threshold artifact、
+Radar normalization、标定目录、`model_lidar`坐标契约、Conda依赖和研究适配器存在性。
+当前真实结果为 `ready=false`：三个正式 launcher 均引用缺失的 checkpoint-chain CLI；
+研究仓库存在多组候选 VAE/LDM/CD 和 threshold，但默认 `formal_v2_80m_86p8_v1` 资产
+目录不存在，不能自动选择旧协议或 smoke 资产。checker 能识别真实
+`radar_normalization_v1/v2` 结构和标定文件存在性，但已验证坐标契约和主仓适配器仍阻塞。
+该 checker 不加载研究模块、不访问GPU、不执行模型生成，也不修改同级研究仓库。
+
+旧 placeholder ROS 入口增加私有 `~mode` 参数，默认仍为 `placeholder`；disabled 和
+research 失败均发布明确 `unavailable` 空观测，禁止静默 fallback。输入契约拒绝 LiDAR、
+target 和 observed_mask 及其训练监督派生字段；这只证明前置和边界检查，不证明模型质量、
+模型forward、真实标定、实时性能或部署能力。
+
+同日只读核对研究仓库已有质量产物：16帧Radar+IR LDM保存评估的occupied 3D IoU为
+`0.573125`，ground false-positive rate为`0.733570`，threshold safety recall为
+`not_qualified`；4帧CD A/B CPU smoke保存评估均为occupied IoU `0.566494`、free
+recall `0`、ground false-positive rate `1`，两组指标完全相同。该证据足以将当前候选
+标记为`rejected_for_integration`，但不宣称完成完整模型质量验收或已定位根因。研究
+适配器、forward、真实标定和正式性能仍保持阻塞。

@@ -1,0 +1,58 @@
+{
+  "schema_version": "test.sim_flight_initialization_selector_cases.v1",
+  "run_id": "selector-offline-01",
+  "checkpoints": [125,250,500,1000,1500,2000,2500],
+  "parameter_order": ["SYS_AUTOSTART","SYS_CTRL_ALLOC","SENS_IMU_MODE","EKF2_ANGERR_INIT","EKF2_MAG_TYPE","EKF2_HGT_MODE","EKF2_AID_MASK"],
+  "parameter_tokens": ["1033","0","0","0.1000","0","0","1"],
+  "topic_order": ["sensors_status_imu","estimator_selector_status","vehicle_imu","estimator_status","estimator_status_flags","estimator_attitude","vehicle_attitude","vehicle_control_mode","actuator_controls_0","actuator_outputs","vehicle_land_detected","estimator_selector_status","sensors_status_imu"],
+  "group_ranges": [[8,20],[21,33],[34,46],[47,59],[60,72],[73,85],[86,98]],
+  "query_count": 98,
+  "historical_nulls": [
+    {"field":"combined_test_ratio","index":6,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"combined_test_ratio","index":7,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"combined_test_ratio","index":8,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"relative_test_ratio","index":6,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"relative_test_ratio","index":7,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"relative_test_ratio","index":8,"native_token":"nan","reason":"native_estimator_slot_not_seen"},
+    {"field":"accumulated_gyro_error","index":3,"native_token":"nan","reason":"native_imu_slot_unavailable"},
+    {"field":"accumulated_accel_error","index":3,"native_token":"nan","reason":"native_imu_slot_unavailable"}
+  ],
+  "imu_reference": {
+    "timestamp": 7988000,
+    "accel_device_id_primary":111,
+    "accel_device_ids":[111,0,0,0],
+    "accel_inconsistency_m_s_s":[0.0,0.0,0.0,0.0],
+    "accel_healthy":[true,false,false,false],
+    "accel_priority":[100,0,0,0],
+    "gyro_device_id_primary":222,
+    "gyro_device_ids":[0,0,222,0],
+    "gyro_inconsistency_rad_s":[0.0,0.0,0.0,0.0],
+    "gyro_healthy":[false,false,true,false],
+    "gyro_priority":[0,0,100,0]
+  },
+  "association_ready": {
+    "checkpoint":2000,"association_kind":"observed_stable_ids","reason":"",
+    "gyro_slot":2,"accel_slot":0,
+    "sensors_before_timestamp_us":7988000,"sensors_after_timestamp_us":7988000,
+    "selector_before_timestamp_us":7992000,"selector_after_timestamp_us":7992000,
+    "selector_consumed_imu_timestamp_us":null,"exact_source_message_verified":false
+  },
+  "summaries": {
+    "ready":{"collection_complete":true,"input_settled":true,"initialization_ready":true,"output_chain_observed":true,"passed":true,"selector_payload_complete":false,"records":2500,"queries":98,"binding_status":"unverified","control_gate_accepted":false},
+    "missing":{"collection_complete":true,"input_settled":true,"initialization_ready":false,"output_chain_observed":false,"passed":false,"selector_payload_complete":false,"records":2500,"queries":98,"binding_status":"unverified","control_gate_accepted":false}
+  },
+  "case_groups": [
+    "S01 historical raw eight exact nulls", "S02 old strict rejection",
+    "S03 nine active estimators", "S04 one active estimator",
+    "S05 invalid availability primary and types", "S06 nan in seen estimator range",
+    "S07 invalid unseen tail health or value", "S08 exact arrays and explanation bijection",
+    "S09 independent gyro accel slots", "S10 independent missing slots and all missing veto",
+    "S11 duplicate IDs and zero slot contradictions", "S12 missing changed unhealthy primary",
+    "S13 other slot mismatch veto", "S14 exact nonfinite whitelist",
+    "S15 independent topic time without consumed message proof", "S16 integer future regressed stale time",
+    "S17 exact 98 plan", "S18 count order argv owner run rejection",
+    "S19 version and physical path isolation", "S20 old quality mask and supervision rejection",
+    "S21 bounded text JSON and budgets", "S22 both checkpoints and separate gates",
+    "S23 real bytes and files synthetic reread", "S24 source drift and legacy compatibility"
+  ]
+}

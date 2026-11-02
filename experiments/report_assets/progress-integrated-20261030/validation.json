@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "python": "/home/zxj/anaconda3/envs/Radar-Diffusion/bin/python",
+  "pdf_pages": 16,
+  "docx_pages_metadata": 16,
+  "reference_pdf_pages_from_previous_validation": 14,
+  "previous_v3_pdf_pages": 17,
+  "heading2_count": 6,
+  "heading3_count": 0,
+  "tables": 2,
+  "docx_text_blocks": 84,
+  "embedded_figures": 9,
+  "embedded_image_bytes_equal": true,
+  "all_pdf_text_present": true,
+  "pdf_text_check_excludes_page_number_footers": true,
+  "nonempty_pages": 16,
+  "local_links_valid": 561,
+  "business_tests_rerun": false,
+  "simulation_rerun": false
+}

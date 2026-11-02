@@ -10,9 +10,11 @@ import weakref
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'sensors'))
 sys.path.insert(0, str(ROOT / 'ros_ws'))
+sys.path.insert(0, str(ROOT / 'simulation'))
 
 from ufm_sensors.perf01a_async import BoundedMatcher, load_profile, make_schedule, expected_matches
-from ufm_sensors.perf01a_fixture import make_fake_infrared, make_fake_radar, make_fixture_state
+from ufm_sensors.perf01a_fixture import make_fake_infrared, make_fake_radar
+from ufm_simulation.perf01a_fixture import make_fixture_state
 from ufm_sensors.state_adapter import adapt_state
 from online_graph_audit import EXPECTED_ONLINE_NODES, validate_online_graph
 

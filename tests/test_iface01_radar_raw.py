@@ -37,6 +37,14 @@ def identity():
 
 
 class RadarRawFixtureTest(unittest.TestCase):
+    def test_field_mapping_follows_byte_offsets_not_requested_name_order(self):
+        cloud = raw_cloud(points=[(7., 2.5, .5, -1., 3.)],
+                          names=('snr_db', 'vr_mps', 'z_m', 'y_m', 'x_m'))
+        cloud.fields.reverse()
+        point = decode_radar_cloud(cloud, fixture_profile(), identity())['points'][0]
+        self.assertEqual([point[key] for key in ('x', 'y', 'z', 'doppler', 'power')],
+                         [3., -1., .5, 2.5, 7.])
+
     def test_declared_fields_support_big_endian_wire_data(self):
         cloud = raw_cloud(points=[(1, 2, 3, -4, 6)])
         cloud.is_bigendian = True

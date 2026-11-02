@@ -1,0 +1,19 @@
+{
+  "schema_version": "sim_scene_motion_fixture.v1",
+  "fixture_only": true,
+  "mode": "jsbsim_scene_truth",
+  "registration_id": "jsbsim_cg_to_scene_enu_v1",
+  "body_origin_policy": "jsbsim_cg_virtual_flu_v1",
+  "step_ns": 4000000,
+  "gazebo_step_ns": 1000000,
+  "capture_period_steps": 25,
+  "duration_steps": 250,
+  "initial_forward_speed_mps": 5.0,
+  "scene_anchor_m": [0.0, 0.0, 8.0],
+  "radar_mount_m": [0.8, 0.0, 0.0],
+  "thermal_optical_xyzw": [-0.5, 0.5, -0.5, 0.5],
+  "max_anchor_distance_m": 200.0,
+  "limits": {"identity_bytes":128,"reason_bytes":256,"wire_bytes":4096,"receipts_per_stream":512,"receipt_bytes":16777216},
+  "deadlines_ns": {"startup":60000000000,"first_capture":3000000000,"transaction":1000000000,"session":120000000000},
+  "pairing_ns": {"radar_ir":5000000,"pose_age":10000000,"wait":40000000}
+}

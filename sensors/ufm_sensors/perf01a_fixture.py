@@ -258,17 +258,6 @@ def make_fake_infrared(run_id, sequence, timestamp_ns, width=2, height=2, *,
                     calibration_id=FIXTURE_CALIBRATION), quality=_quality())
 
 
-def make_fixture_state(run_id, sequence, timestamp_ns):
-    """生成仅供ROS fixture驱动的AircraftState源字典。"""
-    return dict(header=_header(run_id, "sim:" + run_id, timestamp_ns,
-                               "fixture.state:%s:%d" % (run_id, sequence),
-                               "world_ned", "simulation"),
-                position=[0.0, 0.0, 0.0], orientation_xyzw=[0.0, 0.0, 0.0, 1.0],
-                linear_velocity=[0.0, 0.0, 0.0], body_frame_id="body_frd",
-                velocity_frame_id="body_frd", state_source="estimated",
-                quality=_quality("fixture state covariance unavailable"))
-
-
 def fixture_spatial_context(state, timestamp_ns, run_id, calibration_id):
     """使用已适配位姿；单位T_body_radar只由命名fixture标定明确授权。"""
     position, orientation = state["position"], state["orientation_xyzw"]

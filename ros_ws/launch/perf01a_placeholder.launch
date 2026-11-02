@@ -4,8 +4,10 @@
   <arg name="frequency_hz" default="20.0" />
   <arg name="max_delta_ns" default="5000000" />
   <arg name="max_pose_age_ns" default="10000000" />
-  <arg name="staleness_limit_ns" default="100000000" />
+  <arg name="staleness_limit_ns" default="" />
   <arg name="enable_query" default="false" />
+  <arg name="mode" default="placeholder" />
+  <arg name="start_mapping" default="true" />
   <param name="use_sim_time" value="true" />
   <node pkg="uav_fusionmap_simulation" type="perf01a_source_node.py" name="perf01a_source" output="screen" required="true">
     <param name="run_id" value="$(arg run_id)" />
@@ -20,10 +22,14 @@
   </node>
   <node pkg="uav_fusionmap_perception" type="perf01a_placeholder_node.py" name="perf01a_perception" output="screen" required="true">
     <param name="run_id" value="$(arg run_id)" />
+    <param name="mode" value="$(arg mode)" />
+    <param name="max_radar_ir_delta_ns" value="$(arg max_delta_ns)" />
+    <param name="max_pose_age_ns" value="$(arg max_pose_age_ns)" />
   </node>
-  <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py" name="perf01a_mapping" output="screen" required="true">
+  <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py" name="perf01a_mapping" output="screen" required="true" if="$(arg start_mapping)">
     <param name="run_id" value="$(arg run_id)" />
-    <param name="staleness_limit_ns" value="$(arg staleness_limit_ns)" />
+    <param name="staleness_limit_ns" value="$(arg staleness_limit_ns)"
+           if="$(eval arg('staleness_limit_ns') != '')" />
     <param name="enable_query" value="$(arg enable_query)" />
   </node>
 </launch>

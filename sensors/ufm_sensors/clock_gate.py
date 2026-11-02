@@ -3,17 +3,7 @@ import copy
 import math
 from collections import Counter
 from numbers import Real
-
-
-def _same(a, b):
-    # 终止消息允许 NaN 槽位；相同 NaN 占位重传仍是同一身份。
-    if isinstance(a, dict) and isinstance(b, dict):
-        return a.keys() == b.keys() and all(_same(a[k], b[k]) for k in a)
-    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
-        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
-    if isinstance(a, float) and isinstance(b, float) and math.isnan(a) and math.isnan(b):
-        return True
-    return a == b
+from .identity_history import IdentityHistory, same_sample
 
 
 def _timestamp(ns):
@@ -24,10 +14,11 @@ def _timestamp(ns):
 class StateClockGate:
     """每个 run 独立实例，方法返回可发布状态列表，counters 提供诊断计数。
 
-    pending 超限丢弃新到状态；超时阈值包含等号。身份账本覆盖整个有限 run，
-    保证已丢弃或已发布身份重传不复活；新 run 必须创建新实例。
+    pending 超限丢弃新到状态；超时阈值包含等号。身份历史有界，淘汰时间及更旧
+    输入不能复活；终止消息独立保留，不受淘汰水位限制。新 run 必须创建新实例。
     """
-    def __init__(self, run_id, pending_limit=100, pending_timeout_wall_s=.5):
+    def __init__(self, run_id, pending_limit=100, pending_timeout_wall_s=.5,
+                 identity_history_limit=1000):
         if not isinstance(run_id, str) or not run_id.strip():
             raise ValueError("run_id_required")
         if type(pending_limit) is not int or pending_limit < 1:
@@ -46,7 +37,11 @@ class StateClockGate:
         self.counters = Counter()
         self._wall = self._published_ns = None
         self._pending = []
-        self._seen = {}
+        self._history = IdentityHistory(identity_history_limit)
+
+    @property
+    def identity_count(self):
+        return len(self._history.records)
 
     @property
     def pending_count(self):
@@ -76,14 +71,17 @@ class StateClockGate:
         return h
 
     def _remember(self, state):
-        key = state["header"]["sample_id"]
-        if key in self._seen:
-            if not _same(self._seen[key], state):
-                self.counters["sample_identity_conflict"] += 1
-                raise ValueError("sample_identity_conflict")
+        try:
+            outcome = self._history.remember(state)
+        except ValueError:
+            self.counters['sample_identity_conflict'] += 1
+            raise
+        if outcome == 'duplicate':
             self.counters["duplicate_state"] += 1
             return False
-        self._seen[key] = copy.deepcopy(state)
+        if outcome == 'retired':
+            self.counters['old_state'] += 1
+            return False
         return True
 
     def _release(self):
@@ -118,9 +116,12 @@ class StateClockGate:
         self._touch(receive_monotonic)
         terminal = h["status"] == "unavailable" and h["reason"].startswith("terminal:")
         if terminal:
-            if not self._remember(state):
-                return []
             if self.terminal_state is not None:
+                if h['sample_id'] == self.terminal_state['header']['sample_id']:
+                    if not same_sample(state, self.terminal_state):
+                        raise ValueError('sample_identity_conflict')
+                    self.counters['duplicate_state'] += 1
+                    return []
                 self.counters["subsequent_terminal"] += 1
                 return []
             self.counters["terminal_cleared_pending"] += len(self._pending)

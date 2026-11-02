@@ -6,6 +6,7 @@ compid: 1
 warmup_stable_sim_ns: '10000000000'
 startup_timeout_wall_s: 60.0
 pending_limit: 100
+identity_history_limit: 1000
 pending_timeout_wall_s: 0.5
 source_timeout_wall_s: 2.0
 quaternion_norm_tolerance: 0.001

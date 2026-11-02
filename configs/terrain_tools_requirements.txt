@@ -1,0 +1,7 @@
+# Python 3.8 binary wheels; install with --target .runtime/terrain-tools --no-deps.
+rasterio==1.3.11
+pyproj==3.5.0
+affine==2.4.0
+attrs==24.2.0
+cligj==0.7.2
+click-plugins==1.1.1

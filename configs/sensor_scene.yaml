@@ -1,0 +1,35 @@
+# Independent functional sensor scene; no real RF/radiometric calibration claim.
+schema_version: sensor_scene_fixture.v1
+calibration_id: gazebo_sensor_scene_mount_v1
+world_to_odom_registration: gazebo_scene_world_enu_identity_v1
+body_pose: [0, 0, 2, 0, 0, 0]
+radar_mount_xyz: [0.8, 0, 0]
+thermal_mount_xyz: [0.8, 0, 0]
+thermal_optical_xyzw: [-0.5, 0.5, -0.5, 0.5]
+frequency_hz: 10
+radar:
+  horizontal_samples: 96
+  vertical_samples: 24
+  horizontal_fov_rad: 1.4
+  vertical_fov_rad: 0.7
+  min_range_m: 0.5
+  max_range_m: 30
+infrared:
+  width: 320
+  height: 240
+  horizontal_fov_rad: 1.0471975512
+  value_unit: fixture_intensity
+map:
+  map_id: sensor-scene-local
+  resolution: [0.5, 0.5, 0.5]
+  shape: [80, 64, 24]
+  origin: [-4, -16, -4]
+  staleness_limit_ns: 500000000
+  max_active_cells: 20000
+objects:
+  - {name: hot_crate, kind: box, position: [7, -1.5, 1], size: [1.5, 1.5, 2], material: FusionHot}
+  - {name: warm_column, kind: cylinder, position: [12, 2, 1.5], radius: 0.8, length: 3, material: FusionWarm}
+  - {name: cold_pillar, kind: box, position: [6, 2, 1.5], size: [1, 1, 3], material: FusionCold}
+  - {name: back_wall, kind: box, position: [19, 0, 2.5], size: [0.5, 14, 5], material: FusionAmbient}
+  - {name: left_building, kind: box, position: [12, 7, 2.5], size: [12, 2, 5], material: FusionCold}
+  - {name: right_building, kind: box, position: [13, -7, 2.5], size: [12, 2, 5], material: FusionWarm}

@@ -1,0 +1,11 @@
+string terrain_id
+string run_id
+string clock_id
+string frame_id
+int64 query_timestamp
+float64[2] point_xy
+bool pin_version
+string expected_provider_instance_id
+uint64 expected_terrain_revision
+---
+TerrainQueryResult result

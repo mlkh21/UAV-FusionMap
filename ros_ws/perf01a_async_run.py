@@ -13,7 +13,6 @@ import threading
 import time
 import xmlrpc.client
 
-import yaml
 
 from perf01a_async_report import (diagnose_oracle_reasons, state_drain_ready,
                                   summarize_async_wire, summarize_timing, transport_accounting,
@@ -212,14 +211,33 @@ def verify_ir_value_transport(raw_frames, bundles, profile, expected_sample_ids)
                 expected_hotspot_center=expected_center)
 
 
+def resolve_profile(args):
+    """使用业务层同一解析器：defaults、场景、显式CLI覆盖。"""
+    from ufm_sensors.perf01a_async import load_profile
+    overrides = {}
+    if args.full_ir:
+        overrides['ir_resolution'] = [640, 512]
+    if args.speed_mps is not None:
+        overrides['speed_mps'] = args.speed_mps
+    if args.pairing_policy is not None:
+        overrides['pairing_policy'] = args.pairing_policy
+    if args.boundary_obstacles:
+        overrides['obstacles_odom'] = [[1.25, 4.25, .25], [-2.25, 6.25, .75]]
+    profile = load_profile(args.scenario, args.config, overrides)
+    if args.boundary_obstacles and not profile['speed_mps']:
+        raise ValueError('boundary-obstacles requires nonzero speed')
+    return profile
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--scenario', default='normal')
+    parser.add_argument('--config', type=Path, help='async defaults and named scenarios')
     parser.add_argument('--duration-s', type=float, default=3.)
     parser.add_argument('--port', type=int, default=11431)
     parser.add_argument('--full-ir', action='store_true')
-    parser.add_argument('--speed-mps', type=int, default=0, choices=(0, 35, 50, 70))
-    parser.add_argument('--pairing-policy', choices=('deadline', 'exact'), default='deadline')
+    parser.add_argument('--speed-mps', type=int, choices=(0, 35, 50, 70))
+    parser.add_argument('--pairing-policy', choices=('deadline', 'exact'))
     parser.add_argument('--wire-profile', action='store_true', help='audit actual ROS IR/bundle wire stages')
     parser.add_argument('--ir-tcp-nodelay', action='store_true',
                         help='request TCP_NODELAY on the IR subscriber connection')
@@ -246,18 +264,12 @@ def main():
         raise RuntimeError('Radar-Diffusion Python required')
     root = Path(__file__).resolve().parents[1]
     from ufm_sensors.perf01a_async import make_schedule, expected_matches
-    config = yaml.safe_load((root / 'configs/perf01a_async.yaml').read_text())
-    if args.scenario not in config['scenarios']:
-        parser.error('unknown scenario: ' + args.scenario)
-    profile = dict(config['defaults'], **config['scenarios'][args.scenario])
-    if args.full_ir:
-        profile['ir_resolution'] = [640, 512]
-    profile['speed_mps'] = args.speed_mps
-    profile['pairing_policy'] = args.pairing_policy
-    if args.boundary_obstacles:
-        if not args.speed_mps:
-            parser.error('boundary-obstacles requires nonzero speed')
-        profile['obstacles_odom'] = [[1.25, 4.25, .25], [-2.25, 6.25, .75]]
+    try:
+        profile = resolve_profile(args)
+    except (KeyError, ValueError) as exc:
+        parser.error(str(exc))
+    args.speed_mps = profile['speed_mps']
+    args.pairing_policy = profile['pairing_policy']
     duration_ns = round(args.duration_s * 1e9)
     schedule = make_schedule(profile, duration_ns)
     if args.pairing_policy == 'exact':
@@ -426,7 +438,9 @@ def main():
                 queue_size=1000, buff_size=65536))
         spawn('nodes', [sys.executable, '/opt/ros/noetic/bin/roslaunch',
                        str(root / 'ros_ws/launch/perf01a_async.launch'), 'run_id:=' + run_id,
-                       'duration_s:=' + str(args.duration_s)])
+                       'duration_s:=' + str(args.duration_s),
+                       'max_delta_ns:=' + str(profile['max_delta_ns']),
+                       'max_pose_age_ns:=' + str(profile['max_pose_age_ns'])])
         if args.audit_online_graph:
             graph_snapshot = {}
 

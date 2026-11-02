@@ -1,0 +1,101 @@
+# M4-SW-01 合成注册/输入合同；不创建Scene Map，不注册ROS后端。
+schema_version: m4_fixture.v1
+fixture_only: true
+enabled_by_default: false
+local_map:
+  schema_version: m3_fixture.v1
+  fixture_only: true
+  enabled_by_default: false
+  interval_profile:
+    kind: occupancy_probability_interval
+    unit: dimensionless
+    input_source: m3_fixture_bounded_inverse_v1
+    output_source: m3_fixture_bounded_accumulator_v1
+    unavailable_source: m3_fixture_missing_range_v1
+    wire_rounding: float32_nearest_even_v1
+  evidence_intervals:
+    occupied:
+    - 0.7
+    - 0.8
+    free:
+    - 0.2
+    - 0.3
+  arithmetic:
+    schema_version: m2_fixture.v1
+    fixture_only: true
+    enabled_by_default: false
+    map_id: m3-fixture
+    frame_id: odom
+    observed_domain_source: m2_explicit_inverse_fixture_v1
+    calibration_id: m2_fixture_declared_identity_v1
+    resolution:
+    - 0.5
+    - 0.5
+    - 0.5
+    shape:
+    - 64
+    - 32
+    - 16
+    origin:
+    - -16.0
+    - -8.0
+    - -4.0
+    cell_index:
+    - 48
+    - 16
+    - 8
+    prior_probability: 0.5
+    occupied_probability: 0.75
+    free_probability: 0.25
+    neutral_probability: 0.5
+    minimum_probability: 0.1
+    maximum_probability: 0.9
+    free_threshold: 0.3
+    occupied_threshold: 0.7
+    evidence_ttl_ns: 100000000
+    sample_period_ns: 10000000
+    identity_history_limit: 1000
+    max_active_cells: 10000
+scene:
+  map_id: m4-scene-fixture
+  frame_id: map
+  resolution:
+  - 0.5
+  - 0.5
+  - 0.5
+  shape:
+  - 256
+  - 64
+  - 16
+  origin:
+  - 0.0
+  - -16.0
+  - -4.0
+registration:
+  registration_id: m4_fixture_map_from_odom_v1
+  source_frame: odom
+  target_frame: map
+  source: fixture
+  status: available
+  run_id: m4-fixture
+  clock_id: sim:m4-fixture
+  valid_from_ns: 0
+  valid_until_ns: 1000000000
+  T_map_odom:
+  - 1.0
+  - 0.0
+  - 0.0
+  - 32.0
+  - 0.0
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+max_sealed_submaps: 2

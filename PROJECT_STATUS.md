@@ -1,633 +1,307 @@
 # UAV-FusionMap 项目状态
 
-更新日期：2026-10-21；维护角色：Technical Lead。
-当前阶段：SIM-00A/B、SIM-01A/B/C、SIM-SPEED-01及SIM-01D持续性已完成；PERF-01
-与ENV-03外部恢复阻塞；2026-10-15正式复核后完整Phase 1仍未通过退出。
-计划交付：2027年3月；阶段安排见[DEVELOPMENT_PLAN](docs/DEVELOPMENT_PLAN.md)。
-
-2026-10-16无硬件期间按既定Phase 2传感器计划继续 fake Radar/IR 软件子范围：
-[EXP-20261016-001](experiments/2026-10-16-fake-radar-ir-phase2.md)以两个各2秒的
-独立ROS run复核 IR 全像素值和参数化假传感器在线占位链路；各40 Radar/100 IR、
-20 Bundle/占据/地图，359项全仓轻量测试通过。20次严格超时拒绝均与预期相符；
-两run开发机P99为47.280481/44.385750 ms，20ms诊断均未通过，正式PERF-01、
-ENV-03、完整Phase 1/2和真实设备验收仍阻塞。不把训练监督LiDAR加入在线链路。
-
-同日继续完成[EXP-20261016-002](experiments/2026-10-16-iface-radar-height.md)：新增默认关闭的
-fake Radar 原始Frame→采用Bundle逐点值级核对；联合ROS run通过40/20 Radar帧、100/20 IR帧，
-值级错误为空。新增独立高度/非水平射线矩阵3场景/9样本通过，其中无回波场景3840个体素
-全部unknown；全仓轻量回归为370项通过。开发机P99=43.322513ms仍未通过20ms诊断，正式
-PERF-01、真实设备时钟/标定、模型质量和完整Phase 2不变。
-
-2026-10-20完成SENS-TRAIN-COV-01软件覆盖子范围：[独立记录](experiments/2026-10-20-sens-train-voxel-coverage.md)。
-固定距离采样改为正长度线段—体素遍历，端点仍单独标occupied；新增正/负短弦2场景/6记录，
-并将完整覆盖oracle用于既有12场景/36记录。全仓372项轻量测试通过；motion/yaw实际ROS
-回归各20条训练记录、22条状态/clock并正常清理。未改变公共消息或在线链路；无回波仍unknown。
-这是功能级软件fixture结果，不代表真实LiDAR标定、训练质量、硬件性能或正式PERF-01验收。
-
-2026-10-20追加SENS-TRAIN-COV-02边界软件子范围：[独立记录](experiments/2026-10-20-sens-train-dda-boundaries.md)。
-19个固定线段覆盖正反向、面/棱/角、有限网格裁剪、零长度接触及非等距分辨率；退化线段
-原遍历器错误返回一个cell，经RED/GREEN只加空线段保护。既有12+2场景、全仓374项轻量
-测试及motion/yaw各20条实际ROS训练记录回归通过；不改变训练数据接口、在线图或正式门槛。
-
-2026-10-21完成[T-13A在线ROS图运行时隔离](experiments/2026-10-21-t13a-online-graph-audit.md)：
-新增默认关闭的`--audit-online-graph`诊断和纯函数校验器，拒绝空图、缺失在线节点、
-训练/LiDAR话题或节点；在线fake Radar/IR占位ROS run通过，7个预期节点齐全，训练/LiDAR
-话题和节点均为空，20个Bundle/Occupancy/Map闭合；训练专用图20条监督记录及隔离收据回归
-通过，全仓379项轻量测试通过。开发机P99=42.988710 ms仍未达20 ms诊断；T-13完整、
-研究模型forward隔离、真实设备、正式PERF-01和完整Phase 2仍未关闭。
+更新日期：2026-10-30；维护角色：Technical Lead。
+计划交付：2027年3月；阶段日期与退出条件见[开发计划](docs/DEVELOPMENT_PLAN.md)。
+原状态全文已保存在[历史快照](docs/PROJECT_HISTORY_20261027.md)，历史实验继续保留原位。
 
 ## 当前完成
 
-- 已确认UAV-FusionMap为系统主仓，4D-Radar-Diffusion为同级独立研究仓库。
-- 已静态追踪研究预处理、融合、推理与地图关键路径，并登记入口阻断和未验证能力。
-- 已建立根和11个子目录AGENTS，保留原规范与目录，增加application/tests及ros_ws/src占位。
-- 已写入七份设计文档、README入口、组件登记、计划、决策和实验记录。
-- 已完成INIT-01至INIT-05：24个交付文件覆盖、12份AGENTS七项规则、23份Markdown格式
-  与90处本地链接检查通过；研究仓库前后Git状态一致。详细边界见实验记录。
-- 已在feature/engineering-initialization功能分支建立首次提交`4bd0c33`；后续实现为工作区改动。
-- 已完成ENV-01：确认双ROS选择机制、现有PX4与桥接资产，登记JSBSim/MAVROS缺项和
-  GPU驱动/库不一致；结果见[环境清单](configs/ENVIRONMENT_INVENTORY.md)及
-  [EXP-20260911-002](experiments/2026-09-11-environment-inventory.md)。
-- 已完成ENV-02：形成[候选版本与最小验证方案](docs/SIMULATION_VALIDATION_PLAN.md)，
-  ADR-006决定优先评估Noetic/PX4 v1.13.3/JSBSim 1.1.13/MAVROS 1.20.1；核心MAVROS
-  APT模拟解析为新增7包、升级0、移除0。证据见[EXP-20260911-003](experiments/2026-09-11-simulation-plan-review.md)。
+报告更新（2026-10-30）：按用户确认完成真实高程独立读取/查询/RViz显示、显式分散场景与参数化Radar，
+补齐同次动力学运行的场景/点云/IR前后对照。报告随后按四个工作方向整体整编，
+最新[Word/PDF](experiments/report_assets/progress-map-clarified-20261030/README.md)16页、9图、2张表，无三级标题；
+按用户指出的问题，修正将运动观测、占位地图接口记录和独立合成地图图像混称为“已有对应”的表述，
+地图与同场景障碍物的空间对应验证列入后续；[修订核对](experiments/2026-10-30-report-map-claim-correction.md)。
+[整编记录](experiments/2026-10-30-report-integrated-revision.md)包含正文、嵌图与排版核对。
+[此前17页版](experiments/report_assets/progress-update-20261030/README.md)与
+[15页版](experiments/report_assets/progress-20261030/README.md)保留。
+工具与入口见[交付说明](docs/REPORT_IMPROVEMENTS_20261030.md)，
+1090项全仓回归及实际高程/运动/旧默认兼容见[实验](experiments/2026-10-30-report-terrain-radar-improvements.md)。
 
-- 已完成SIM-00A：JSBSim开发包、7个MAVROS相关包及geoid取得并在项目目录解包，
-  独立PX4与JSBSim桥接构建通过；依赖解析、包发现、geoid读取及命令环境隔离通过。
-  见[构建说明](simulation/BUILD_SIM00A.md)和[EXP-20260912-001](experiments/2026-09-12-sim00a-build.md)。
-- ENV-03已落实[精确忽略、提交范围与产物保存规则](docs/VERSION_AND_ARTIFACT_POLICY.md)，
-  .runtime有catkin隔离标记；首次提交已完成，第二份资产副本及恢复验收尚未完成。
-- 已完成SIM-00B前置核查：确认桥接初始化缺陷，原构造探针失败、审查副本通过，
-  已准备2文件5处声明的补丁；历史提案见[EXP-20260912-002](experiments/2026-09-12-sim00b-preflight.md)。
-- 用户确认后已应用SIM00B-INIT-01，仅修改项目内桥接副本；新构建与消息回归通过，
-  旧二进制保留。SIM-00B实测120.056秒静止遥测通过：IMU 6051条、50Hz，心跳121条，
-  ODOMETRY 2407条；未解锁，本次进程和端口清理通过。
-  见[EXP-20260912-003](experiments/2026-09-12-sim00b-init-and-smoke.md)及[运行说明](simulation/RUN_SIM00B.md)。
+| 范围 | 状态 | 已验证能力与证据 |
+| --- | --- | --- |
+| REPORT-UPDATE-SW-01 | 已完成（真实高程独立预览/参数化演示与报告） | Rasterio/pyproj隔离安装，Copernicus四川201×201源高程/49查询对照及RViz地表通过；180×140m/30障碍物、实际每帧161～256回波、10对/14查询/公开回放与旧入口通过，两次原始Radar/IR字节可复现；新增7项/全仓1090项及17页报告交付。真实地形公共服务/场景注册/融合与飞行控制后续单列 |
+| 工程基线与仿真 | 已完成（所列子范围） | SIM-00A/B、SIM-01A/B/C、SIM-SPEED-01及[SIM-01D持续性](experiments/2026-10-05-sim01d-continuity.md)；不代表完整Phase 1退出 |
+| Phase 2在线/训练软件图 | 已完成（fixture子范围） | [双图整合](experiments/2026-10-26-phase2-sensor-integration.md)、[Radar值级传递](experiments/2026-10-16-iface-radar-height.md)、[IR值级传递](experiments/2026-10-05-sens-ir-value-transport.md)、[训练体素覆盖](experiments/2026-10-20-sens-train-voxel-coverage.md)与[边界](experiments/2026-10-20-sens-train-dda-boundaries.md) |
+| 可选仿真IMU | 已完成（虚拟源子范围） | [可选ROS旁路](experiments/2026-10-26-phase2-imu-optional-ros.md)、[PX4/JSBSim短测](experiments/2026-10-26-phase2-imu-live-px4-jsbsim.md)、[独立比力语义核对](experiments/2026-10-26-phase2-imu-physics-semantics.md)；非实物标定或同run内部真值逐帧对照 |
+| 状态兼容镜像 | 已完成（fixture子范围） | [T-14 Odometry/唯一TF](experiments/2026-10-14-t14-odom-tf.md)；AircraftState仍为状态权威 |
+| 基础Local Map | 已完成（软件子范围） | [单点查询](experiments/2026-10-14-local-map-query-ros.md)与[滚动网格](experiments/2026-10-14-local-map-rolling.md)；M1保持latest覆盖，M2合成累计单列；Scene Map和DEM未验收 |
+| 感知失效传递 | 已完成（软件子范围） | [disabled/research拒绝链路](experiments/2026-10-27-perception-mode-ros-fail-closed.md)；research尚无可用forward |
+| OPT-01审查修复 | 已完成（软件范围） | [修复、配置收敛及回归记录](experiments/2026-10-27-review-repairs.md)；423项轻量测试及独立/旧入口/异步/失效/IMU/滚动/训练ROS回归通过 |
+| P3-SW-01/02/03 | 已完成（软件范围） | 统一感知入口/输出契约、可选有界CPU执行及独立ROS坏输出/忙碌/超时/恢复通过；[交接记录](experiments/2026-10-27-p3-m1-app-handoff.md) |
+| M1-SW-02 / APP-SW-01 | 已完成（软件范围） | 三组公开占据收据回放逐值一致；应用五类查询及独立CLI/缺失服务通过；全仓469项回归，详见上述交接记录 |
+| M2-DESIGN-01 | 已完成（方案交付） | [概率更新与软件试制方案](docs/M2_SOFTWARE_TRIAL_PLAN_20261027.md)及[设计审查](experiments/2026-10-27-m2-design-review.md)；用户后续已确认合成数据软件试制，正式M1/M2门槛保持 |
+| M2-SW-01 | 已完成（软件范围） | [合成证据/显式参数/独立分数oracle](experiments/2026-10-27-m2-fixture-oracle.md)，9场景/31消息和10项定向、479项全仓回归通过；未执行地图累计 |
+| M2-SW-02 | 已完成（固定合成网格软件范围） | [候选累计与公开查询](experiments/2026-10-27-m2-fixed-map.md)，9场景/31观测对冻结oracle一致，12项定向及491项全仓回归通过；未运行滚动M2或ROS候选图 |
+| M2-SW-03 | 已完成（离线合成软件范围） | [时序/TTL与滚动集成](experiments/2026-10-27-m2-rolling-time.md)，3组运动场景/15观测及40条限额序列通过，M2共37项定向、全仓506项通过；实际ROS证据见SW-04 |
+| M2-SW-04 | 已完成（合成软件交接） | [独立ROS/回放/应用交接](experiments/2026-10-27-m2-ros-handoff.md)：15观测/9快照/14查询、五类状态及4条坏输入拒绝，公开收据回放一致；旧固定/滚动/placeholder ROS通过，全仓515项通过，清理通过 |
+| M3-DESIGN-01 | 已完成（方案交付） | [来源/单位/缺失传播与合成区间方案](docs/M3_SOFTWARE_TRIAL_PLAN_20261027.md)，沿真实链审计9项事实、核对3组分数算例，既有质量相关17项定向通过；[审查记录](experiments/2026-10-27-m3-design-review.md)。未实现M3候选或运行新ROS |
+| M3-SW-01 | 已完成（输入/预期软件范围） | [显式区间合同、配置与独立oracle](experiments/2026-10-27-m3-fixture-oracle.md)：10场景/43输入实际消息序列化往返通过，19项定向及534项全仓通过；未执行M3累计或新ROS图 |
+| M3-SW-02 | 已完成（固定合成网格软件范围） | [固定区间累计与冻结预期对账](experiments/2026-10-27-m3-fixed-map.md)：10场景/43输入一致、名义值逐值等于M2，12项新增定向、M3共31项及全仓546项通过；受影响M2 ROS/回放/清理通过，M3滚动/ROS仍待后续 |
+| M3-SW-03 | 已完成（离线合成滚动范围） | [区间滚动/TTL与有界状态](experiments/2026-10-27-m3-rolling-time.md)：96帧/257查询/4探针及五类状态通过，名义值逐值等于M2；新增15项、M3共46项、全仓561项通过；M3实际ROS/应用交接待SW-04 |
+| M3-SW-04 | 已完成（合成软件交接） | [独立ROS/回放/应用质量检查](experiments/2026-10-27-m3-ros-handoff.md)：19观测/13快照/19查询、155项运行检查、五类状态与4条坏输入拒绝通过；公开回放、旧M1/M2/placeholder及清理通过，全仓570项通过 |
+| M4-DESIGN-01 | 已完成（具体设计） | [Scene Map/有界子地图方案](docs/M4_SOFTWARE_TRIAL_PLAN_20261027.md)及[审查记录](experiments/2026-10-27-m4-design-review.md)：9项审计、32项既有定向通过；明确唯一所有权、具名非零map←odom注册、联合原子提交和定位reset限制，未实现M4或启动新ROS |
+| M4-SW-01 | 已完成（输入/预期软件范围） | [注册/输入合同与独立生命周期预期](experiments/2026-10-28-m4-fixture-contract.md)：8场景/41输入/52查询预期已保存，输入与预期载荷实际序列化通过；24项定向、全仓594项通过；未运行Scene候选或M4 ROS |
+| M4-SW-02 | 已完成（离线合成候选范围） | [有界Scene候选与冻结预期对账](experiments/2026-10-28-m4-scene-candidate.md)：8场景/41输入/52查询、目录所有权/FIFO与实际消息序列化通过；新增15项、M4共39项/全仓609项通过，未接入工厂或ROS |
+| M4-SW-03 | 已完成（离线合成组合范围） | [时序/资源与联合原子性](experiments/2026-10-28-m4-time-resources.md)：140帧/323查询、4故障点及1域隔离探针与保存预期通过，120帧K=1/N=2/H=3状态/索引/副本计数有界；新增13项/M4共52项/全仓622项通过，非RSS或M4 ROS验收 |
+| M4-SW-04 | 已完成（合成软件交接） | [显式ROS/回放/独立应用map查询](experiments/2026-10-28-m4-ros-handoff.md)：15观测/9快照/20查询、174项运行检查及4条拒绝通过；五类状态/历史质量、公开回放、旧M1/M2/M3/placeholder与清理通过，新增7项/全仓629项通过；不关闭正式M4 |
+| APP-VIS-01 | 已完成（地图工作台软件子范围） | 用户要求10-30周五前交付原生RViz；[10-28交付记录](experiments/2026-10-28-rviz-report-delivery.md)与[报告图片/图注](experiments/report_assets/rviz-20261028/README.md)。默认软件渲染的三维/俯视/图层/五类查询、公开快照回放、实际服务/时钟失效与像素检查通过；旧Radar/IR占位链live收到32帧，新增9项/全仓638项通过；系统显卡路径有未解释启动异常，非真实模型/飞行验收；场景与传感器目标见SENS-VIS-01 |
+| SENS-VIS-01 | 已完成（独立功能级场景） | 用户澄清需要场景与Radar点云、IR；[Gazebo + 标准RViz入口](docs/SENSOR_SCENE_VISUALIZATION.md)、[运行证据](experiments/2026-10-28-sensor-scene-visualization.md)和[报告素材](experiments/report_assets/sensor-scene-20261028/README.md)。1790回波/594占据cell、冷暖投影及热箱位移联动、无训练图、窗口像素与正常清理通过；既有state_adapter唯一TF职责保持，旧placeholder ROS及全仓649项通过；飞机固定，未接PX4联动或真实传感器物理模型 |
+| M5-DESIGN-01 | 已完成（具体设计） | [TerrainPrior/DEM准入与兼容方案](docs/M5_TERRAIN_PRIOR_DESIGN_20261028.md)、[审查记录](experiments/2026-10-28-m5-design-review.md)：10条源码事实、4项现有边界探针/6个数字算例和40项既有定向通过；交付基准/no-data/时效/高度质量、独立地形层、原子版本、公共协议闸门及16组验收预期。未实现DEM、未改公共接口或启动ROS |
+| M5-SW-01 | 已完成（私有离线输入/预期） | [冻结合同](docs/M5_SW01_CONTRACT_20261028.md)、[实验记录](experiments/2026-10-28-m5-fixture-contract.md)：45组JSON输入（4接收/41拒绝）、5个请求语法与16组/7事件独立预期保存，新增21项/全仓670项通过；未实现地形候选/安装查询、未接ROS或占据融合，m5_fixture选型仍拒绝 |
+| M5-SW-02 | 已完成（离线合成地形候选） | [候选/API说明](docs/M5_SW02_TERRAIN_CANDIDATE_20261028.md)、[运行记录](experiments/2026-10-28-m5-terrain-candidate.md)：4样本/5边界/7事件/45输入共135项保存预期一致；整版替换、缺失质量、幂等/冲突/原子重试及占据隔离通过，新增24项/M5共45项/全仓694项通过；未接真实DEM、公共ROS或占据融合，后续完整时序/资源组合见SW-03 |
+| M5-SW-03 | 已完成（私有离线合成软件组合） | [时序/资源说明](docs/M5_SW03_TIME_RESOURCES_20261028.md)、[运行记录](experiments/2026-10-28-m5-time-resources.md)：4组84事件/44查询/19拒绝，64版大载荷、五处故障重试及占据隔离通过；保存输入/结果重放逐值一致，提前拒绝超长文本；新增10项/M5共55项/全仓704项通过。保留项与临时载荷分开核对，非RSS/正式性能；真实DEM/公共地形交接/占据融合未开展 |
+| M5-IFACE-DESIGN-01 | 已完成（具体提案） | [公共地形接口方案](docs/M5_IFACE_DESIGN_20261028.md)、[审查记录](experiments/2026-10-28-m5-interface-design.md)：14项源码事实/实际边界探针及74项既有定向通过；明确独立4消息/1服务、版本/实例/时钟/质量、记录与兼容恢复、16组未来验收。仅设计，未生成消息或实施新ROS/客户端；公共运行字段未变 |
+| M5-IFACE-SW-01 | 已完成（消息/离线合同） | [公共合同](docs/M5_IFACE_SW01_CONTRACT_20261028.md)、[验证记录](experiments/2026-10-28-m5-interface-contract.md)：独立4.msg/1.srv已生成，公开逻辑对象/严格codec、dataset及三文件recording校验已实现；独立字节与真实genpy往返、29项新增定向及733项全仓轻量回归通过。旧类型与入口保持；无Provider/实际地形服务/客户端/RViz地形或公共回放执行 |
+| M5-IFACE-SW-02 | 已完成（合成Provider/独立ROS） | [Provider/装配说明](docs/M5_IFACE_SW02_PROVIDER_20261028.md)、[实际记录](experiments/2026-10-28-m5-provider-ros.md)：默认关闭、clock来源/超时/reset、evaluation/版本/pin/状态及单启动安装已实现；实际ROS28查询/15状态/38检查、新run恢复与旧占据兼容/清理通过。新增20项，相关104项/全仓753项通过；无客户端/公共执行回放/RViz地形，非真实DEM或完整M5验收 |
+| M5-IFACE-SW-03 | 已完成（公共合成软件交付） | [客户端/录制回放/RViz说明](docs/M5_IFACE_SW03_DELIVERY_20261029.md)、[实际记录](experiments/2026-10-29-m5-terrain-delivery.md)：单worker期限/迟到丢弃、状态存活/整组pin、有界录制与真实执行回放、独立live/recorded显示完成；实际23事件/8查询收据逐值重放、12项客户端与四图像素、旧Gazebo/Radar/IR/占据/RViz兼容/清理通过。新增21项，定向70项/全仓774项通过；v1无法表达的失败明确incomplete，非真实DEM/占据融合或完整M5/Phase 4 |
+| P5-DESIGN-01 | 已完成（具体设计） | [组合场景/需求矩阵](docs/PHASE5_SOFTWARE_COMBINATION_DESIGN_20261029.md)、[审查记录](experiments/2026-10-29-phase5-combination-design.md)：15项源码事实、三类配置、九组待实施场景及REQ-01—14矩阵、SW-01—03分工；既有76项定向通过。只改文档，未实现或运行新组合，未重跑全仓；真实质量/融合/正式Phase 4/5门槛保持 |
+| P5-SW-01 | 已完成（输入/预期/线格式） | [输入合同](docs/P5_SW01_INPUT_CONTRACT_20261029.md)、[验证记录](experiments/2026-10-29-phase5-input-contract.md)：九组37子例/253事件、95检查点/228项独立预期，143组采样/12逆观测/23公共样例共742次真实消息往返；新增31项定向及全仓805项通过。仅离线合同，未运行新组合ROS/Provider/地图累计或原生图验收 |
+| P5-SW-02 | 已完成（A/B合成ROS组合） | [实际装配/回放](docs/P5_SW02_ROS_COMBINATION_20261029.md)、[实验记录](experiments/2026-10-29-phase5-ros-combination.md)：33/33独立Master子例、244事件/86检查点/216项独立比较；148占据/143快照/14查询逐值地图回放，S08正常/不完整/篡改地形记录按预期通过。旧默认入口与清理通过，新增8项、P5定向39项/全仓813项通过；S09/C与正式阶段门槛保持 |
+| P5-SW-03 | 已完成（原生图与软件全矩阵交接） | [交付说明](docs/P5_SW03_NATIVE_DELIVERY_20261029.md)、[实际记录](experiments/2026-10-29-phase5-native-delivery.md)：S09/C四例、图错误/正常清理/哨兵保留、新run空地图与旧pin拒绝、原生Gazebo/标准RViz及独立地形四图通过；复核既有A/B收据后合计37例/253事件/95检查点/228项比较，A/B本轮未重跑。新增6项、P5定向45项/全仓819项通过，宿主36个受管命令无残留；仅关闭冻结软件工作包，完整阶段门槛保持 |
+| DELIVERY-SW-01 | 已完成（仓内交付整理） | [统一交付清单](docs/SOFTWARE_DELIVERY_20261029.md)、[含八图报告](docs/REPORT_20261029.md)、[核验记录](experiments/2026-10-29-software-delivery-motion-design.md)：版本/dirty范围、启动/配置/查询/回放与未关闭门槛归并，57项核验/64项既有定向及22事件地形离线回放通过；未重跑全仓或ROS，未对外发布/归档 |
+| SIM-MOTION-DESIGN-01 | 已完成（具体设计） | [JSBSim真值/受控Gazebo运动方案](docs/SIM_SCENE_MOTION_DESIGN_20261029.md)、上述核验记录：16项源码事实，单时钟/逐帧ACK、固定注册、杆臂速度及12组待实施验收、SW-01—03分工；未生成2.msg/1.srv或实现运行器，当前飞机仍固定 |
+| SIM-MOTION-SW-01 | 已完成（离线输入/协议软件范围） | [合同说明](docs/SIM_MOTION_SW01_CONTRACT_20261029.md)、[实际记录](experiments/2026-10-29-sim-motion-contract.md)：独立2.msg/1.srv、严格嵌套codec/字节扫描、有界profile/FDM输入已实现；先冻结六组坐标/六时间点与20组独立字节，真实genpy往返、26项新增/全仓845项通过，17份旧定义不变。无推进状态机、FDM转换器/节点或飞行联动，下一项SW-02 |
+| SIM-MOTION-SW-02 | 已完成（真实引擎/采样软件闸门） | [交接说明](docs/SIM_MOTION_SW02_ENGINE_20261029.md)、[实测/失败记录](experiments/2026-10-29-sim-motion-engine.md)：同一FDM、固定ENU转换、暂停Gazebo与实际Ray/Camera、单clock/state/TF、terminal已实现；250步/10对/20 ACK、运行期丢IR回执停于996ms、13,217回波Doppler及67,933 IR像素变化通过；37项定向/全仓856项、旧估计/静态原生入口回归通过。首采样故障时PX4启动中断255的两次失败保留；新模式端到端地图/原生窗口待SW-03，非受控飞行 |
+| SIM-MOTION-SW-03 | 已完成（运动感知地图/原生窗口软件交接） | [交接说明](docs/SIM_MOTION_SW03_DELIVERY_20261029.md)、[实验记录](experiments/2026-10-29-sim-motion-delivery.md)：同tick精确位姿、10组Bundle/占据/快照、14条公开查询、独立回放、首采样/运行期ACK故障、第二clock拒绝、新run空地图恢复及原生Gazebo/RViz前后/History窗口通过；运动定向43/43、全仓862/862，旧estimated/静态入口回归通过。仅关闭单profile软件范围，不代表受控飞行、真实模型质量、DEM/资源或正式阶段退出 |
+| SIM-MOTION-SW-04-DESIGN | 已完成（多场景具体设计） | [具体方案](docs/SIM_MOTION_SW04_MULTISCENE_DESIGN_20261029.md)、[核验记录](experiments/2026-10-29-sim-motion-multiscene-design.md)：12项源码事实、9核心/3兼容用例、独立几何/空图/TTL/故障预期及资源上界；54项既有定向、20组真实线格式/17旧定义、13只读探针通过。仅文档，未实现新清单或运行多场景，未重跑全仓；下一项SW-04A |
+| SIM-MOTION-SW-04A | 已完成（多场景输入/预期离线合同） | [合同/文件清单](docs/SIM_MOTION_SW04A_CONTRACT_20261029.md)、[实验记录](experiments/2026-10-29-sim-motion-multiscene-contract.md)：独立9例清单/有界校验、7几何模板、IC/射线/空图/TTL/故障预期完成；77组真实场景协议字节、36组旧公共消息往返、18合成源转换通过，25份旧定义/7配置入口保持。新增23项、运动66/66及全仓885/885通过；未启新FDM/ROS/Gazebo场景，下一项SW-04B |
+| SIM-MOTION-SW-04B | 已完成（显式装配/真实定向机制） | [交付/文件清单](docs/SIM_MOTION_SW04B_ENGINE_20261029.md)、[实验记录](experiments/2026-10-29-sim-motion-multiscene-engine.md)：S06真实空域10组/13查询、S07两次暂停几何切换/5空帧/返回/16查询、S08第125步Radar ACK故障clock496ms/4组，以及旧默认入口实际通过；独立原始FDM/逐射线/公开回放与清理通过。新增11项、运动77/77及全仓896/896；保留矩阵/visual/48边界假设失败，后续固定零豁免且不增物理容差。完整9核心/3兼容与原生交接留SW-04C |
+| SIM-MOTION-SW-04C | 已完成（同源码多场景软件交接） | [交付/文件清单](docs/SIM_MOTION_SW04C_DELIVERY_20261029.md)、[实验记录](experiments/2026-10-29-sim-motion-multiscene-delivery.md)：423份冻结源码上9核心/3兼容通过；84组业务/121查询、75帧逐射线零豁免、独立回放、S08→S09实际旧身份拒绝及14阶段总图/12 viewport。四次失败保留；修正独立旋转估计、S04生成IC冲突、S05合法空帧断言及新视图IR范围。新增7项、运动84/84、全仓903/903；全部尝试364自有PID/端口清理通过。仅1秒无控制软件范围，非完整阶段退出 |
+| SIM-FLIGHT-DESIGN-01 | 已完成（具体方案/只读审查） | [受控短窗方案](docs/SIM_FLIGHT_DESIGN_20261029.md)、[实验记录](experiments/2026-10-29-sim-flight-design.md)：19项源码事实、15项独立核验及84项既有运动定向/真实消息往返通过；明确执行器时序/属性收据、AGL/预热、独立v2、新有界profile、命令准入/停止及SW-01—04。仅文档，未发控制或启动新仿真；旧25份定义/423份生产源码保持，未重跑全仓 |
+| SIM-FLIGHT-SW-01 | 已完成（私有离线合同范围） | [合同/文件清单](docs/SIM_FLIGHT_SW01_CONTRACT_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-contract.md)：具名ground IC/执行器收据、严格有界JSON/JSONL与先保存独立预期完成；8组私有字节往返、3映射探针、100个未来采样时刻、两条合成记录通过。新增25项、旧运动84项/全仓928项通过；旧25份定义/7入口/423份源码保持。绑定仍unverified且控制门固定false，无新运行或控制 |
+| SIM-FLIGHT-SW-02 | 已完成（隔离诊断/短窗失效子范围） | [交付/十文件清单](docs/SIM_FLIGHT_SW02_DIAGNOSTICS_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-diagnostics.md)：同439份源码上正常250条/250次Run/1s、断连接126条/125次Run/停.5s及真实wire/IC核对通过；新增7项、飞行32项/旧运动84项/全仓935项通过。两例执行器0包、bootstrap_not_ready，正向属性施加与时间绑定未验证；无命令/新ROS/Gazebo/v2/长窗，控制门仍false |
+| SIM-FLIGHT-DIAG-DESIGN-02 | 已完成（只读归因/补证设计） | [具体方案](docs/SIM_FLIGHT_DIAG_DESIGN_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-readiness-design.md)：32份源文本/30项源码核验、两组376个旧HIL_SENSOR离线解码及32项既有飞行定向通过。GPS非姿态初始化无条件前置；首瞬时输入范围样本428ms不代表EKF就绪。明确SW-02B本run 9类uORB/3参数、21次有界只读快照；本轮未实现/查询/启新运行，439份源码保持，未重跑全仓 |
+| SIM-FLIGHT-DIAG-DESIGN-03 | 已完成（空实例具体设计） | [三态/显式补证方案](docs/SIM_FLIGHT_DIAG_DESIGN03_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-empty-instance-design.md)：九份源文本/16项核验、旧原文/严格拒绝与49项既有飞行测试通过；445源码保持。明确独立diagnostic事件、完整/未发布/无载荷三态、混合块/畸形停止、18组未来预期及SW-02C范围；只设计，无新分类器/模式运行，SW-02B原失败与控制门保持 |
+| SIM-FLIGHT-DIAG-DESIGN-04 | 已完成（原生质量隔离具体设计） | [两字段条件隔离方案](docs/SIM_FLIGHT_DIAG_DESIGN04_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-native-quality-design.md)：九份源文本/20项核验、六实例12处nan及同载荷源位核对、16组独立掩码算例与69项既有定向通过；451源码保持。拟独立私有diagnostic v2/显式模式、质量不可用状态、20组未来验收；未实施或启新运行，旧两个合同/失败与控制门保持 |
+| SIM-FLIGHT-SW-02D | 已完成（私有隔离软件/实际有界采集） | [交付/文件清单](docs/SIM_FLIGHT_SW02D_QUALITY_20261030.md)、[实验记录](experiments/2026-10-30-sim-flight-quality-collection.md)：先冻结20组预期/源基线，再实现两字段条件隔离、私有diagnostic.v2及显式模式；21次实际查询/事件与三参数、独立重读通过。六实例12处质量不可用明确记录；采集完整但正文/载荷不完整，已读flags样本tilt/yaw均未对齐、selected姿态缺失、执行器0包，控制门false。飞行92/运动84/全仓995项、旧实际入口/线格式及27自有PID清理通过；旧B/C失败保持 |
 
-上述SIM-00交付证明文档、独立构建及静止遥测通过；SIM-01A状态/时钟证据见下项。
-地图、算法质量和高速飞行仍未验收。
+SIM-FLIGHT-INIT-DESIGN-01：已完成（具体设计），见[方案](docs/SIM_FLIGHT_INIT_DESIGN_20261030.md)与
+[实验](experiments/2026-10-30-sim-flight-initialization-design.md)。24份源文本/32项核验、旧21条事件和250条wire重读、
+92项既有飞行定向通过；设计时尚无新合同/宿主/准备运行。
 
-- 09-14已调用system_architect、simulation_engineer、sensor_engineer完成只读分析与
-  二次复核，形成[SIM-01A实施提案](docs/SIM01A_IMPLEMENTATION_PLAN.md)，现已获用户确认。
-  新发现及边界见[EXP-20260914-001](experiments/2026-09-14-sim01a-agent-review.md)；该记录保留实施前状态。
+SIM-FLIGHT-INIT-SW-01：已完成（私有离线软件），见[合同/八文件清单](docs/SIM_FLIGHT_INIT_SW01_CONTRACT_20261030.md)与
+[实验](experiments/2026-10-30-sim-flight-initialization-contract.md)。先冻结独立预期，再实现新profile/step/query/事件/终态合同、
+有界文件重读与四门合成判定；两组2500步/84查询和88次私有JSON往返、35项新增/飞行127/运动84/全仓1030项通过，
+旧实际genpy/25定义/7入口与原458份源码保持。没有准备宿主/客户端或新运行，控制门false；下一项INIT-SW-02。
 
-- 用户09-14确认后，三个子agents与Technical Lead完成SIM-01A：四个ROS消息、源筛选/
-  时钟状态机、NED/FRD坐标适配、有界接收门控及两层薄节点；默认Python为Radar-Diffusion。
-- 独立catkin与44项单元/契约通过；固定历史重建2103对状态、6051 clock，无FAULT。
-  11项实际ROS fixture通过；未解锁静止联调605对状态、2302 clock、30.196秒valid跨度。
-  抽查8个Python本次进程及后代均来自Conda；已知端口和进程清理通过。
-  见[EXP-20260914-002](experiments/2026-09-14-sim01a-implementation.md)及
-  [RUN_SIM01A](simulation/RUN_SIM01A.md)，仍非完整Phase 1或飞行验收。
+SIM-FLIGHT-INIT-SW-02：已完成（宿主/部分实际证据/故障兼容软件子范围），完整准备运行未通过；
+见[十文件交付/失败说明](docs/SIM_FLIGHT_INIT_SW02_PREPARATION_20261030.md)、[实验](experiments/2026-10-30-sim-flight-initialization-preparation.md)。
+新正常实际500步/2s、78全零执行器/属性读回、30查询原文/29合法事件，第30条selector未用槽位含nan严格停止；
+未完成2500步/84查询，控制门false/绑定unverified。断连接/期限停止、飞行134/运动84/全仓1037项及旧实际入口/消息兼容通过；
+原466源码保持，旧失败不回填。随后槽位具体设计见下项，原合同未放宽。
 
-- SIM-01B已完成：300.008001秒连续valid LIVE记录、B1成品逐字节回放、B2全新sensors复算
-  分别通过。15,794 clock和源/适配各6,003条逐话题身份、完整质量与落盘重读一致。
-- 73项单元/契约、11项实际ROS fixture及增量catkin通过；三个成功会话均已正常退出，
-  清理无强制信号或审计PID残留。B1/B2额外clock计数均为0；未解锁或发送控制命令。
-- B实施由对应子agents与Technical Lead完成；原生clock队列复用、EOF交接及退出码
-  问题已在项目入口修复，三次失败B1原始证据保留。见[EXP-20260915-001](experiments/2026-09-15-sim01b-implementation.md)
-  与[RUN_SIM01B](simulation/RUN_SIM01B.md)。本次完成不代表整个Phase 1或高速飞行通过。
+SIM-FLIGHT-INIT-SELECTOR-DESIGN-01：已完成（具体设计/只读审查），见
+[方案](docs/SIM_FLIGHT_INIT_SELECTOR_DESIGN_20261030.md)、[实验](experiments/2026-10-30-sim-flight-initialization-selector-design.md)。
+24项源事实、历史500步/78零包/29事件和8处nan重读、原严格拒绝及既有飞行134项通过，476份源码/配置保持。
+拟独立selector观测合同、98项查询和前后IMU设备表关联；estimator高水位与四槽设备索引分开，
+消费消息时间仍未知/不声称原子快照，选中槽有限/关联/原姿态门保持。仅文档，未实现新规则或启准备期；
+下一项INIT-SELECTOR-SW-01仅独立离线合同/先行预期，SW-02才单独新运行装配。
 
-- 用户确认后，多个对应子agents与Technical Lead完成SIM-01C第一批实施。F0—F7已在
-  独立run中通过实际故障注入、唯一终止原因、terminal后零valid、监督清理及新run恢复
-  验收；故障帧使用真实MAVLink编码并通过source和sensors链路，F0与F6按各自无上游输入/
-  sensors本地回退的边界验收。证据见[实施记录](experiments/2026-09-16-sim01c-implementation.md)
-  与[运行说明](simulation/RUN_SIM01C.md)。
-- 修复前bridge倍速实测未通过：2倍三次实际为1.6982、1.6945、1.6896，均低于1.7下限；
-  0.5倍因float getter截断为0而自由运行，一次20源秒窗口测得71.4543倍，随后发生
-  `estimator_reset` terminal。现状RED及失败运行均保留；未修改bridge、PX4、公共消息
-  或业务状态机。该历史结果触发SIM-SPEED-01，不能被修复后结果覆盖。
-- SIM-SPEED-01已按[具体实施方案](docs/SIM_SPEED_01_IMPLEMENTATION_PLAN.md)实施：仅将
-  `getRealtimeFactor()`返回类型由`int`改为`float`，并把elapsed改为
-  `step_stop_time - step_start_time`。独立候选
-  `.runtime/build/jsbsim-bridge-speed01/jsbsim_bridge`为71,059,096字节，SHA-256为
-  `d846038cddbd64859e1d48e414d994248c70c408ec3552d39cb472e2beb63ddf`。
-- 真实suite `sim01c-suite-20260916T143604636221`及matrix
-  `sim-speed01-matrix-20260916T143604603286`的预注册九run全部`COMPLETE`：0.5倍实测
-  0.492476—0.492647、1倍0.971738—0.972527、2倍1.899797—1.909010，逐run零terminal
-  且清理通过。前置历史仍见[EXP-20260916-002](experiments/2026-09-16-sim-speed01-preflight.md)，
-  实施证据见[EXP-20260916-003](experiments/2026-09-16-sim-speed01-implementation.md)。
-- 工具开发期间有一项证据保护偏差：历史1.689637552倍RED目录的
-  `scenario-result.json`曾被checker CLI以相同失败结论重写，mtime改变；对应
-  `manifest.json`、`speed-result.json`和原始观测未改。技术验收结论不变，但不把
-  该历史文件声明为字节未改；详情已进入EXP-20260916-003。2026-09-17用户明确接受
-  该已披露偏差，并要求保留完整记录、不伪造原时间且不尝试恢复。依据该处置，
-  SIM-SPEED-01及SIM-01C已正式关闭；该接受不改变修复前RED结论，也不关闭SIM-01D、
-  PERF-01、完整Phase 1或高速地图测试。
-- 09-16用户确认[ADR-012](docs/DECISION_LOG.md)设计边界：保留现有AircraftState状态链，
-  定位先作为权威职责而非新增目录；PointCloud2/Image仅作驱动载荷，设备无关契约与
-  模型预处理分层；fake LiDAR只在训练数据生成配置为fake Radar/IR产生监督标签，禁止
-  进入在线SensorBundle、forward、定位和mapping。本项是文档/计划更新，节点尚未实现。
+SIM-FLIGHT-INIT-SELECTOR-SW-01：已完成（私有离线软件），见
+[七文件/合同](docs/SIM_FLIGHT_INIT_SELECTOR_SW01_CONTRACT_20261030.md)、[实验](experiments/2026-10-30-sim-flight-initialization-selector-contract.md)。
+先保存24组独立预期/源基线，再实现独立4种封套/严格codec、98计划、槽位隔离/设备关联和原四门纯判定。
+两组合成2500步/98事件实际文件重读、101次新JSON往返、新28/飞行162/运动84/全仓1065项及旧真实genpy兼容通过。
+原476源码/配置保持，消费消息时间未知/验证false、绑定unverified/控制false；未启daemon查询/准备或改旧失败。
+下一项INIT-SELECTOR-SW-02单独98项实际装配、原wire/物理/关联与故障/兼容/清理交接。
 
-- 2026-09-22完成PERF-01-A异步扩展：Radar/IR由独立发布进程产生，sensors层维护有界
-  匹配缓存并按原Radar采样时间构建SensorBundle；唯一`/clock`、5 ms同步阈值、40 ms
-  等待、10 ms位姿年龄和500 ms墙钟上限均按配置执行。7/7确定性场景（正常异步、5 ms
-  相位、抖动、乱序、缺帧、缓存溢出、恢复）及640×512 IR正常场景通过；生成/接收/采用/
-  未采用/预期拒绝/意外丢失分账与地图身份、时间、unknown语义闭合。证据见
-  [EXP-20260922-001](experiments/2026-09-22-perf01a-async.md)。配对等待纳入的20 ms
-  诊断仍失败（约43.5—46.7 ms P99）；该09-22结果不包括09-23运动短测。
+SIM-FLIGHT-INIT-SELECTOR-SW-02：已完成（装配/部分实际证据/故障兼容软件子范围），完整准备未通过；
+见[五新增/一修改及时间失败交接](docs/SIM_FLIGHT_INIT_SELECTOR_SW02_PREPARATION_20261030.md)、
+[实验](experiments/2026-10-30-sim-flight-initialization-selector-preparation.md)。
+唯一新正常1007 Run/4.028s、582真实全零执行器、59 raw/59合法查询，500/1000局部ready、primary4/IMU槽1；
+1008条HIL原戳4027999us（网格4028000）Run前拒绝，旧桥接double截断来源已定位，未改戳或重跑。
+断连/期限在126 raw/125 Run停止，新11/飞行173/运动84/全仓1076及旧实际/真实genpy兼容通过，控制false/绑定unverified。
+下一项INIT-TIME-SW-01仅新增隔离的发送端整数时间适配与独立预期/验证，不再调整selector缺失表示或扩大窗口。
 
-- 2026-09-23完成[高速运动时空一致性功能级基线](experiments/2026-09-23-perf01a-motion.md)：
-  35/50/70m/s状态、固定世界障碍物采样时刻Radar相对测量、真实历史姿态及地图更新
-  已经小图实际ROS短测；50/70m/s的5ms历史位姿偏差约0.25/0.35m。70m/s断流
-  恢复与乱序拒绝后clock域地图老化/恢复核对通过，全仓194项轻量契约通过。格网边界RED
-  和大图恢复oracle理由失败均保留；大图normal功能通过但感知P99=69.328ms未达20ms。
-  此基线不是高速实时验收、PX4飞行、研究模型质量或机载资源验收。
+SIM-FLIGHT-INIT-TIME-SW-01：已完成（隔离时间生产修复/单profile 10s无控制准备软件范围），见
+[十文件/交付](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)、[实验](experiments/2026-10-30-sim-flight-initialization-time.md)。
+先冻结16组预期，再新增纯C++/精确副本适配与显式入口；旧488源码/配置保持。
+一次新正常2500 Run/10s、98 raw/合法事件、2500 HIL/9 GPS和2509源收据、2078真实零包；四门全true，2000/2500末检查点通过。
+源double在原1ns内，旧失败位置实际发送4028000us，原4027999us失败不回填；主实例5/IMU槽2、绑定unverified/控制false。
+C++5016包/新7/飞行180/运动84/全仓1083及实际故障/旧入口兼容通过。下一项SW-03A仅公共v2离线合同，不启长窗或控制。
 
-- 2026-10-03完成fake Radar/IR功能级参数化：保留旧函数兼容和默认固定载荷，新增可选FOV、
-  最大量程、位置/强度噪声、Radar扫描持续时间、IR背景/噪声和曝光持续时间；异步生产器、
-  旧场景包装和配置校验已接通。新增fake传感器测试及相关motion、contract、scenario、async、
-  wrapper、wire回归通过。该结果仅证明功能级参数入口和可重复性，不证明真实设备驱动、物理
-  真实性、机载资源或研究模型质量；LiDAR仍不得进入在线SensorBundle、forward、定位或mapping。
-  证据见[EXP-20261003-002](experiments/2026-10-03-fake-sensor-parameterization.md)。
-- 2026-10-03完成参数化fake Radar/IR真实ROS短链路：启用FOV、量程、强度/IR噪声和扫描/
-  曝光时长后，独立发布器→匹配→SensorBundle→placeholder→Local Map的修正版2秒run通过，
-  20个有效样本闭合。首轮位置噪声使静态点跨越0.5m地图格并触发严格oracle失败，原始失败
-  保留；未放宽校验，改为在静态oracle场景关闭位置噪声。位置噪声仍需独立动态地图oracle，
-  本次不产生20ms性能结论。证据见[EXP-20261003-003](experiments/2026-10-03-fake-sensor-ros-parameterized.md)。
-- 2026-10-03补齐位置噪声动态地图oracle：新增`map_oracle: radar_points`，以已接收Bundle
-  的Radar点和`T_mapping_source`独立计算体素，再核对地图累计cell集合、概率、observed和
-  最后观测时间。`parameterized_position_noise`开启0.01m位置噪声的2秒ROS run通过，20个
-  有效样本闭合；不复用固定静态格点、不放宽地图或同步门限，不产生20ms或真实Radar质量结论。
-  证据见[EXP-20261003-004](experiments/2026-10-03-fake-sensor-position-noise-oracle.md)。
-- 2026-10-04完成fake IR空间热点扩展：新增可重复的像素坐标圆形热点、重叠增量和边界校验；
-  默认空热点列表保持固定背景行为。`parameterized_sensors`真实ROS 2秒run通过，热点经
-  IR发布、匹配、SensorBundle、placeholder和Local Map链路闭合。热点仍只是
-  `fixture_intensity`结构，不代表温度/辐射物理或真实IR质量；不改变5ms/20ms边界。
-  证据见[EXP-20261004-001](experiments/2026-10-04-fake-ir-hotspots.md)。
-- 2026-10-05完成SENS-IR-01同帧IR数值守恒门禁：新无噪声4×3场景真实ROS 2秒run
-  采集100帧原始发布IR，20个采用帧的Bundle与发布帧按run/clock/sample/frame、采样/
-  曝光时间及全部12个像素逐帧核对；热点中心索引5与背景索引0对oracle成立。严格配对
-  拒绝20/20、状态/时钟排空、地图闭合与进程清理通过；首次null配置失败run保留，
-  全仓226项轻量测试通过。20ms诊断P99=45.144325ms未通过，额外订阅不可作为性能证据；
-  在该SENS-IR-01记录完成时，SIM-01D至少40分钟长测及训练监督LiDAR均未执行；随后
-  SIM-01D已由EXP-20261005-003独立验收。见[EXP-20261005-001](experiments/2026-10-05-sens-ir-value-transport.md)。
-- 2026-10-05完成PERF-01正式测量门禁预检：新增只读
-  [`perf01_budget_gate.py`](ros_ws/perf01_budget_gate.py)和`formal_measurement`配置组，
-  当前明确输出`reference_only`而非性能通过。目标平台、正式起止端点、设备采样时钟/跨时钟
-  映射、Radar/IR选定配置和持续时长共10项阻塞保持显式；5 ms同步和20 ms P99目标由测试
-  锁定，未启动ROS或长测。证据见[EXP-20261005-002](experiments/2026-10-05-perf01-budget-gate.md)。
-- 2026-10-05完成SIM-01D独立持续性验收：专用候选bridge、独立Master/端口和Conda
-  环境启动约41分钟，源状态有效跨度`2400004000000 ns`，跨越边界
-  `2147483647000 ns`；clock/source/sensor频率约50/20/20 Hz，最大间隔分别为
-  24.001/60/60 ms，源状态与适配状态各48002条，clock 120786条。实时记录、bag
-  回读、writer排空、边界checker和进程/端口清理均`passed=true`；未执行控制命令、未
-  进入训练LiDAR或PERF-01性能判定。证据见[EXP-20261005-003](experiments/2026-10-05-sim01d-continuity.md)。
-- 2026-10-06完成PERF-01正式输入与证据预检：只读审计确认当前为x86笔记本，未发现
-  Jetson Orin NX、ARS548或Micro III Lite物理输入，亦无外部功耗和设备采样时钟证据；
-  当前门禁保持`reference_only`、10项正式输入阻塞。新增
-  [`perf01_formal_preflight.py`](ros_ws/perf01_formal_preflight.py)及契约测试，拒绝以
-  fixture频率、仿真时间或`/clock`替代物理采样依据；未启动正式ROS性能运行。证据见
-  [EXP-20261006-001](experiments/2026-10-06-perf01-formal-preflight.md)。
-- 2026-10-08完成PERF-01证据内容数值预检：六类JSON证据按同一run/航速/时钟域
-  对账，逐样本单调时间重算P50/P95/P99，并检查单样本年龄、5ms Radar—IR同步、
-  10ms姿态年龄、输入输出及丢帧/超时率、功耗/内存和连续时长。先复现空文件、
-  `passed=true`、虚报或超标P99均被旧门禁接受的RED，再以严格拒绝规则实现GREEN；
-  全仓243项轻量测试通过。测试仅为合成证据，未采集硬件或新增ROS性能运行；实际
-  配置仍`reference_only`，PERF-01及Phase 1未验收。见
-  [EXP-20261008-001](experiments/2026-10-08-perf01-metric-preflight.md)。
-- 2026-10-08预登记的35/50/70m/s各2秒640×512开发机真实ROS短测均未通过：
-  三档均收到40 Radar/100 IR，却各自严格拒绝40 Radar，0 Bundle/Occupancy/Map，
-  P99因无有效样本不可计算。首次35m/s运行触发可选`null`无法经ROS XML-RPC
-  封送，修复仅省略写入参数服务器的空字段并新增测试；首次失败和三档失败目录
-  全部保留。资源角色/采样及进程端口清理成功，不能替代配对/地图闭合，
-  不把失败标为速度可用或机载性能通过。见
-  [EXP-20261008-002](experiments/2026-10-08-perf01a-three-speed-fixture.md)。
-- 2026-10-08预登记零噪声IR生成局部优化：保留非零噪声、热点、消息、1ms时钟与
-  5ms同步/40ms匹配截止；全仓245项轻量测试通过。35/50/70m/s各2秒640×512
-  真ROS开发机run均按原oracle达到20采用/20严格拒绝、20个Bundle/占据/地图闭合，
-  收据/资源/时钟和清理通过；此前全拒绝的失败run原样保留。
-  实测回调到占据P99分别49.703/49.834/60.720ms，仍均高于20ms。
-  设备采样时钟不可用且正式平台/功耗证据缺失，功能恢复不等于PERF-01达标。
-  见[EXP-20261008-003](experiments/2026-10-08-perf01a-zero-noise-candidate.md)。
-- 2026-10-08追加正式证据预检审阅：补齐两路设备时钟身份、非有限时间误差与
-  聚集/倒序采样的拒绝规则和合成负例；全仓248项轻量测试通过，预算配置
-  `--require-formal`仍为`reference_only`、10项输入阻塞。工具不能证明自报的
-  平台/时钟/功耗实际存在；标称频率帧间距上界保守，正式传感器抖动合同待确认。
-  见[EXP-20261008-004](experiments/2026-10-08-perf01-evidence-audit.md)。
-- 2026-10-08在已闭合70m/s大图fixture上另跑2秒匹配锁/线格式插桩诊断：
-  20采用/20严格拒绝与地图、资源、进程/端口清理通过；同帧只读联接通过，
-  最慢帧IR序列化/线格式到反序列化混合区间/反序列化约6.18/11.62/6.83ms。
-  插桩P99=44.872ms仍超20ms，无探针run约29.96ms的`ready_to_encode`
-  长尾本次未重现；不能将探针前后P99当受控A/B或宣称解决了调度成本。
-  见[EXP-20261008-005](experiments/2026-10-08-perf01a-probe-after-fastpath.md)。
-- 2026-10-09预登记IR回调借用列表的单候选、按70m/s大图运行A-B-B-A：
-  四次均20严格采用/20原由拒绝并完成地图闭合，250项轻量回归通过；
-  解码P50显著下降，但端到端P99的A/B中位数54.700/50.416ms，
-  降幅7.83%未达预设10%采纳门槛，默认保持关闭；四次均超20ms。
-  不改变严格拒绝、5ms同步、正式`reference_only`或目标硬件阻塞。
-  见[EXP-20261009-001](experiments/2026-10-09-perf01a-ir-decode-copy.md)。
-
-## 进行中
-
-2026-09-20线格式成本归因与旁路订阅对照已完成，见
-[EXP-20260920-004](experiments/2026-09-20-perf01a-wire-cost.md)。实际serialize/deserialize
-探针、两端身份审计及本次进程树CPU/RSS采样已落地；full/light/metadata正式汇总感知
-P99为33.257/31.377/27.546ms。metadata取消大图旁路订阅，独立IR无接收者，不能将该路
-发布尝试写作交付成功；bundle业务交付由两端记录核对。单个NumPy接收解码候选端到端
-降幅中位数0.950%，未达预登记10%，保留standard默认。全仓141项契约、33个短ROS run
-功能检查通过，15个正式run的20ms诊断全部失败。采样有可测CPU开销，GPU/NPU/功耗与
-目标机载平台仍未验收；SIM-01D长测已于2026-10-05通过，ENV-03归档/恢复仍未执行。
-
-2026-09-20大图耗时只读定位完成：最慢30.376ms样本中，bundle就绪至感知回调约
-18.806ms，回调内约0.817ms；内存微基准提示完整图像检查也有显著观察开销。
-分段计时源码写入两次因权限审查超时未执行；分析见[PERF-01预算](docs/PERF01_BUDGET.md)。
-该定位没有新增ROS性能验收结果。
-
-2026-09-20后续完整IR与同步故障检查完成：full_ir为640×512测试图；修复待clock状态
-被覆盖及逐像素深拷贝开销后，六个ROS场景功能检查通过，128项回归通过。
-大图40/40地图更新，但感知P99=30.376ms，高于20ms工程目标；PERF-01仍进行中。
-见[EXP-20260920-002](experiments/2026-09-20-perf01a-load-faults.md)。
-
-2026-09-20 PERF-01-A短时占位闭环技术验证通过：统一运行器等待订阅就绪后发送160样本，
-六路业务接收各160条、800条事件全部valid、160根样本闭合；实际地图和进程/端口清理通过。
-全仓122项契约通过。当前为静止单Radar点、2×2 IR、小格网；不作为35/50/70m/s或机载验收。
-SIM-01D补齐候选路径门控和只读checker，6项前置测试通过；该记录形成时长测仍未执行，
-后续长测见EXP-20261005-003。
-实现/失败/限制与09-18零事件报告被重建的证据偏差见
-[EXP-20260920-001](experiments/2026-09-20-perf01a-integration.md)。此技术结果不关闭PERF-01。
-
-2026-09-18已完成PERF-01输入参数冻结的第一步：用户确认35/50/70 m/s三个验收航速点，
-并指定ARS548为4D Radar参考，确认视场120°×30°、有效距离300 m，mid360为训练监督LiDAR参考。
-按常用工程估计补入Jetson Orin NX 16GB/25 W、Micro III Lite 640和低空场景/地图初始阈值；
-这些值仍需用户确认与实测，本次未启动性能仿真或感知/地图测量。mid360继续只属于
-`training_data_generation`监督支路，不进入在线SensorBundle、感知forward、定位或mapping。
-
-SIM-01C已按[方案](docs/SIM01C_FAULT_CLOCK_PLAN.md)完成F0—F7实际场景；SIM-SPEED-01
-九run技术矩阵通过。2026-09-17用户明确接受历史RED派生文件同语义重写及
-mtime变化的已披露偏差，要求保留完整记录、不伪造原时间且不尝试恢复；
-因此SIM-SPEED-01与SIM-01C已正式关闭。修复前RED、只读核查和修后九run
-分别保留在EXP-20260916-001/002/003，偏差处置见EXP-20260917-001。当前进行中的
-Phase 1工作还包括PERF-01和ENV-03恢复；SIM-01D已由独立长测关闭R-10，
-不能由短窗倍速结果替代其他持续性或性能门槛。
-
-ENV-03进行中：本地工作资产与保存责任已登记，第二份副本的介质/位置需在09-20前
-明确，10-15前完成恢复检查。LIVE/B1/B2已退出，本任务不留下仿真或回放进程。
-2026-09-18用户明确授权先建立Git提交并继续除归档外的任务，同时明确不授权、不执行
-外部归档；因此第二份独立副本及恢复验收保持未完成，后续实施接受本机单副本风险。
-交互终端仍按用户习惯选择Foxy(1) / Noetic(2)，工具会话未选择版本不作为安装故障；
-SIM-00A通过独立子进程使用Noetic，不改变父终端的ROS/Conda环境。
-
-SIM-01A/B/C已完成。2026-09-18已完成SIM-01D的32位微秒边界前置修复、独立候选构建、
-HIL_SENSOR/HIL_GPS边界RED/GREEN、SIM-00B初始化回归、SIM-SPEED getter回归和正式SIM-01
-Python 97/97契约回归；2026-10-05已完成独立连续运行器的跨边界长测、bag回读和清理对账。
-ENV-03外部归档未执行，本机单副本风险保持开放，PERF-01与完整Phase 1仍未完成。
-默认所有新增Python使用Conda Radar-Diffusion；不修改原环境和终端ROS菜单。
-实施分工已明确：simulation_engineer负责源状态/时钟，sensor_engineer负责坐标适配，
-system_architect负责契约审查，Technical Lead负责薄ROS包装、集成与管理文件。
+SIM-01C/SIM-SPEED-01历史派生结果mtime偏差已于2026-09-17由用户明确接受并关闭；
+原始事实与失败记录保留，处置见[ADR-P013及相关记录](docs/DECISION_LOG.md)。
 
 ## 计划
 
-2026-10-15已完成[Phase 1日期/范围复审](docs/PHASE1_DATE_SCOPE_REVIEW_20261015.md)：
-原目标日未通过，不删PERF-01或ENV-03关口；外部输入/授权与验收排程均未确认，
-**新退出日期待定**，不擅改原计划。建议输入到齐即复核，最迟在原Phase 2
-结束日2026-11-10复查风险（此为待确认管理检查点，非新退出日）。
-同日按计划允许的提前独立软件子范围完成
-[IFACE-01/SENS-TRAIN-01记录与标签审计](experiments/2026-10-15-iface01-sens-train-audit.md)：
-设备记录拒绝伪造时间来源/跨frame流；训练标签新增命中前保守free子集、
-越界free拒绝及严格布尔mask。RED先复现，随后15项设备、49项训练、
-全仓353项轻量测试及新目录12场景/36记录离线矩阵通过；不关闭完整Phase 2、
-IFACE-01真实设备
-或SENS-TRAIN-01模型质量。地图下一步仅准备
-[M1真实输入与资源验收矩阵](docs/M1_INPUT_RESOURCE_GATE_20261015.md)：
-当前缺实物输入/资源时钟，不能验收M1或提前开发M2；Phase 4原定2026-12-16开始。
-本次仍不改`.gitignore`：新增实验及被忽略测试不会自动出现于普通`git status`，
-后续版本纳入需逐文件审核；未提交/推送，未动同级研究仓库或历史run。
+OPT-02第二轮修复已完成（软件与fixture ROS范围）：442项轻量回归及7组独立ROS短测，
+证据见[EXP-20261027-003](experiments/2026-10-27-opt02-repair.md)。
 
-同日增量[EXP-20261015-002](experiments/2026-10-15-iface-replay-training-ray-m1-resource.md)：
-只读IFACE-01设备JSONL回放入口、训练场景离轴false-free拒绝、默认关闭的
-地图进程RSS诊断；359项轻量测试、12场景/36记录新目录离线回读及滚动/旧查询
-四次独立ROS fixture（滚动+旧三模式）均通过。地图采样仅11次、
-开发机RSS采样峰值45,383,680字节，
-没有真实设备来源、目标机/功耗及同run完整延迟分布，不能关闭M1、PERF-01、
-完整Phase 1/2或ENV-03，不启动M2/DEM/对照试验。原计划时间保持不变。
+按用户允许外部数据阻塞时提前进入下一阶段的要求，新增
+[跨阶段软件推进计划](docs/STAGE_ADVANCE_PLAN_20261027.md)：
+P3-SW-01/02/03、M1-SW-02与APP-SW-01已完成本批软件范围，
+证据见[EXP-20261027-005](experiments/2026-10-27-p3-m1-app-handoff.md)。用户再次授权后
+独立ROS实际通过，前轮自动权限审查超时事实保留于[初次记录](experiments/2026-10-27-p3-perception-engine-worker.md)。
+M2概率更新[具体方案](docs/M2_SOFTWARE_TRIAL_PLAN_20261027.md)的合成数据软件试制已获用户确认。
+M2-SW-01/02/03/04已完成合成输入、独立oracle、固定/滚动累计、时序/TTL及独立ROS交接。
+当前关闭的是M2合成软件试制，真实输入/质量与正式M1/M2验收仍独立登记。
+M3-DESIGN-01[具体方案](docs/M3_SOFTWARE_TRIAL_PLAN_20261027.md)已交付：拟用现有
+Uncertainty字段进行默认关闭的合成概率区间传播，区分输入/累计来源，缺失贡献使
+累计质量保持不可用，直到TTL重启或淘汰重建。不是方差、置信水平或真实校准结果。
+用户后续“继续”确认按具体方案推进合成软件试制，M3-SW-01已完成显式合同/profile、
+配置、输入和独立oracle；M3-SW-02随后完成固定累计，对保存的10场景/43输入预期一致。
+M3-SW-03随后完成区间随窗口滚动、TTL/淘汰/新run及有界状态的离线组合验证；
+M3-SW-04随后完成显式ROS选择、公开占据回放及应用质量检查交接，关闭M3合成软件工作包。
+M4-DESIGN-01随后交付[Scene Map/有界子地图具体方案](docs/M4_SOFTWARE_TRIAL_PLAN_20261027.md)，
+用户后续“继续”确认同一具体软件范围，M4-SW-01已完成显式注册合同、输入与独立预期；
+M4-SW-02随后实现显式纯Python有界Scene候选，对保存的8场景41输入52查询预期一致；
+M4-SW-03随后完成离线时序/TTL/目录淘汰/新run与资源、联合原子性组合；
+M4-SW-04随后完成显式ROS、公开占据回放及独立应用map查询交接，关闭固定合成注册下的M4软件工作包。
+按阶段顺序已完成M5-DESIGN-01具体方案：先规划独立地形高程层，明确TerrainPrior准入与兼容恢复，
+不把DEM直接转成占据观测；当前未实现DEM，完整阶段门槛保持。
+用户10-28追加“本周五前完成报告用ROS可视化界面”并明确必须RViz，优先完成APP-VIS-01。
+原生RViz报告版本已于10-28实现和验证；[启动/回放说明](docs/ROS_VISUALIZATION.md)可复现。
+用户随后明确需要三维场景与Radar/IR模拟，单独地图工作台不能满足完整可视化目标。
+SENS-VIS-01现已完成独立Gazebo功能级场景及标准RViz传感器显示/截图，
+见[专用入口](docs/SENSOR_SCENE_VISUALIZATION.md)；此前APP-VIS-01仅保留为地图工作台能力。
+用户随后明确继续M5-DESIGN-01；已交付[具体设计](docs/M5_TERRAIN_PRIOR_DESIGN_20261028.md)，
+用户继续授权后M5-SW-01已完成私有fixture合同/输入校验及独立预期；
+M5-SW-02随后完成独立纯Python地形候选/私有回放，对SW-01保存预期一致；
+M5-SW-03随后完成84事件/64版压力/五处故障和逻辑载荷组合，关闭私有离线合成软件子范围。
+M5-IFACE-DESIGN-01随后交付独立公共地形查询/状态/记录及兼容恢复具体提案；
+用户10-28明确授权后，M5-IFACE-SW-01已完成独立公共类型生成、逻辑合同/codec及记录schema离线验证。
+用户随后“继续”后，M5-IFACE-SW-02已实现Provider与独立ROS节点/clock/查询/状态并通过实际拒绝/新run恢复，
+用户10-29继续后，SW-03已完成客户端/公共录制与执行回放/可选RViz地形及旧场景兼容，
+关闭M5公共合成接口三步软件范围；记录v1无法表达的失败仍明确incomplete，不将其算完整重放。
+随后P5-DESIGN-01已交付[组合场景与需求矩阵](docs/PHASE5_SOFTWARE_COMBINATION_DESIGN_20261029.md)，
+按真实链分开paired-M1、显式逆观测M4及原生场景显示，明确旧地图墙钟存活/调用期限与地形录制边界；
+既有76项定向通过，未实现/运行新组合。用户继续后，P5-SW-01已完成
+[九组37子例输入/独立预期及实际线格式](docs/P5_SW01_INPUT_CONTRACT_20261029.md)，742次序列化、31项定向及全仓805项通过；
+owner/封存数仅独立声明，不冒充公共可观测字段。随后P5-SW-02已完成
+[A/B实际ROS组合与独立回放](docs/P5_SW02_ROS_COMBINATION_20261029.md)：33例/216项、旧默认入口及全仓813项通过；
+初次连接/关联/隔离设施失败与修复过程保留。随后P5-SW-03已完成
+[S09/C及软件全矩阵交接](docs/P5_SW03_NATIVE_DELIVERY_20261029.md)：本轮四例实际运行，
+复核A/B源码/冻结合同与收据后37例/228项通过，全仓819项通过；原生八图与清理证据已交付。
+P5-SW-01—03冻结合成软件工作包完成，正式阶段门槛保持。
+用户确认后，DELIVERY-SW-01已归并软件入口、八图报告与未关闭门槛；
+SIM-MOTION-DESIGN-01已按真实链形成单JSBSim时间源/受控Gazebo采样具体方案，
+57项只读/CLI/定向核验和64项既有测试通过，无新联动运行结论。
+直接下一项SIM-MOTION-SW-01，先冻结独立输入/预期与场景推进承载，不恢复研究质量任务。
+后续SW-01已完成[独立场景推进协议/输入与字节预期](docs/SIM_MOTION_SW01_CONTRACT_20261029.md)：
+20组实际生成消息逐字节一致，新增26项/全仓845项通过；未改变旧公共字段或运行入口。
+后续SW-02已通过[真实动力学/采样闸门](docs/SIM_MOTION_SW02_ENGINE_20261029.md)：250步/1s、
+10对实际采样、20 ACK、唯一clock/state/TF及运行期故障停止；正常/故障最终清理通过，
+首采样立即故障时的PX4启动中断255仍保留失败，不扩大为所有故障路径验收。
+SIM-MOTION-SW-03已通过[运动感知地图/窗口交接](docs/SIM_MOTION_SW03_DELIVERY_20261029.md)：
+同tick Context、公开查询/回放、故障停止、新run恢复和History显示均有实际证据。
+随后SIM-MOTION-SW-04-DESIGN已完成[有界多场景具体设计](docs/SIM_MOTION_SW04_MULTISCENE_DESIGN_20261029.md)：
+12项源码事实、9核心/3兼容用例、独立几何/空图/TTL预期与资源上界；54项既有定向及13探针通过。
+本轮只改文档，新增多场景未实施；下一项SW-04A先冻结独立清单/预期并离线核验。
+随后SW-04A已完成[独立清单/校验/预期与实际线格式](docs/SIM_MOTION_SW04A_CONTRACT_20261029.md)：
+77组协议/36公共往返、18合成源转换、运动66项/全仓885项通过；仅离线输入范围，未运行新多场景。
+直接下一项SW-04B显式装配/真实几何切换/场景化核验，SW-04C再完成最终矩阵及原生交接。
+随后SW-04B已完成[真实定向机制门](docs/SIM_MOTION_SW04B_ENGINE_20261029.md)：
+同FDM/实采S06空域、S07暂停切换/旧证据TTL/回波返回、S08中途故障及旧默认入口通过；
+运动77项/全仓896项通过。原48近边缘数量假设失败保留，明确改为原物理误差界下逐射线零豁免，
+不是调大误差或删边缘数据。下一项SW-04C最终9核心/3兼容及原生阶段图，完整阶段门槛保持。
+不自动延长自由动力学窗口，不新增控制指令，不恢复真实数据/研究质量任务。
+随后SW-04C已完成[最终同源码矩阵与原生交接](docs/SIM_MOTION_SW04C_DELIVERY_20261029.md)：
+9核心/3兼容、84组业务/121查询、独立回放与S05/S07阶段图通过；运动84项/全仓903项通过。
+四次失败分别记录姿态估计、IC冲突、合法空观测及RViz显示范围问题，修正后整套新run重跑；
+原物理容差、时间/身份门禁与1秒上限保持。下一项只做受控飞行联动具体设计审查，不自动控制飞行。
+随后SIM-FLIGHT-DESIGN-01已交付[具体方案](docs/SIM_FLIGHT_DESIGN_20261029.md)：
+已有执行器通路缺少当前周期/超时的严格拒绝证据，旧1秒自由动力学不能直接当受控飞行。
+先离线合同、再1秒只读诊断，后续才单独实施v2/长准备与受限命令；当前不改公共承载或运行默认值。
+用户继续后，SIM-FLIGHT-SW-01已完成[私有离线合同](docs/SIM_FLIGHT_SW01_CONTRACT_20261030.md)：
+固定AGL=.5m、显式缺包与float32执行器值、属性读回、FDM结果/时间及有界JSONL校验；
+新25项/旧运动84项/全仓928项通过。40s及100组采样只为静态合同，未运行；
+没有实际HIL包关联证明，binding_status仍unverified，control_gate_accepted固定false。
+下一项SW-02隔离宿主≤250步/1s实际只读诊断；ground IC仅进私有诊断，不送旧Gazebo v1端点。
+随后SW-02已完成[隔离诊断软件与实际短窗](docs/SIM_FLIGHT_SW02_DIAGNOSTICS_20261030.md)：
+正常源时间1s、断连接在.5s停止，原始wire/高度/JSONL与935项回归通过。
+实际无执行器回包，不能把初始属性零当作观测到disarmed或已施加零命令；当前周期对应关系仍无证据。
+ASL初次419.7假设修正为本模型径向高度独立几何核对，原微米界不变；失败/5s停止全部保留。
+下一项先SIM-FLIGHT-DIAG-DESIGN-02只读归因/最小补证方案，不直接放开SW-03长窗或SW-04控制。
+随后DIAG-DESIGN-02已交付[有界uORB补证具体方案](docs/SIM_FLIGHT_DIAG_DESIGN_20261030.md)：
+实际缺口收敛为PX4内部IMU/EKF/姿态选择/模式/混控/发送的当前run证据，尚无唯一根因。
+直接下一项SW-02B保持1s/250步，于125/250步读九类topic并只show三个参数；
+用现有listener现值分支，不安装ULog依赖、不重复无新增观察的短测，也不自动扩窗或发控制命令。
+随后[SW-02B软件与实际未通过交付](docs/SIM_FLIGHT_SW02B_PROBE_20261030.md)已实现私有合同/严格解析/有界客户端。
+实际第二次在125步读到三实例IMU，第二条estimator_status仅六实例标题，按原规则停止；21查询验收未通过。
+飞行49项/运动84项/全仓952项与旧normal/disconnect、真实genpy兼容通过，11自有PID退出。
+源码只能解释advertised不等于有载荷，不能据此判EKF字段值或唯一根因；下一项先空实例具体补证设计。
+随后[DIAG-DESIGN-03](docs/SIM_FLIGHT_DIAG_DESIGN03_20261030.md)完成空实例三态/独立诊断事件的具体设计：
+保留旧strict拒绝；拟显式新模式在完整/空实例混合时逐块保存，部分字段或异常仍停止。
+采集完整、载荷完整与控制门分别报告，单实例无标签不猜编号；16项只读核验/49项既有定向通过。
+下一项SW-02C先冻结18组独立预期再实现/运行补证；原1秒/250步、白名单/墙钟界保持，不自动控制。
+随后[SW-02C软件/实际未通过交付](docs/SIM_FLIGHT_SW02C_DIAGNOSTICS_20261030.md)已实现独立三态事件和显式诊断。
+125步九topic完成，250步第11次estimator_status含12处nan，按原有限数值规则停止；11查询/10合法事件，21次采集未完成。
+同451源码飞行69/运动84/全仓972项与旧两诊断/真实消息兼容通过，17自有PID退出；实际执行器仍0包。
+PX4原源存在主动NaN表达辅助源比值不可用的路径，不据此判数值崩溃或放宽合同；下一项先做该语义与隔离补证具体设计。
+随后[DIAG-DESIGN-04](docs/SIM_FLIGHT_DIAG_DESIGN04_20261030.md)已交付原生质量隔离具体方案：
+仅estimator_status两比值准确nan且同载荷源位符合固定条件时可显式标不可用，其他非有限仍停止。
+六实例原文的源位均符合拟议条件；20项源核验、16组独立掩码算例/69项既有定向通过，451源码保持。
+下一项SW-02D先冻结20组独立预期，再实施独立私有v2事件/显式采集；旧两个合同和失败不改，不自动控制。
+随后[SW-02D](docs/SIM_FLIGHT_SW02D_QUALITY_20261030.md)已完成独立私有v2及实际21次采集/三参数核对：
+六实例两比值共12处按同块固定源条件显式标不可用，其他非有限/畸形仍拒绝，旧两个合同不放宽。
+采集完整，正文/载荷不完整；已读六flags样本tilt/yaw未对齐、selected姿态缺失、实际执行器仍0包。
+飞行92/运动84/全仓995项与旧入口/消息兼容通过，458份源码运行期不变、27自有PID退出。
+随后[INIT-DESIGN-01](docs/SIM_FLIGHT_INIT_DESIGN_20261030.md)已交付无控制初始化准备与SW-03衔接方案：
+24份源文本/32项核验、旧21条事件重读与250条wire解码、92项既有飞行定向通过，458份源码保持。
+区分首次初始化、倾角精对齐、选中姿态和输出链；不把143个原始范围合格样本当内部收敛。
+下一项INIT-SW-01先做独立私有合同/字面量预期；新准备期、公共v2和命令尚未实施。
+随后[INIT-SW-01](docs/SIM_FLIGHT_INIT_SW01_CONTRACT_20261030.md)已完成新私有离线合同/fixture，
+源前后动力学/接触、整数时间/身份/四态质量和84项查询独立校验；合成ready也不产生控制许可。
+飞行127/运动84/全仓1030项与旧消息兼容通过，原458源码保持；下一项INIT-SW-02仅私有无控制准备。
+随后[INIT-SW-02](docs/SIM_FLIGHT_INIT_SW02_PREPARATION_20261030.md)实现独立宿主/运行器，
+实际第423步起收到全零未armed执行器，78包原戳均早于本步HIL4ms，仍无严格周期绑定。
+第500步前局部输入静稳可核对，但第30条selector原文含8处nan按原合同拒绝，完整准备未通过。
+故障/兼容与134/84/1037项回归通过不开放SW-03运行或控制；下一项先做selector槽位具体设计，不重复正常run。
+旧公共字段、默认M1/M2和研究后端状态保持；真实区间覆盖率/质量、真实DEM与占据融合未验收。
 
-2026-10-15已执行[Phase 1退出门禁正式复核](docs/PHASE1_EXIT_REVIEW_20261015.md)：
-现存SIM-01D三份报告均`passed=true`且跨边界，A/B/C及倍速只按既有记录
-认可软件子范围；当日PERF-01预算门禁仍为`reference_only/ready=false`、
-10项外部输入阻塞，`--require-formal`以退出码1正确拒绝参考模式；
-不能形成正式20ms或机载资源/功耗结论。ENV-03无新增
-外部归档授权或经验证的第二份副本/新目录恢复收据，单副本风险保持开放。
-因此完整Phase 1在原2026-10-15日期**阻塞，未通过退出**；原计划日期、
-门槛和历史记录保留，新日期/范围待单独评审。此次没有重读原始bag、
-重跑长仿真、执行外部归档或改动业务代码；2026-10-16的软件子项可独立推进，
-不得据此倒填Phase 1完成或提前对照试验。
+## 进行中
 
-2026-10-14完成[Phase 1退出门禁预复核](docs/PHASE1_EXIT_PREREVIEW_20261014.md)：
-仅核对既有SIM-01D验证/记录/清理产物（均通过），重跑只读PERF-01预算门禁
-仍为`reference_only`、`ready=false`、10项正式输入阻塞；ENV-03第二份副本
-仍未获授权。2026-10-15的正式复核尚未执行，完整Phase 1不宣告完成；
-该日缺输入时应分别保留阻塞并评审日期/范围，不自动改阶段计划。
-本次未接入硬件、未执行正式性能运行或外部归档，历史实验不变。
-
-同日无硬件软件续审：[PERF-01同帧只读复核](experiments/2026-10-14-perf01-phase1-readonly.md)
-核对四条既有A-B-B-A短测的各20个闭合样本；各run的20/20有效帧均高于
-开发机20ms诊断线，四条最慢同帧配对等待23.027—44.439ms、
-Bundle发送→回调9.390—20.157ms。分析未运行新ROS、未修改算法或放宽门限，
-不合并run分位数；正式门禁复跑仍为`reference_only`/10项阻塞，
-Phase 1和PERF-01不因此关闭。ENV-03只读核查还发现当前未提交的`.gitignore`
-整目录忽略`experiments/`和`tests/`，新记录与测试普通`git status`不可见；
-未修改用户现有规则、Git索引或执行归档，版本化方案需另行确认。
-SIM-01独立只读复核已在[预复核表补充](docs/PHASE1_EXIT_PREREVIEW_20261014.md)
-限定A/B/C/D历史产物范围：F6只是sensors本地`/clock`回退，F7是新run恢复；
-未重新回读全部原始bag或启动新的仿真，既有验收结论和10-15门槛不变。
-
-2026-10-08更新：[开发计划§4](docs/DEVELOPMENT_PLAN.md)保持PERF-01全项目第一优先级；
-预算、manifest及数值门禁预检已完成，但正式测量输入仍阻塞。
-10-03三条大图开发机短测感知P99为58.745/78.635/53.507 ms，均超20 ms且无物理采样时钟；
-10-04热点短测`passed=true`原仅核对IR帧身份/时间戳、图像尺寸和像素数；10-05的独立
-SENS-IR-01短测已按同帧值级oracle通过；SIM-01D的40分钟持续性随后已独立通过，ENV-03
-恢复验收仍未执行；不以传感器短测代替正式持续性或性能验收。
-原09-20 PERF-01及ENV-03日期已逾期，10-15 Phase 1退出存在风险，未另行确认新阶段日期。
-10-04计划修订未运行新ROS；10-05执行SENS-IR-01短测、PERF-01预算预检、SIM-01D独立
-持续性验收与轻量测试，未训练或运行研究模型。10-06完成平台/设备只读审计和正式证据
-预检契约测试；因当前主机与真实传感器不满足正式输入条件，未启动正式性能运行。
-
-| 执行次序 | 任务 | 主责任角色 | 目标日期 | 下一交付与完成边界 |
-| --- | --- | --- | --- | --- |
-| P0-1 | PERF-01 性能预算（进行中，正式输入阻塞） | Technical Lead | 原定2026-09-20已逾期；10-15复核 | [预算门禁](experiments/2026-10-05-perf01-budget-gate.md)、[manifest预检](experiments/2026-10-06-perf01-formal-preflight.md)及[证据数值预检](experiments/2026-10-08-perf01-metric-preflight.md)已覆盖结构和阈值反例；实际配置仍`reference_only`，无目标平台/真实Radar-IR/设备时钟/外部功耗证据；严格拒绝理由、5 ms同步门限与20 ms目标不变，开发机功能短测不等于机载实时通过 |
-| P0-2 | SENS-IR-01 同IR帧热点/背景数值守恒（已完成） | sensor_engineer | 2026-10-08计划门槛（实际10-05） | 新[EXP-20261005-001](experiments/2026-10-05-sens-ir-value-transport.md)真实ROS短测按IR sample_id核对100帧发布IR与20个采用它的SensorBundle的全像素、时间、热点与背景；失败run保留，旧`passed=true`未用于关闭本项 |
-| P0-3 | SIM-01D 持续性验收（已完成） | simulation_engineer | 2026-10-15原阶段目标（实际10-05完成） | [独立长测](experiments/2026-10-05-sim01d-continuity.md)有效跨度`2400004000000 ns`并跨越32位微秒边界；bag回读、状态/时钟对账和清理通过；不等同于PERF-01或完整Phase 1 |
-| P1-1 | IFACE-01 定位权威与驱动/业务接口（进行中，T-14及fake Radar值级fixture子范围通过） | system_architect | 2026-10-15 | [ARS548/Mid-360设备时间合同](experiments/2026-10-13-device-time-contract.md)、[设备时间记录审计](experiments/2026-10-13-device-time-record-audit.md)、[T-14 fixture](experiments/2026-10-14-t14-odom-tf.md)及[Radar值级核对](experiments/2026-10-16-iface-radar-height.md)通过；AircraftState仍为唯一状态权威；真实设备记录回放/跨设备时钟误差、真实协方差和正式平台仍未验收 |
-| P1-2 | SENS-TRAIN-01 训练监督生成支路（进行中，ROS直线/偏航、12场景、高度/无回波及体素覆盖/边界fixture子范围通过） | sensor_engineer | 2026-11-10 | [ROS偏航闭环](experiments/2026-10-13-sens-train-yaw-ros.md)、[ROS直线闭环](experiments/2026-10-13-sens-train-motion-ros.md)、[高度矩阵](experiments/2026-10-16-iface-radar-height.md)、[完整体素覆盖](experiments/2026-10-20-sens-train-voxel-coverage.md)和[DDA边界](experiments/2026-10-20-sens-train-dda-boundaries.md)软件子范围通过；真实标定/设备时钟/规模/模型质量仍未验收 |
-| P1-3 | ENV-03 版本与产物管理基线（外部副本未获授权） | project_manager | 原定2026-09-20已逾期；10-15复核 | 规则和首次提交已有；无新授权不得执行外部归档/恢复验收，本机单副本风险保持开放 |
-| P2 | ALG-01及后续研究/高级地图（计划） | perception_engineer | 2026-11-10起按阶段评审 | 先核对研究前置；占位地图功能、真实融合质量及DEM/飞行分别验收 |
-
-SIM-SPEED-01及SIM-01C已于09-17正式关闭，SIM-01A/B/C成果及原失败记录保持。
-表中角色尚未分配给具体人员时由Technical Lead协调，执行次序不表示已有并行人力。
-任务实施先遵守根AGENTS的计划与确认流程；10-15若门槛未过，另行评审日期，
-不得用省略测试或自动顺延宣布Phase 1完成。
-
-## 风险
-
-| 编号 | 风险与影响 | 主责任角色 | 关闭条件 |
+| 任务 | 主责任角色 | 下一交付 | 完成条件 |
 | --- | --- | --- | --- |
-| R-01 | 构建、静止状态/时钟、300秒记录回放、F0—F7异常恢复、短窗倍速及SIM-01D持续性已通过；环境恢复仍未验收，Noetic/Foxy均已结束支持 | simulation_engineer | 环境恢复通过后冻结ADR-P001；候选/运行决定见ADR-006至011及ADR-P013 |
-| R-02 | 研究正式推理启动引用缺失CLI，模型质量/速度未验收 | perception_engineer | ALG-01和真实后端小样本验证；不阻塞占位模式 |
-| R-03 | 航速点和一套工程估计已形成，但机载硬件、IR镜头/同步、场景、地图与质量阈值仍未确认或实测 | Technical Lead | PERF-01及阶段细化，形成可测量验收条件 |
-| R-04 | model_lidar逻辑参考系与Body/Radar关系、真实training_lidar外参和跨设备时钟误差仍未验证；ARS548/Mid-360字段语义已按型号固化，功能级非零扫描合同已验证 | sensor_engineer | 完成真实标定/独立设备记录/ROS记录验证和时钟残差审计；不要求在线LiDAR |
-| R-05 | 低空场景已有初始估计，但场景几何和热属性来源未确认 | simulation_engineer | ADR-P003及已知场景传感器测试 |
-| R-06 | 已建立提交基线4bd0c33；第二份资产副本和恢复验收未完成，用户不授权归档 | project_manager | 保持本机资产；外部副本任务仅在后续获授权后执行 |
-| R-07 | GPU查询在沙箱外仍报NVML驱动/库版本不一致，阻塞GPU可用性验收 | integration_engineer | 独立确认修复范围后复测NVML和目标环境CUDA；不阻塞CPU上的环境设计 |
-| R-08 | 接入/预热/双门控及F0—F7异常整run停止已实测通过；协方差仍未知 | simulation_engineer | 保持未知质量，后续补可用协方差来源，不直接改名原始话题 |
-| R-09 | SIM-00B入口已规避旧启动器：独立PID/完整日志及清理实测通过 | integration_engineer | 本入口范围已关闭；后续启动装配保持相同进程保护要求 |
-| R-10（已关闭） | 桥接32位微秒窄化的前置修复、独立候选和跨边界持续运行已完成；实时记录、bag回读及清理对账通过 | simulation_engineer | 2026-10-05 [SIM-01D](experiments/2026-10-05-sim01d-continuity.md)满足至少40分钟有效持续性和边界checker；不并入SIM-SPEED-01关闭 |
-| R-11 | SIM00B-INIT-01已应用，初始化/消息回归、完整构建及静止遥测通过 | simulation_engineer | 当前独立SITL入口范围已关闭；不代表全部HIL/串口路径均已审计 |
-| R-12 | 零时长与非零扫描训练fixture的ROS图/私有JSON记录、离线PointCloud2受限适配、型号时间合同、设备记录审计及T-14可选镜像已验证；真实raw驱动、公共ROS逐点时间、真实标定/大规模监督未验收 | system_architect | [EXP-20261014-008](experiments/2026-10-14-t14-odom-tf.md)只关闭T-14软件fixture子范围；IFACE-01剩余实机回放、时钟残差、真实协方差、T-13仍待通过，不得关闭Phase 2/3 |
-| R-13（已关闭） | SIM-SPEED-01两行修复及九run技术矩阵通过，但一份历史RED派生`scenario-result.json`被同语义重写、mtime改变，未满足方案§6/§7证据保全门禁 | simulation_engineer | 2026-09-17用户明确接受已披露偏差并关闭本风险；保留完整记录、不伪造原时间、不尝试恢复，且不用本处置关闭R-10/SIM-01D |
-| R-14（已关闭） | 10-04 fake IR热点ROS短测只检查IR身份/时间和Bundle尺寸/像素数量，旧`passed=true`不能证明像素传输/配对守恒 | sensor_engineer | 2026-10-05 [SENS-IR-01](experiments/2026-10-05-sens-ir-value-transport.md)独立真实ROS run按同IR sample_id及run/clock/frame对齐100帧原始发布与20个Bundle采用帧，曝光时间/全部像素及热点/背景通过；不关闭PERF-01、SIM-01D或训练监督隔离 |
+| IFACE-01 / Phase 2 | sensor_engineer | 真实Radar/IR原始记录、安装外参、设备时钟映射与质量来源 | 独立记录回放与跨设备时间/坐标门禁通过；在线图无训练监督泄漏 |
+| SENS-TRAIN-01 | sensor_engineer | 真实标定、规模与标签/训练质量证据 | 不以理想fixture覆盖率或无回波替代真实监督质量 |
+| ALG-01 / Phase 3真实后端 | perception_engineer | 按用户要求暂不研究模型质量；工程软件按P3-SW计划先行 | 研究任务恢复且候选质量门通过后，分步验证权重/forward/适配；本仓不修改研究仓库 |
+| M1 Local Map | mapping_engineer | [真实输入、资源与查询时延矩阵](docs/M1_INPUT_RESOURCE_GATE_20261015.md) | 正式M1→M2验收门槛保持；已确认的合成软件试制独立推进，不以cell上限推断机载RSS达标 |
+
+SW-02B/C原实际验收未通过，失败与交付记录保留在上文链接；SW-02D是独立补证，
+不回填旧验收，也不再将重复旧失败列为当前任务。
+
+研究仓库现有候选已被质量审计标记为rejected_for_integration，依据保留在
+[历史快照研究审计段落](docs/PROJECT_HISTORY_20261027.md)与[组件登记](algorithms/README.md)。
+research模式继续明确不可用，不回退placeholder；本仓不修改同级研究仓库。
+
+## 阻塞与风险
+
+| 范围 | 状态 | 缺少输入或关闭条件 |
+| --- | --- | --- |
+| PERF-01 | 阻塞 | 正式目标平台、设备配置、20ms起止端点、采样时钟/跨钟映射、持续时长及资源功耗证据；门禁仍为reference_only |
+| ENV-03 | 阻塞 | 第二份独立副本及恢复验收未完成；用户未授权外部归档，不执行复制或恢复 |
+| 完整Phase 1退出 | 阻塞 | [10-15正式复核](docs/PHASE1_EXIT_REVIEW_20261015.md)未通过；[新日期/范围](docs/PHASE1_DATE_SCOPE_REVIEW_20261015.md)待输入与确认 |
+| 完整Phase 2/3 | 进行中 | 真实设备、标定/时钟及真实Radar-IR后端质量；fixture子范围完成不关闭整阶段 |
+| GPU与硬件资源 | 阻塞 | 既有NVML/CUDA可用性及机载资源证据仍需独立验证；不妨碍CPU fixture |
+| 高速实时与地图资源 | 阻塞 | 35/50/70m/s只具功能级证据；默认异步40ms等待和正常场景一半Radar拒绝不构成20ms/低丢帧验收 |
+| 受控飞行准入 | 阻塞 | [INIT-TIME-SW-01](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)已通过单profile 10s/98采集/双末检查点准备门；严格执行器周期绑定/非零因果、长窗采样/命令/正常arming及真实离地仍未验收，控制false/绑定unverified。旧1008截断失败保留，下一项仅公共v2离线合同 |
+| 真实地形集成 | 进行中 | [独立真实高程读取/查询/显示](docs/REPORT_IMPROVEMENTS_20261030.md)已完成；真实数据profile/公共服务、地形与Gazebo空间注册和占据融合继续分步实施 |
 
 ## 下一步任务
 
-2026-10-16 fake Radar值级核对与高度/无回波标签矩阵已完成软件子范围；下一步仍需取得IFACE-01真实设备原始记录、
-跨设备时钟映射/误差及质量来源，用只读JSONL工具复核解码合同，同时
-保留原始包供真实性复查；SENS-TRAIN-COV-01完整体素覆盖与SENS-TRAIN-COV-02边界
-软件fixture子范围已完成，SENS-TRAIN-01仍需真实标定、设备时钟、规模和训练质量证据。
-外部输入之前仅开展经确认的
-具名fixture，不把未知、过期或无回波写成free，训练LiDAR继续与在线链路隔离。
-T-13A在线占位图隔离软件子范围已完成；T-13完整仍需研究后端forward边界审计，不能以
-当前占位图运行时图结果代替模型质量或真实部署证据。
-地图M1真实输入、同run进程RSS/更新/查询延迟和连续场景门槛按
-[待执行矩阵](docs/M1_INPUT_RESOURCE_GATE_20261015.md)先收集证据；
-M1正式通过前不实施M2概率、DEM或科研对照，阶段日期保持原计划。
+1. SIM-FLIGHT-SW-03A（计划；主责任integration_engineer）：按[原v2方案/本次交接](docs/SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md#6-下一任务与未验证能力)先冻结独立预期，再新增ufm_flight_contract离线逻辑/严格codec及独立端点合同，复用现有SceneFrame/SceneStep/SceneCaptureAck生成类型；v2/v1交叉拒绝、冻结ground注册/10000步与100个未来采样点，实际生成消息序列化/旧字节兼容和轻量回归。旧字段/入口/v1预算保持；本项不启动30/40s运行、插件端点/节点或控制，研究质量继续暂缓。
+2. 报告改进已交付，真实高程服务与场景注册待独立具体方案；不重复已通过的演示、P3交接或客户端短测充作新任务。
+3. 真实设备到位后恢复IFACE-01及标定/时钟验收；PERF-01与ENV-03独立跟踪。研究模型质量按用户要求暂不安排，research继续fail-closed。
 
-2026-10-14最新状态：[Local Map纯业务单点查询](experiments/2026-10-14-local-map-query.md)
-及其[ROS单点服务](experiments/2026-10-14-local-map-query-ros.md)软件子范围已完成：
-7项纯业务定向、11项查询/ROS定向、338项全仓轻量测试通过；消息构建和实际ROS
-启用/关闭/未配置阈值三种fixture均通过。启用复测包含30次有效查询、5条观测发布、
-2次快照和并发只读，端口/Python清理通过；默认`enable_query=false`保持旧链路行为。
-首轮连接图检查因ROS仿真时间自动订阅公共`/clock`失败，失败目录保留并已修正图
-规则，仍禁止传感器、状态、Odometry、Radar及训练LiDAR订阅。当前关闭固定网格单点
-查询软件子范围，不代表滚动窗口、概率融合、模型质量、正式PERF-01或对照试验通过。
-下一步为滚动局部地图的具体方案、契约和测试矩阵，实施前仍需另行确认；不参考开题计划
-时间，不以硬件缺失为由倒填正式PERF-01或提前对照试验。
+各项范围、输入、交付、工时估计与验收见[详细计划](docs/STAGE_ADVANCE_PLAN_20261027.md)。
+后续提交仍逐文件审查并需单独授权；软件提前开发不表示完整阶段已通过。
 
-后续经用户确认实施[MAP-ROLL-01基础滚动Local Map](experiments/2026-10-14-local-map-rolling.md)：
-可选整格odom移动窗口，以OccupancyObservation自带观测时刻SpatialContext中body位置
-定位，旧固定模式仍为默认。10项滚动定向、348项全仓轻量测试通过；独立ROS
-滚动fixture有5次快照、7条occupancy、20次查询及清理/图隔离通过，旧三种查询
-模式及PERF-01-A旧入口回归通过。首轮ROS fixture身份复用失败及沙箱端口受限
-记录保留，修正后重跑通过。此为基础滚动软件子范围，不代表Phase 4整体关闭；
-真实机载地图RSS/时延、设备时钟/功耗、正式PERF-01、概率累计、DEM或对照试验
-均尚未验证/仍需外部输入。按DEVELOPMENT_PLAN阶段时间执行，对照试验最后开展。
-
-2026-10-14继续推进：[T-14 Odometry/TF兼容镜像](experiments/2026-10-14-t14-odom-tf.md)
-已完成12场景、36组离线记录，35/50/70m/s、偏航、插值、遮挡及无回波均有具名
-功能级fixture证据；observed=1.09375%、最大补偿残差3.08461e-7m只是理想小场景
-统计，不是传感器精度、感知召回或数据充分性。新矩阵复现并修复同一命中表面的
-float64标签索引分裂，40项定向、309项全仓轻量测试及motion/single/multiray
-三个实际ROS入口回归通过；失败run与中间版本报告保留。随后偏航/插值接入ROS训练
-短测：20组schema 0.2记录、22条状态/clock收据、20个插值回波和20个无回波时间槽
-通过独立几何/标签/ROS收据核验；实际run及图审计见[ROS偏航记录](experiments/2026-10-13-sens-train-yaw-ros.md)。
-此结果仍是运动学fixture，不是实机时钟或固定翼动力学验收。T-14随后完成可选Odometry/TF
-兼容镜像的ROS fixture验收，下一步转入基础 Local Map 契约与占位链路；真实设备、正式
-PERF-01、研究模型质量及对照试验仍不前移。
-
-2026-10-13用户明确无硬件/实测记录，并确认继续独立软件任务：
-[非零扫描ROS训练闭环](experiments/2026-10-13-sens-train-motion-ros.md)已完成，
-实际ROS `motion`短测20组记录及两个旧入口回归通过；31项定向、300项全仓轻量
-测试通过。首轮XML-RPC超限启动失败保留，配置改为本地读取，纳秒值未截断。
-当前可执行下一关口是更多几何/运动场景及训练数据覆盖/补偿误差统计，随后推进
-Odometry镜像/唯一TF已在2026-10-14的T-14 fixture中验证；下一步按项目阶段建设基础
-Local Map，真实设备和功耗仍为外部输入阻塞，各新增范围仍先评审具体方案。
-真实设备记录、标定、跨设备时钟、功耗和正式PERF-01继续记录为外部输入阻塞，
-不再作为独立仿真训练路径的前置。研究模型接入和对照试验不前移。
-下文保留此前计划及失败历史，不以新子范围通过重写原结论。
-
-2026-10-08优先顺序以[开发计划§4.1](docs/DEVELOPMENT_PLAN.md)为准：PERF-01
-预算边界、manifest与证据数值预检已完成，下一步仍是取得正式平台、IR/Radar配置、20 ms起止端点和采样时钟；
-本日三航速大图旧短测因IR生成迟于时钟未闭合，预登记的零噪声生成候选已恢复
-三档功能级闭合，但回调到占据P99仍为49.703/49.834/60.720ms；继续按真实收据
-定位剩余配对等待与线格式成本，不改严格配对门限，也不把功能通过写成20ms达标；
-SENS-IR-01值级门禁与SIM-01D跨边界持续性均已独立通过。下一项按计划推进
-SENS-TRAIN-01，但[同场景训练监督与IFACE-01时空契约具体方案](docs/SENS_TRAIN_01_IMPLEMENTATION_PLAN.md)
-在2026-10-08仍待确认；2026-10-10用户确认最小子范围并完成具名fixture、训练专用
-LiDAR节点与标签、训练/推理分图的[独立ROS短测](experiments/2026-10-10-sens-train-01-fixture.md)。
-因此下一步聚焦IFACE-01未闭合的真实驱动载荷/时间/定位权威边界和SENS-TRAIN-01多场景
-标签质量、非零扫描运动补偿；PERF-01正式输入仍是项目管理第一优先，研究模型接入
-及科研对照试验留待上述合同和可复现数据门禁之后。
-2026-10-10用户说明正式平台、物理时钟和功耗暂缺：PERF-01正式门禁维持阻塞，
-不停用既有预算与证据预检，但本轮执行先转向不依赖设备的[IFACE-01受限
-PointCloud2 fixture及双射线训练监督](experiments/2026-10-10-iface01-sens-train-multiray.md)。
-下一独立开发关口为将ARS548/Mid-360字段合同接入真实记录格式审查、设备状态/原始包
-记录和公共记录路径；本轮已完成设备时间/接收时间分离的JSON-ready输入审计；功能级标签边界
-审计已扩展至遮挡、量程、FOV及三类场景矩阵；
-本次已先完成不依赖设备的型号字段合同、非零扫描纯函数合同与审计，但真实设备接口仍需
-原始记录、时钟状态和跨设备误差。ALG-01研究接入和科研对照试验不前移，对照试验继续
-放在工程数据门禁和接口闭合之后。
-当前最小外部输入为：目标平台唯一ID/功耗模式、实际Radar频率与物理时间误差、IR变体/镜头/触发
-与时间误差、正式起止端点、设备时钟映射、连续时长及资源/功耗/温度/丢帧证据。输入未到位前
-不得填充正式配置、启动长测或将`formal_ready`写成性能通过。
-严格拒绝理由、5 ms门限及20 ms目标保持，Phase 1、训练LiDAR和真实融合均未因
-10-05功能级值级短测获验收。以下按日期保留原定位、失败与诊断记录。
-
-2026-09-23补齐异步验收边界：历史640×512矩阵分别6/7、10/14通过，整体失败；
-包含容量拒绝、IR实际迟到和墙钟过期导致的oracle理由差异，原失败产物保留。
-见[EXP-20260922-001补充](experiments/2026-09-22-perf01a-async.md)。
-“高速运动时空一致性基线”的小图功能短测已完成，见
-[EXP-20260923-001](experiments/2026-09-23-perf01a-motion.md)；大图normal功能通过，
-但大图recovery严格oracle失败，20ms实时门槛继续阻塞PERF-01。提前配对`exact`
-仅对同刻IR和状态有效；不同步/历史位姿偏差仍等40ms。接收锁等待、回调内解码及
-缓存/发布已量测；ROS回调前大图反序列化/排队及格网边界量化仍需进一步定位，
-不得调宽5ms同步门限或抹去失败记录。
-
-2026-09-23追加[EXP-20260923-002](experiments/2026-09-23-perf01a-boundary-wire.md)：
-按实收Radar点和历史变换的连续odom坐标量化格网，并单独检查真值世界误差，
-50m/s的4.25/6.25m边界新ROS短测通过，旧边界失败保留；全仓196项契约通过。
-可选真实ROS线格式审计覆盖IR/Bundle的发送serialize、接收deserialize及回调，
-70m/s大图normal的exact/deadline功能通过但P99=44.181/79.776ms，
-大图recovery的Radar19拒绝理由仍与理想1x oracle不同，整run失败保留。
-重复大图recovery再次于Radar19失败；第二次大图deadline出现221条状态已接收、
-仅219条发布的末尾排空失败，新失败run亦保留。这仅缩小了承载定位范围，不构成
-20ms实时或稳定配对收益验收；下一步先确立状态/clock排空门禁及双时钟oracle边界，
-格网合同不得以容差掩盖真实体素漂移。
-
-2026-09-23继续[EXP-20260923-003](experiments/2026-09-23-perf01a-clock-drain.md)：
-runner现在等待真实source clock到达matcher、全部源状态发布且pending清空后才
-请求finish；大图deadline在2200ms/221条状态短run验证通过，全仓198项契约通过。
-双时钟诊断确认大图recovery Radar19所见旧IR按实际墙钟未过期、理想1x
-则已过期，但仍保持原预登记严格oracle失败。两次新增探针参数编码失败run
-保留，未抹去EXP-002的末尾状态排空失败。大图修后感知P99=81.030ms仍未达
-20ms；新的理由验收政策、长期重现及机载资源继续待定。
-
-2026-09-24按[EXP-20260924-001](experiments/2026-09-24-perf01a-dual-clock-preflight.md)
-预登记并执行70m/s大图normal的AB/BA四个2秒run及recovery一个run；5/5严格
-功能通过，均正常清理，但五条感知P99均超20ms。recovery此次IR24在Radar19
-决策前墙钟过期，理由与理想oracle一致；09-23旧run在决策后过期且仍保持失败。
-诊断加了候选终态/身份和决策覆盖负例，全仓200项契约通过。
-双时钟理由政策仅为待确认提案，不能用此次通过替历史失败背书或关闭PERF-01。
-
-2026-09-24按[EXP-20260924-002](experiments/2026-09-24-perf01a-ir-transport.md)
-逐样本归因后，仅评估IR订阅`TCP_NODELAY`单候选：70m/s、640×512
-normal/exact四条2秒A/B/B/A严格功能均通过，端到端P99分别为
-48.384/53.779/46.431/50.356ms；未在两组都降低至少10%，
-**未采纳**，显式诊断选项保持默认关闭。5ms同步、严格oracle和20ms
-目标不变；PERF-01的大图到达/发送/锁等待及目标机载承载仍需继续定位。
-
-2026-09-24 [EXP-20260924-003](experiments/2026-09-24-perf01a-critical-path.md)
-对上述四条run开展只读逐样本关键路径复核：各20条采用样本身份闭合；
-尾部既有IR晚到/反序列化，也有25-30ms回调后待决定和约27ms Bundle
-混合排队区间。下一轮先补齐状态/clock/worker锁与配对就绪的时间证据，
-再预登记单点优化；尚未执行该定位run，不能断言单一瓶颈或实时达标。
-
-2026-09-26 [EXP-20260926-001](experiments/2026-09-26-perf01a-match-trace.md)
-完成默认关闭的matcher标量追踪及逐样本只读关联；四条独立2秒run
-中首条因IR85实际回调越过截止导致Radar34严格oracle失败并保留，
-后三条严格功能通过但P99为60.528/59.226/57.276ms，均超20ms。
-终版trace的20条采用样本闭合：Radar22就绪到worker锁21.143ms，
-其中另一状态回调持锁20.298ms；Radar32 worker锁内到决定18.228ms。
-均为墙钟、尚未区分CPU和调度，下一步先测状态回调和worker内部阶段，
-再预登记单点性能候选；不得用新增探针短测宣称实时验收或抹去失败。
-
-2026-09-28按[EXP-20260928-001](experiments/2026-09-28-perf01a-stage-trace.md)
-在默认关闭的追踪中补充分段墙钟/线程CPU，新目录单条70m/s大图
-2秒run严格功能通过（20采用/20拒绝，排空和清理通过），
-端到端P99=56.002ms，20ms继续失败。长段分别涉及
-`matcher.advance`、`matcher.add_state`、Bundle编码/发布和统计发布，
-不是可归咎一个阶段的稳定瓶颈；下一步重复诊断后才可预登记
-单点优化。双时钟理由oracle仍严格，历史失败产物不变。
-
-2026-09-28按[EXP-20260928-002](experiments/2026-09-28-perf01a-stage-repeat.md)
-完成同配置三条70m/s大图、normal/exact、2秒的独立重复诊断；
-每条20采用/20拒绝，严格功能、wire、状态/clock排空、运动地图与
-进程清理通过，P99=59.749/49.122/53.014ms，均未达20ms。
-最慢三个采用样本中CPU与墙钟同超10ms的stage分别为
-`decision.emit`、`matcher.advance`、无，未满足跨run重复判定；
-不采纳单点优化或降低门槛。短run仅诊断，SIM-01D及机载承载
-仍待独立验收。
-
-2026-09-28 [EXP-20260928-003](experiments/2026-09-28-perf01a-end-to-end-wait.md)
-只读关联上述三条run的60个采用样本，形成大图端到端等待归因表：
-IR真实回调与线/业务解码、配对就绪和worker获锁、决定与Bundle发送、
-感知接收及占据就绪均按同根样本对齐。最慢样本的长段分别落在
-就绪后未解释的worker入锁前间隔、`matcher.advance`、IR反序列化；
-另有Bundle传输/排队混合区间和clock/state持锁长段，不能将
-不同样本阶段P99相加或归因于单一可重复瓶颈。现有账本不能解释
-关键空档，已登记仅在确认范围后执行的默认关闭标量探针及新目录
-短测门禁；未运行补测、未选择A/B或修改matcher。严格拒绝理由、
-5ms同步与20ms目标不变，PERF-01仍进行中。
-
-2026-09-28按[EXP-20260928-004](experiments/2026-09-28-perf01a-wait-probe.md)
-为默认关闭的追踪补充worker睡眠/醒来与锁内线程CPU缺口，
-不改变matcher业务或ROS传输。新目录串行三条70m/s大图
-normal/exact、2秒run均严格功能通过（各20采用/20拒绝，
-wire/地图/clock及状态排空/资源/清理均通过），P99分别
-90.011/47.413/53.940ms，仍超20ms；最慢样本分别体现
-IR接收前混合等待、决定后Bundle编码与IR反序列化等不同长段。
-决定前>=10ms墙钟及CPU的命名stage仅一条run的
-`matcher.advance`满足，未选单点A/B，原始旧run及阈值不变。
-探针有开销，尚不能确认机载实时性或纯网络/调度原因。
-
-2026-09-28 [EXP-20260928-005](experiments/2026-09-28-perf01a-20ms-feasibility.md)
-只读复算上述三条新run全部60个采用样本，按Radar实际回调、
-IR实际回调、matcher决定、Bundle线序列化、感知回调和占据就绪
-组成逐样本互斥时间表。三条run分别20/20样本超过20ms，
-各自最快亦为23.155/22.689/22.099ms；43/60个样本仅IR
-回调偏移与Bundle线序列化起至感知回调两个互斥区间已超20ms。
-这是当前带探针ROS路径的常态预算冲突，非目标平台物理不可达
-证明；不同样本分位数不相加，不据此选单点A/B或放宽门槛。
-下一步先确认20ms计时边界及目标平台预算，并明确混合区间的
-可观察/可控部分；新试验或架构改动另行预登记。
-
-2026-09-29 [EXP-20260929-001](experiments/2026-09-29-perf01a-budget-boundary.md)
-只读核对20ms目标与实际计时：异步诊断测量Radar真实ROS回调到
-`occupancy_ready`，不覆盖设备采样到回调、占据发布到订阅者收到；
-matcher的`data_age_ns`是仿真时钟域，不能与墙钟时延相加。
-现有机载平台为参考估计，真实采样参考点、两个20ms指标的终点
-与跨设备时钟误差仍待Technical Lead确认；当前不新增补测、
-不选单点A/B或调整matcher。原三条短测的20ms诊断失败结论、
-严格拒绝理由和5ms同步门限不变，PERF-01仍进行中。
-
-2026-10-03预登记[EXP-20261003-001](experiments/2026-10-03-perf01a-endpoint-probe-prereg.md)：
-因现有账本仍有未归因区间，下一轮仅补齐输入端点/时钟域标记、worker与state/clock
-混合等待、以及occupancy/map下游端点。探针默认关闭，不记录大图，不改变匹配决定、
-Bundle格式、严格拒绝理由、5ms同步或20ms目标；P1没有真实设备采样时钟时必须报告缺失，
-不得用fixture时间戳补齐；当时仍待Technical Lead确认验收起止点和目标平台，故未执行该预登记短测。
-
-2026-10-03按[EXP-20261003-001](experiments/2026-10-03-perf01a-endpoint-probe.md)
-完成默认关闭的端点/时钟探针三条独立短测：70m/s、640x512 IR、exact、
-`--wire-profile --match-trace`，三条严格功能及资源/清理门禁通过，
-Radar回调到占据P99为58.745/78.635/53.507ms，仍未达20ms。
-占据就绪到MapSnapshot事件增量P99仅2.085/3.314/2.049ms，不能解释主长尾；
-输入采样时钟均为unavailable，不能形成物理数据年龄。决定前混合等待、Bundle
-发送混合区间和未覆盖间隔仍跨run不重复，未满足A/B采纳条件，不修改matcher。
-
-PERF-01-A已完成分段计时与观察器对照，见
-[EXP-20260920-003](experiments/2026-09-20-perf01a-segmented-timing.md)：134项契约通过，
-18个10秒大图对照均200/200闭合、零意外丢帧且清理通过；3个故障回归准确拒绝并恢复。
-64KiB基线full/light汇总感知P99为32.376/33.965ms，最大段为bundle发送至感知回调；
-像素扫描明显增加观察器CPU，但省略扫描或关闭新增探针均未稳定降低尾延迟。
-4MiB读缓冲候选未显示稳定收益，默认保留64KiB；18个20ms诊断全部失败，原结果保留。
-上述EXP-003之后，已完成实际线格式细分、取消大图旁路订阅对照、进程树CPU/RSS及
-单候选复测，详见EXP-004。编解码存在明显实际CPU成本；NumPy候选未达采纳条件，
-标准解码和20ms目标保持。独立传感器发布/有界匹配缓存已按
-[EXP-20260922-001](experiments/2026-09-22-perf01a-async.md)完成；航速功能级短测
-已另按EXP-20260923-001执行，机载GPU/NPU/功耗仍独立待验。静止短时复现：
-`bash ros_ws/sim01_env.sh python ros_ws/perf01a_run.py --duration-s 8`。
-09-18历史零事件派生报告被重建的偏差已记录，尚无用户处置，不据本次技术通过消除该事实。
-
-PERF-01仍是第一优先级。35/50/70m/s航速点、ARS548参考Radar和mid360训练监督参考已于
-09-18确认；Jetson Orin NX/25 W、Micro III Lite 640和低空场景已按常用工程估计填入，
-仍需确认镜头/同步、平台可用性和实测阈值，预算不能写成性能验收通过。
-SIM-SPEED-01短窗技术矩阵通过不构成这些指标的验证。2026-09-17用户已接受
-证据保全偏差，SIM-SPEED-01与SIM-01C已正式关闭；已披露历史继续保留，
-不伪造原时间、不尝试恢复。
-继续保持原采样时间、未知质量、Conda默认与仅清理本次PID的规则，不放宽业务超时。
-R-10的桥接32位微秒前置修复已于09-18完成：HIL_SENSOR/HIL_GPS四个边界值的C++ RED/GREEN、
-独立候选构建和短回归通过；专用SIM-01D运行器、配置、checker及契约单测已补齐。2026-10-05
-独立端口/PID前检通过，实际长测有效跨度`2400004000000 ns`并跨越边界，bag回读、排空和清理
-对账通过，R-10关闭。正式Phase 1基线仍待PERF-01与环境恢复完整验收。本次35—70m/s仅验证
-已知真值功能级地图更新；尚未验证真实Radar—IR融合感知或训练监督LiDAR。
+建议仍在原Phase 2结束日2026-11-10复查外部输入风险；这是管理检查点，不是新的退出日期。
+自主控制、实飞和高真实性传感器物理仿真继续属于独立评审范围。
 
 ## 开发入口与证据
 
-- 规则：[根AGENTS](AGENTS.md) → [系统架构](docs/SYSTEM_ARCHITECTURE.md) → 涉及目录AGENTS。
-- 接口：[数据格式](docs/DATA_FORMAT.md)、[传感器连接](docs/SENSOR_INTERFACE.md)、[坐标](docs/COORDINATE_SYSTEM.md)。
-- 决定：[DECISION_LOG](docs/DECISION_LOG.md)；验证：[EXPERIMENT_LOG](docs/EXPERIMENT_LOG.md)。
-- 研究来源：[algorithms/README](algorithms/README.md)。
-- 本机环境与缺项：[ENVIRONMENT_INVENTORY](configs/ENVIRONMENT_INVENTORY.md)。
-- 下一阶段执行方案：[SIMULATION_VALIDATION_PLAN](docs/SIMULATION_VALIDATION_PLAN.md)。
+- 规则：[AGENTS](AGENTS.md) → [系统架构](docs/SYSTEM_ARCHITECTURE.md) → 涉及目录AGENTS。
+- 契约：[DATA_FORMAT](docs/DATA_FORMAT.md)、[SENSOR_INTERFACE](docs/SENSOR_INTERFACE.md)、[COORDINATE_SYSTEM](docs/COORDINATE_SYSTEM.md)。
+- 决策：[DECISION_LOG](docs/DECISION_LOG.md)；实验：[EXPERIMENT_LOG](docs/EXPERIMENT_LOG.md)；历史：[完整快照](docs/PROJECT_HISTORY_20261027.md)。
+- 环境入口：`bash ros_ws/sim01_env.sh ...`，默认Radar-Diffusion Python；不修改原环境或终端ROS选择。
+- 无观察器fixture：`bash ros_ws/sim01_env.sh python ros_ws/local_map_query_run.py --mode inference`；仅软件闭环。
+- 配置与兼容：[运行配置说明](docs/RUNTIME_CONFIGURATION.md)。
+- 原生RViz：[启动/接入/回放/导出](docs/ROS_VISUALIZATION.md)；[报告图片与图注](experiments/report_assets/rviz-20261028/README.md)。
+- 场景/Radar/IR：[Gazebo + RViz启动与截图](docs/SENSOR_SCENE_VISUALIZATION.md)；[场景传感器报告素材](experiments/report_assets/sensor-scene-20261028/README.md)。
 
 ## 更新规则
 
-每次开发结束更新实际完成、验证边界、风险和下一步；每周复核进度和待决项。
-完成项必须链接证据，未执行写未执行；不将日期到达或文档创建视为运行验收通过。
+这里只登记当前事实、阻塞和下一交付，完成必须链接证据；过程与失败进入实验记录。
+按周复核计划，接口或架构变化进入DECISION_LOG；不因日期到达或fixture通过提高阶段状态。

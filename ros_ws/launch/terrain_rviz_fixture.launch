@@ -1,0 +1,13 @@
+<launch>
+  <arg name="enabled" default="false" />
+  <arg name="terrain_id" default="m5-terrain-fixture" />
+  <arg name="run_id" default="" />
+  <arg name="clock_id" default="" />
+  <group if="$(arg enabled)">
+    <node pkg="uav_fusionmap_terrain" type="terrain_rviz_node.py" name="terrain_rviz_markers" output="screen">
+      <param name="terrain_id" value="$(arg terrain_id)" />
+      <param name="run_id" value="$(arg run_id)" />
+      <param name="clock_id" value="$(arg clock_id)" />
+    </node>
+  </group>
+</launch>

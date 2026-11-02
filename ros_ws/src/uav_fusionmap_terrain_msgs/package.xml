@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_fusionmap_terrain_msgs</name>
+  <version>0.1.0</version>
+  <description>Independent terrain v1 messages and offline contracts.</description>
+  <maintainer email="maintainer@example.invalid">UAV-FusionMap Technical Lead</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>message_runtime</exec_depend>
+</package>

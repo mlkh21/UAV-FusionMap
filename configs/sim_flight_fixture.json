@@ -1,0 +1,16 @@
+{
+  "schema_version":"sim_flight_fixture.v1",
+  "profile_id":"sim-flight-ground-observe-v1",
+  "fixture_only":true,
+  "simulation_only":true,
+  "mode":"px4_stabilized_sitl",
+  "commands_enabled":false,
+  "observation_only":true,
+  "model":{"airframe":1033,"sys_ctrl_alloc":0,"aircraft_model":"Rascal110-JSBSim","bridge_config":"configs/rascal.xml","mixer":"etc/mixers-sitl/plane_sitl.main.mix"},
+  "ic":{"latitude_deg":47.458159,"longitude_deg":8.548004,"altitude_reference":"AGL","altitude_m":0.5,"terrain_elevation_m":419.2,"true_airspeed_mps":0.0,"phi_theta_psi_deg":[0.0,0.0,90.0],"gamma_deg":null},
+  "actuator_channels":[{"name":"rudder","index":2,"scale":-1,"property":"fcs/rudder-cmd-norm"},{"name":"aileron","index":5,"scale":-1,"property":"fcs/aileron-cmd-norm"},{"name":"elevator","index":7,"scale":-1,"property":"fcs/elevator-cmd-norm"},{"name":"throttle","index":4,"scale":1,"property":"fcs/throttle-cmd-norm"}],
+  "time":{"step_ns":4000000,"max_step":10000,"prepare_steps":7500,"capture_period_steps":25,"bootstrap_source_steps":500,"bootstrap_wall_ns":5000000000},
+  "state":{"source":"ground_truth","frame_id":"scene_world","body_frame_id":"base_link","registration_id":"jsbsim_cg_to_flight_enu_v1","anchor_m":[0.0,0.0,0.5]},
+  "command_policy":{"allowed":[],"force_arming_allowed":false},
+  "limits":{"header_bytes":262144,"record_bytes":16384,"depth":8,"nodes":8192,"text_bytes":128,"list_items":512,"stream_records":12288,"control_log_bytes":67108864,"control_events":4096,"wire_bytes":134217728,"artifact_bytes":536870912,"startup_wall_ns":60000000000,"transaction_wall_ns":1000000000,"first_capture_wall_ns":3000000000,"case_wall_ns":240000000000}
+}

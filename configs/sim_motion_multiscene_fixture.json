@@ -1,0 +1,24 @@
+{
+  "schema_version": "sim_motion_multiscene_fixture.v1",
+  "suite_id": "sim-motion-multiscene-v1",
+  "base_motion_profile": "configs/sim_scene_motion_fixture.json",
+  "cases": [
+    {"case_id":"S01","ic_degrees":[0,0,90],"geometry_id":"legacy","epochs":[],"fault":null,"expected_id":"multiscene:S01","native":false},
+    {"case_id":"S02","ic_degrees":[0,0,0],"geometry_id":"north_wall","epochs":[],"fault":null,"expected_id":"multiscene:S02","native":false},
+    {"case_id":"S03","ic_degrees":[0,0,180],"geometry_id":"south_wall","epochs":[],"fault":null,"expected_id":"multiscene:S03","native":false},
+    {"case_id":"S04","ic_degrees":[10,5,90],"geometry_id":"east_wall","epochs":[],"fault":null,"expected_id":"multiscene:S04","native":false},
+    {"case_id":"S05","ic_degrees":[0,0,90],"geometry_id":"occlusion_boxes","epochs":[],"fault":null,"expected_id":"multiscene:S05","native":true},
+    {"case_id":"S06","ic_degrees":[0,0,90],"geometry_id":"empty","epochs":[],"fault":null,"expected_id":"multiscene:S06","native":false},
+    {"case_id":"S07","ic_degrees":[0,0,90],"geometry_id":"moving_box","epochs":[{"after_step":100,"obstacle_name":"obstacle_wall","position":[100,0,8]},{"after_step":225,"obstacle_name":"obstacle_wall","position":[12,0,8]}],"fault":null,"expected_id":"multiscene:S07","native":true},
+    {"case_id":"S08","ic_degrees":[0,0,90],"geometry_id":"east_wall","epochs":[],"fault":{"sensor_kind":1,"step_index":125},"expected_id":"multiscene:S08","native":false},
+    {"case_id":"S09","ic_degrees":[0,0,90],"geometry_id":"east_wall","epochs":[],"fault":null,"expected_id":"multiscene:S09","native":false}
+  ],
+  "resource_limits": {
+    "manifest_bytes":262144,"depth":8,"nodes":8192,"text_bytes":128,
+    "boxes_per_template":8,"epochs_per_case":2,"receipts_per_stream":512,
+    "receipt_bytes":16777216,"case_artifact_bytes":268435456,
+    "suite_artifact_bytes":3221225472,"suite_wall_ns":1800000000000,
+    "angle_error_rad":0.000005,"range_error_m":0.011,
+    "boundary_distance_m":0.02,"boundary_ray_limit":48
+  }
+}

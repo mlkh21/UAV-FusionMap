@@ -1,0 +1,20 @@
+{
+  "schema_version":"test.sim_flight_quality_cases.v1",
+  "fixture_only":true,
+  "case_ids":["Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10","Q11","Q12","Q13","Q14","Q15","Q16","Q17","Q18","Q19","Q20"],
+  "query_count":21,
+  "mask_examples":[[0,0,0,0,true,true],[0,0,0,1,false,true],[0,0,1,0,true,false],[0,0,1,1,false,false],[0,1,0,0,false,true],[0,1,0,1,false,true],[0,1,1,0,false,false],[0,1,1,1,false,false],[1,0,0,0,false,false],[1,0,0,1,false,false],[1,0,1,0,false,false],[1,0,1,1,false,false],[1,1,0,0,false,false],[1,1,0,1,false,false],[1,1,1,0,false,false],[1,1,1,1,false,false]],
+  "velocity_mask":16777228,
+  "position_mask":4100,
+  "archived_instances":[0,1,2,3,4,5],
+  "archived_mask":537002496,
+  "archived_unavailable_count":12,
+  "unavailable_descriptors":[{"field":"vel_test_ratio","native_token":"nan","reason":"native_ratio_source_not_selected"},{"field":"pos_test_ratio","native_token":"nan","reason":"native_ratio_source_not_selected"}],
+  "status_fields":{"timestamp":988000,"timestamp_sample":908000,"output_tracking_error":[0.0006,0.0047,1.4457],"control_mode_flags":537002496,"filter_fault_flags":0,"pos_horiz_accuracy":14.1629,"pos_vert_accuracy":2.0209,"mag_test_ratio":0.0,"vel_test_ratio":null,"pos_test_ratio":null,"hgt_test_ratio":0.1915,"tas_test_ratio":0.0,"hagl_test_ratio":0.0,"beta_test_ratio":0.0,"time_slip":0.0,"accel_device_id":1310988,"gyro_device_id":1310988,"baro_device_id":6620172,"mag_device_id":197388,"gps_check_fail_flags":0,"innovation_check_flags":0,"solution_status_flags":228,"reset_count_vel_ne":1,"reset_count_vel_d":0,"reset_count_pos_ne":1,"reset_count_pod_d":0,"reset_count_quat":1,"pre_flt_fail_innov_heading":false,"pre_flt_fail_innov_vel_horiz":false,"pre_flt_fail_innov_vel_vert":false,"pre_flt_fail_innov_height":false,"pre_flt_fail_mag_field_disturbed":false,"health_flags":0,"timeout_flags":0},
+  "quality_state":"payload_quality_unavailable",
+  "quality_reason":"native_optional_quality_unavailable",
+  "missing_result":{"state":"not_published","reason":"native_not_published","instances":[],"parameter":null},
+  "empty_result":{"state":"payload_unavailable","reason":"native_payload_unavailable","instances":[{"instance":null,"state":"payload_unavailable","fields":null,"unavailable_fields":[]}],"parameter":null},
+  "collection_with_missing":{"diagnostic_collection_complete":true,"body_complete":false,"payload_complete":false,"control_gate_accepted":false},
+  "expectations":{"Q01":"six conditional quality blocks, twelve descriptors; old codecs reject","Q02":"finite values and zero unchanged","Q03":"one permitted field only","Q04":"GPS contradicts both masks","Q05":"EV velocity blocks velocity NaN","Q06":"EV position blocks position NaN","Q07":"any optical flow blocks velocity NaN","Q08":"only exact nan token; reject variants/inf/overflow","Q09":"non-whitelist fields stay finite","Q10":"complete typed unique fields required","Q11":"same-block uint32 and binary annotation must agree","Q12":"one bad instance rejects query","Q13":"mixed states retain all blocks and unknown single identity","Q14":"descriptors, nulls and raw text must correspond","Q15":"schema crossover and invalid JSON reject","Q16":"armed/transport failure stops session","Q17":"fixed query, owner, clock and HIL context","Q18":"source drift, bounds and expired deadlines reject","Q19":"collection/body/payload flags are separate","Q20":"complete ordered twenty-one events and three expected parameters"}
+}

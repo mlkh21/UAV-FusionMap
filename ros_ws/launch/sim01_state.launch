@@ -4,16 +4,21 @@
   <arg name="input_topic" default="/mavlink/from" />
   <arg name="publish_odom" default="false" />
   <arg name="broadcast_tf" default="false" />
+  <arg name="publish_imu" default="false" />
+  <arg name="imu_calibration_id" default="" />
   <param name="use_sim_time" value="true" />
   <node pkg="uav_fusionmap_simulation" type="state_clock_node.py" name="state_clock" output="screen" required="true">
     <rosparam command="load" file="$(arg config)" />
     <param name="run_id" value="$(arg run_id)" />
     <param name="input_topic" value="$(arg input_topic)" />
+    <param name="publish_imu" value="$(arg publish_imu)" />
   </node>
   <node pkg="uav_fusionmap_sensors" type="state_adapter_node.py" name="state_adapter" output="screen" required="true">
     <rosparam command="load" file="$(arg config)" />
     <param name="run_id" value="$(arg run_id)" />
     <param name="publish_odom" value="$(arg publish_odom)" />
     <param name="broadcast_tf" value="$(arg broadcast_tf)" />
+    <param name="publish_imu" value="$(arg publish_imu)" />
+    <param name="imu_calibration_id" value="$(arg imu_calibration_id)" />
   </node>
 </launch>

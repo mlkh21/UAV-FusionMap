@@ -1,0 +1,24 @@
+# 合成逆观测算术fixture；仅显式m2_fixture候选读取，非设备/模型/飞行配置。
+schema_version: m2_fixture.v1
+fixture_only: true
+enabled_by_default: false
+map_id: m2-fixture
+frame_id: odom
+observed_domain_source: m2_explicit_inverse_fixture_v1
+calibration_id: m2_fixture_declared_identity_v1
+resolution: [0.5, 0.5, 0.5]  # XYZ，m
+shape: [64, 32, 16]
+origin: [-16.0, -8.0, -4.0]  # odom最小角，m
+cell_index: [48, 16, 8]
+prior_probability: 0.5
+occupied_probability: 0.75
+free_probability: 0.25
+neutral_probability: 0.5
+minimum_probability: 0.1  # 对应log-odds下限-ln(9)
+maximum_probability: 0.9  # 对应log-odds上限ln(9)
+free_threshold: 0.3
+occupied_threshold: 0.7
+evidence_ttl_ns: 100000000
+sample_period_ns: 10000000
+identity_history_limit: 1000
+max_active_cells: 10000

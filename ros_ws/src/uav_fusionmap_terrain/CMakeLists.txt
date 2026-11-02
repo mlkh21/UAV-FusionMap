@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(uav_fusionmap_terrain)
+find_package(catkin REQUIRED COMPONENTS rospy rosgraph_msgs uav_fusionmap_terrain_msgs)
+catkin_package()
+catkin_install_python(PROGRAMS scripts/terrain_node.py ${CMAKE_CURRENT_SOURCE_DIR}/../../terrain_rviz_node.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

@@ -1,0 +1,10 @@
+SceneFrame frame
+---
+bool accepted
+string reason
+bool has_applied_frame
+SceneFrame applied_frame
+bool radar_captured
+int64 radar_timestamp
+bool infrared_captured
+int64 infrared_timestamp

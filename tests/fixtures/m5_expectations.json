@@ -1,0 +1,37 @@
+{
+  "schema_version": "m5_expected.v1",
+  "scope": "independent expectations; no terrain candidate executed in SW-01",
+  "samples": [
+    {"row": 0, "column": 0, "source_xy": [101.0, 199.0], "map_xy": [111.0, 179.0], "source_height": 10.0, "map_height": 13.0, "map_height_interval": [12.65, 13.35]},
+    {"row": 0, "column": 1, "source_xy": [103.0, 199.0], "map_xy": [113.0, 179.0], "source_height": 11.0, "map_height": 14.0, "map_height_interval": [13.65, 14.35]},
+    {"row": 1, "column": 0, "source_xy": [101.0, 197.0], "map_xy": [111.0, 177.0], "status": "unknown", "reason": "no_data", "source_height": null, "map_height": null},
+    {"row": 1, "column": 1, "source_xy": [103.0, 197.0], "map_xy": [113.0, 177.0], "source_height": -2.0, "map_height": 1.0, "map_height_interval": [0.65, 1.35]}
+  ],
+  "groups": [
+    {"id": "T1", "case": "pixel_center", "expected": [101.0, 199.0], "sw01": "input_and_arithmetic"},
+    {"id": "T2", "case": "negative_row_direction", "expected": [101.0, 197.0], "sw01": "input_and_arithmetic"},
+    {"id": "T3", "case": "valid_zero", "height": 0.0, "mask": false, "expected": "valid", "sw01": "input_only"},
+    {"id": "T4", "case": "nodata_and_nan", "expected": ["unknown", "reject_nonfinite"], "sw01": "input_only"},
+    {"id": "T5", "case": "positive_geoid", "H": 100, "N": 20, "h0": 95, "expected_z": 25, "sw01": "arithmetic_only_real_conversion_unsupported"},
+    {"id": "T6", "case": "negative_geoid_and_bounds", "H": 100, "N": -20, "h0": 95, "expected_z": -15, "H_bounds": [99, 101], "N_bounds": [19, 21], "h0_bounds": [94, 96], "expected_bounds": [22, 28], "sw01": "arithmetic_only_real_conversion_unsupported"},
+    {"id": "T7", "case": "missing_datum_or_required_grid", "expected": "unavailable", "sw01": "input_rejected"},
+    {"id": "T8", "case": "eligibility_boundaries", "times_ns": [99, 100, 199, 200, 300], "expected_status": ["unavailable", "valid", "valid", "stale", "unavailable"], "sw01": "requests_saved_candidate_pending"},
+    {"id": "T9", "case": "source_and_run_clocks", "expected": "reject_missing_authorization", "sw01": "input_only"},
+    {"id": "T10", "case": "registration_domain_reset", "expected": "unavailable_new_run_required", "sw01": "domain_checked_reset_pending"},
+    {"id": "T11", "case": "replay_duplicate_conflict_replace", "expected": ["idempotent", "reject_keep_old", "reject_keep_old"], "sw01": "events_saved_stateful_candidate_pending"},
+    {"id": "T12", "case": "limits_and_atomic_failure", "expected": "reject_without_partial_commit", "sw01": "input_limits_checked_transactions_pending"},
+    {"id": "T13", "case": "occupancy_isolation", "expected": "occupancy_unchanged", "sw01": "default_import_and_public_map_checked_install_pending"},
+    {"id": "T14", "case": "unsupported_product_resampling", "expected": "reject", "sw01": "input_only"},
+    {"id": "T15", "case": "missing_height_quality", "expected": "height_quality_unavailable", "sw01": "input_only_propagation_pending"},
+    {"id": "T16", "case": "legacy_paths", "expected": "no_terrain_import_or_input", "sw01": "existing_unit_regression_no_ros"}
+  ],
+  "future_events": [
+    {"sequence": 0, "operation": "install", "version": "v1", "timestamp_ns": 100, "expected_revision": 1},
+    {"sequence": 1, "operation": "install_identical", "version": "v1", "timestamp_ns": 110, "expected_revision": 1},
+    {"sequence": 2, "operation": "install_conflicting", "version": "v1", "timestamp_ns": 120, "expected_revision": 1, "expected": "rejected"},
+    {"sequence": 3, "operation": "install_bad_tile", "version": "v2", "timestamp_ns": 130, "expected_revision": 1, "expected": "rejected"},
+    {"sequence": 4, "operation": "query", "timestamp_ns": 200, "expected_revision": 1, "expected": "stale"},
+    {"sequence": 5, "operation": "query", "timestamp_ns": 300, "expected_revision": 1, "expected": "unavailable"},
+    {"sequence": 6, "operation": "clock_reset", "timestamp_ns": 50, "expected": "unavailable_new_run_required"}
+  ]
+}

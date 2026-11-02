@@ -2,10 +2,16 @@
   <arg name="run_id" />
   <arg name="enable_query" default="true" />
   <arg name="classify" default="true" />
+  <arg name="mode" default="placeholder" />
+  <arg name="max_delta_ns" default="5000000" />
+  <arg name="max_pose_age_ns" default="10000000" />
   <param name="use_sim_time" value="true" />
   <node pkg="uav_fusionmap_perception" type="perf01a_placeholder_node.py"
         name="perf01a_perception" output="screen" required="true">
     <param name="run_id" value="$(arg run_id)" />
+    <param name="mode" value="$(arg mode)" />
+    <param name="max_radar_ir_delta_ns" value="$(arg max_delta_ns)" />
+    <param name="max_pose_age_ns" value="$(arg max_pose_age_ns)" />
     <param name="rolling_grid" value="true" />
   </node>
   <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py"

@@ -1,0 +1,11 @@
+uint8 PROTOCOL_V1=1
+uint8 RADAR=1
+uint8 INFRARED=2
+uint8 protocol_version
+string run_id
+string clock_id
+uint64 step_index
+int64 measurement_timestamp
+uint8 sensor_kind
+bool published
+string reason

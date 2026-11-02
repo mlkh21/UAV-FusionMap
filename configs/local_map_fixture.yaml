@@ -1,0 +1,8 @@
+# 软件fixture共享网格；不是300m前视地图或飞行参数。
+schema_version: local_map_fixture.v1
+map_id: perf01a-local
+resolution: [0.5, 0.5, 0.5]  # m，XYZ
+shape: [64, 32, 16]         # XYZ体素数量
+origin: [-16.0, -8.0, -4.0] # odom中的网格最小角，m
+staleness_limit_ns: 100000000
+max_active_cells: 10000

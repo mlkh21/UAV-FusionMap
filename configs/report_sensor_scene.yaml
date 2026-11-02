@@ -1,0 +1,71 @@
+# Explicit report scene; physical units are m/rad. Old sensor_scene.yaml stays unchanged.
+schema_version: sensor_scene_fixture.v1
+calibration_id: gazebo_sensor_scene_mount_v1
+world_to_odom_registration: gazebo_scene_world_enu_identity_v1
+body_pose: [0, 0, 8, 0, 0, 0]
+radar_mount_xyz: [0.8, 0, 0]
+thermal_mount_xyz: [0.8, 0, 0]
+thermal_optical_xyzw: [-0.5, 0.5, -0.5, 0.5]
+frequency_hz: 10
+aircraft_visual_scale: [0.35, 0.35, 0.35]
+overview_camera_pose: [-38, -70, 53, 0, 0.48, 0.80]
+ground: {name: ground, kind: box, position: [45, 0, -0.15], size: [180, 140, 0.3], material: FusionAmbient}
+radar:
+  horizontal_samples: 96
+  vertical_samples: 24
+  horizontal_fov_rad: 1.4
+  vertical_fov_rad: 0.7
+  min_range_m: 0.5
+  max_range_m: 90
+  measurement_model: parameterized_v1
+  detection_probability: 0.24
+  detection_distance_m: 45
+  range_std_m: 0.08
+  angle_std_rad: 0.003
+  doppler_std_mps: 0.05
+  noise_seed: 20261030
+  max_points: 256
+infrared:
+  width: 320
+  height: 240
+  horizontal_fov_rad: 1.0471975512
+  value_unit: fixture_intensity
+  far_clip_m: 120
+map:
+  map_id: report-scene-local
+  resolution: [1.0, 1.0, 1.0]
+  shape: [160, 128, 48]
+  origin: [-10, -64, -8]
+  staleness_limit_ns: 500000000
+  max_active_cells: 20000
+objects:
+  - {name: warm_shed, kind: box, position: [23, -10, 3], size: [5, 5, 6], material: FusionWarm}
+  - {name: cold_shed, kind: box, position: [31, 13, 4], size: [7, 6, 8], material: FusionCold}
+  - {name: engine_box, kind: box, position: [16, 4, 1.5], size: [2, 2, 3], material: FusionHot}
+  - {name: warehouse_north, kind: box, position: [65, 27, 6], size: [16, 12, 12], material: FusionCold}
+  - {name: warehouse_south, kind: box, position: [76, -31, 5], size: [18, 10, 10], material: FusionWarm}
+  - {name: office_east, kind: box, position: [99, 9, 7], size: [12, 15, 14], material: FusionCold}
+  - {name: workshop_west, kind: box, position: [46, -29, 4], size: [9, 7, 8], material: FusionWarm}
+  - {name: vehicle_1, kind: box, position: [38, -4, 1], size: [4, 2, 2], material: FusionHot}
+  - {name: vehicle_2, kind: box, position: [62, 6, 1], size: [4, 2, 2], material: FusionWarm}
+  - {name: vehicle_3, kind: box, position: [88, -12, 1], size: [4, 2, 2], material: FusionHot}
+  - {name: column_1, kind: cylinder, position: [21, 8, 3.5], radius: 0.7, length: 7, material: FusionWarm}
+  - {name: column_2, kind: cylinder, position: [43, 17, 4.5], radius: 0.8, length: 9, material: FusionCold}
+  - {name: column_3, kind: cylinder, position: [54, -12, 5], radius: 0.6, length: 10, material: FusionWarm}
+  - {name: column_4, kind: cylinder, position: [82, 25, 4], radius: 0.9, length: 8, material: FusionCold}
+  - {name: column_5, kind: cylinder, position: [90, -33, 4], radius: 0.8, length: 8, material: FusionWarm}
+  - {name: column_6, kind: cylinder, position: [110, -8, 5], radius: 0.7, length: 10, material: FusionCold}
+  - {name: grove_1, kind: cylinder, position: [17, -24, 4], radius: 1.8, length: 8, material: FusionCold}
+  - {name: grove_2, kind: cylinder, position: [25, -30, 5], radius: 2.0, length: 10, material: FusionCold}
+  - {name: grove_3, kind: cylinder, position: [31, -21, 4.5], radius: 1.8, length: 9, material: FusionCold}
+  - {name: grove_4, kind: cylinder, position: [40, 34, 5], radius: 2.0, length: 10, material: FusionCold}
+  - {name: grove_5, kind: cylinder, position: [50, 40, 4.5], radius: 2.1, length: 9, material: FusionCold}
+  - {name: grove_6, kind: cylinder, position: [74, 44, 5], radius: 2.2, length: 10, material: FusionCold}
+  - {name: grove_7, kind: cylinder, position: [101, 34, 4], radius: 1.7, length: 8, material: FusionCold}
+  - {name: grove_8, kind: cylinder, position: [106, -41, 5], radius: 2.0, length: 10, material: FusionCold}
+  - {name: rock_1, kind: box, position: [13, -8, 0.7], size: [2.1, 1.5, 1.4], material: FusionAmbient}
+  - {name: rock_2, kind: box, position: [36, 3, 1], size: [3, 2, 2], material: FusionAmbient}
+  - {name: rock_3, kind: box, position: [51, 26, 1.2], size: [3, 3, 2.4], material: FusionAmbient}
+  - {name: rock_4, kind: box, position: [68, -20, 0.8], size: [2, 3, 1.6], material: FusionAmbient}
+  - {name: rock_5, kind: box, position: [86, 3, 1.4], size: [3, 2, 2.8], material: FusionAmbient}
+  - {name: rock_6, kind: box, position: [114, 25, 1], size: [3, 3, 2], material: FusionAmbient}

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_fusionmap_terrain</name>
+  <version>0.1.0</version>
+  <description>Optional independent terrain provider ROS wrapper.</description>
+  <maintainer email="maintainer@example.invalid">UAV-FusionMap Technical Lead</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>rosgraph_msgs</depend>
+  <depend>uav_fusionmap_terrain_msgs</depend>
+  <exec_depend>visualization_msgs</exec_depend>
+</package>

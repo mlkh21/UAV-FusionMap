@@ -1,0 +1,78 @@
+# M5-SW-01 private offline fixture; no ROS/backend entry is enabled.
+schema_version: m5_terrain_fixture.v1
+fixture_only: true
+enabled_by_default: false
+identity:
+  terrain_id: m5-terrain-fixture
+  dataset_version: fixture-20261028-v1
+  tile_id: tile-0
+  product_kind: DTM
+  source_kind: fixture
+  source_ref: configs/m5_terrain_fixture.yaml
+source_time:
+  acquisition_ns: 10
+  publication_ns: 20
+  precision_ns: 1
+  clock_id: dataset:m5-fixture
+  dataset_epoch: fixture-epoch-0
+horizontal:
+  crs_id: fixture:terrain_xy_v1
+  frame_id: terrain_fixture
+  axis_order: [x, y]
+  unit: m
+vertical:
+  datum_id: fixture:terrain_height_zero_v1
+  height_type: local_height
+  unit: m
+  operation: fixed_translation_fixture_v1
+  required_grids: []
+grid:
+  rows: 2
+  columns: 2
+  # Row-major center samples; the third cell is no-data.
+  heights: [10.0, 11.0, null, -2.0]
+  no_data_mask: [false, false, true, false]
+  affine: [100.0, 2.0, 0.0, 200.0, 0.0, -2.0]
+  sample_anchor: center
+  # Bounds are absolute source heights in m, not probability or height errors.
+  height_quality:
+    - {status: available, kind: height_interval, value: [9.75, 10.25], unit: m, source: fixture_height_bound_v1}
+    - {status: available, kind: height_interval, value: [10.75, 11.25], unit: m, source: fixture_height_bound_v1}
+    - {status: unavailable, kind: '', value: null, unit: '', source: fixture_no_data_v1}
+    - {status: available, kind: height_interval, value: [-2.25, -1.75], unit: m, source: fixture_height_bound_v1}
+map_grid:
+  crs_id: fixture:map_xy_v1
+  vertical_datum_id: fixture:map_height_zero_v1
+  frame_id: map
+  unit: m
+  origin_xy: [110.0, 176.0]
+  resolution_xy: [2.0, 2.0]
+registration:
+  registration_id: m5-fixture-terrain-to-map-v1
+  source_frame: terrain_fixture
+  target_frame: map
+  source: fixture
+  status: available
+  run_id: m5-fixture
+  clock_id: sim:m5-fixture
+  valid_interval_ns: [0, 300]
+  T_map_terrain: [1, 0, 0, 10, 0, 1, 0, -20, 0, 0, 1, 3, 0, 0, 0, 1]
+  horizontal_alignment: exact_fixture_v1
+  height_quality:
+    status: available
+    kind: height_offset_interval
+    value: [2.9, 3.1]
+    unit: m
+    source: fixture_registration_bound_v1
+eligibility:
+  policy: fixture_run_authorization_v1
+  run_id: m5-fixture
+  clock_id: sim:m5-fixture
+  valid_interval_ns: [100, 200]
+limits:
+  max_tiles: 1
+  max_axis_samples: 4
+  max_samples_per_tile: 16
+  max_total_samples: 16
+  max_input_bytes: 16384
+  max_receipt_events: 64

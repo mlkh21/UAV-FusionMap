@@ -1,0 +1,45 @@
+{
+  "run": ".runtime/runs/p5-delivery-20261029T123816555451",
+  "figures": [
+    {
+      "file": "gazebo-scene.png",
+      "source": ".runtime/runs/sensor-scene-20261029T123831232102/figures/gazebo-scene-20261029T123843486.png",
+      "bytes": 149040
+    },
+    {
+      "file": "radar-ir-map.png",
+      "source": ".runtime/runs/sensor-scene-20261029T123831232102/figures/rviz-sensors-20261029T123846903.png",
+      "bytes": 268048
+    },
+    {
+      "file": "radar-map-viewport.png",
+      "source": ".runtime/runs/sensor-scene-20261029T123831232102/figures/rviz-sensors-20261029T123846903-viewport-0.png",
+      "bytes": 204204
+    },
+    {
+      "file": "ir-viewport.png",
+      "source": ".runtime/runs/sensor-scene-20261029T123831232102/figures/rviz-sensors-20261029T123846903-viewport-1.png",
+      "bytes": 2670
+    },
+    {
+      "file": "terrain-current.png",
+      "source": ".runtime/runs/terrain-delivery-20261029T123853103628/figures/01-current.png",
+      "bytes": 26508
+    },
+    {
+      "file": "terrain-stale.png",
+      "source": ".runtime/runs/terrain-delivery-20261029T123853103628/figures/02-stale.png",
+      "bytes": 26490
+    },
+    {
+      "file": "terrain-unavailable.png",
+      "source": ".runtime/runs/terrain-delivery-20261029T123853103628/figures/03-unavailable.png",
+      "bytes": 23683
+    },
+    {
+      "file": "terrain-recorded.png",
+      "source": ".runtime/runs/terrain-delivery-20261029T123853103628/figures/04-recorded.png",
+      "bytes": 26944
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version":"test.sim_motion_strict_geometry.v1",
+  "policy":"strict_all_rays_no_exemptions_v1",
+  "hit_set_must_equal":true,
+  "maximum_exemptions":0,
+  "angle_error_rad":0.000005,
+  "range_error_m":0.011,
+  "near_edge_distance_m":0.02,
+  "near_edge_count_is_diagnostic":true,
+  "superseded_near_edge_count_assumption":48,
+  "simulator_or_raw_data_may_not_be_modified_to_meet_oracle":true
+}

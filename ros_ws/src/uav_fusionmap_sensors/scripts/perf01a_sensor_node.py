@@ -13,7 +13,7 @@ from ufm_ros_contract.perf01a_codec import to_ros_bundle, to_ros_infrared, to_ro
 from ufm_sensors.perf01a_fixture import build_sensor_bundle
 from ufm_sensors.clock_gate import StateClockGate
 from ufm_sensors.state_adapter import adapt_state
-from ufm_ros_contract.perf01a_ros import PerfTrace, publish_perf_event
+from ufm_ros_contract.perf01a_ros import PerfTrace, publish_perf_event, perf_publisher
 from ufm_ros_contract.perf01a_wire import WireAudit
 from ufm_sensors.perf01a_scenarios import scenario_inputs
 
@@ -34,21 +34,22 @@ class SensorFixture:
         ir_pub = rospy.Publisher("/uav/sensors/infrared", InfraredFrame, queue_size=100)
         bundle_pub = rospy.Publisher("/uav/sensors/bundle", SensorBundle, queue_size=100)
         state_pub = rospy.Publisher("/uav/sensors/state", AircraftState, queue_size=100)
-        event_pub = rospy.Publisher("/uav/perf/events", __import__("uav_fusionmap_msgs.msg", fromlist=["PerfEvent"]).PerfEvent,
-                                    queue_size=500)
+        event_pub = perf_publisher(rospy)
         self.radar_pub, self.ir_pub, self.bundle_pub, self.state_pub, self.event_pub = (
             radar_pub, ir_pub, bundle_pub, state_pub, event_pub)
         self.lock = threading.RLock()
         self.gate = StateClockGate(self.run_id)
         self.sequence = 0
-        rospy.Subscriber("/uav/sim/state", AircraftState, self.receive_state, queue_size=100)
-        rospy.Subscriber("/clock", Clock, self.receive_clock, queue_size=100)
+        state_sub = rospy.Subscriber("/uav/sim/state", AircraftState, self.receive_state, queue_size=100)
+        clock_sub = rospy.Subscriber("/clock", Clock, self.receive_clock, queue_size=100)
         deadline = time.monotonic() + 15.0
-        expected_bundle = 1 if observer_mode == 'metadata' else 2
-        expected_ir = 0 if observer_mode == 'metadata' else 1
-        while not (event_pub.get_num_connections() and
+        require_observers = rospy.get_param('/perf01a_require_observers', True)
+        expected_bundle = 1 if not require_observers or observer_mode == 'metadata' else 2
+        expected_ir = 0 if not require_observers or observer_mode == 'metadata' else 1
+        while not ((not require_observers or event_pub is None or event_pub.get_num_connections()) and
                    bundle_pub.get_num_connections() >= expected_bundle and
-                   ir_pub.get_num_connections() >= expected_ir):
+                   ir_pub.get_num_connections() >= expected_ir and
+                   state_sub.get_num_connections() and clock_sub.get_num_connections()):
             if time.monotonic() > deadline or rospy.is_shutdown():
                 raise RuntimeError('sensor subscribers not ready')
             time.sleep(.02)

@@ -1,0 +1,64 @@
+{
+  "motion_run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-report-20261030T175334777829",
+  "terrain_run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/real-elevation-20261030T181113915286",
+  "figures": [
+    {
+      "file": "scene-before.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-report-20261030T175334777829/figures/gazebo-motion-before-20261030T175440424.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "scene-after.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-report-20261030T175334777829/figures/gazebo-motion-after-20261030T175445721.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "sensors-before.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-report-20261030T175334777829/figures/rviz-motion-before-20261030T175440352.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "sensors-after.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-report-20261030T175334777829/figures/rviz-motion-after-20261030T175445651.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "infrared-before.png",
+      "source": ".runtime/runs/sim-motion-report-20261030T175334777829/infrared-000.bin",
+      "timestamp_ns": 100000000,
+      "operation": "raw float intensity 0..1 to fixed grayscale 0..255"
+    },
+    {
+      "file": "infrared-after.png",
+      "source": ".runtime/runs/sim-motion-report-20261030T175334777829/infrared-009.bin",
+      "timestamp_ns": 1000000000,
+      "operation": "raw float intensity 0..1 to fixed grayscale 0..255"
+    },
+    {
+      "file": "elevation-map.png",
+      "source": ".runtime/runs/real-elevation-20261030T181113915286/elevation-map.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "elevation-rviz.png",
+      "source": ".runtime/runs/real-elevation-20261030T181113915286/figures/real-elevation.png",
+      "operation": "exact copy"
+    },
+    {
+      "file": "motion-observations.png",
+      "sources": [
+        "sensors-before.png",
+        "sensors-after.png"
+      ],
+      "operation": "two unaltered full native screenshots with external timestamp captions"
+    },
+    {
+      "file": "infrared-comparison.png",
+      "sources": [
+        "infrared-before.png",
+        "infrared-after.png"
+      ],
+      "operation": "fixed grayscale raw IR side-by-side; nearest pixel enlargement"
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+[
+  {
+    "file": "S05-gazebo-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/gazebo-motion-before-20261029T231120013.png",
+    "stage": "before",
+    "role": "gazebo"
+  },
+  {
+    "file": "S05-rviz-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-before-20261029T231120002.png",
+    "stage": "before",
+    "role": "rviz"
+  },
+  {
+    "file": "S05-scene-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-before-20261029T231120002-viewport-0.png",
+    "stage": "before",
+    "role": "scene"
+  },
+  {
+    "file": "S05-infrared-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-before-20261029T231120002-viewport-1.png",
+    "stage": "before",
+    "role": "infrared"
+  },
+  {
+    "file": "S05-gazebo-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/gazebo-motion-after-20261029T231125718.png",
+    "stage": "after",
+    "role": "gazebo"
+  },
+  {
+    "file": "S05-rviz-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-after-20261029T231125702.png",
+    "stage": "after",
+    "role": "rviz"
+  },
+  {
+    "file": "S05-scene-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-after-20261029T231125702-viewport-0.png",
+    "stage": "after",
+    "role": "scene"
+  },
+  {
+    "file": "S05-infrared-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-after-20261029T231125702-viewport-1.png",
+    "stage": "after",
+    "role": "infrared"
+  },
+  {
+    "file": "S05-gazebo-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/gazebo-motion-history-20261029T231128722.png",
+    "stage": "history",
+    "role": "gazebo"
+  },
+  {
+    "file": "S05-rviz-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-history-20261029T231128703.png",
+    "stage": "history",
+    "role": "rviz"
+  },
+  {
+    "file": "S05-scene-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S05-20261029T231115401962/figures/rviz-motion-history-20261029T231128703-viewport-0.png",
+    "stage": "history",
+    "role": "scene"
+  },
+  {
+    "file": "S07-gazebo-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/gazebo-motion-before-20261029T231156817.png",
+    "stage": "before",
+    "role": "gazebo"
+  },
+  {
+    "file": "S07-rviz-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-before-20261029T231156902.png",
+    "stage": "before",
+    "role": "rviz"
+  },
+  {
+    "file": "S07-scene-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-before-20261029T231156902-viewport-0.png",
+    "stage": "before",
+    "role": "scene"
+  },
+  {
+    "file": "S07-infrared-before.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-before-20261029T231156902-viewport-1.png",
+    "stage": "before",
+    "role": "infrared"
+  },
+  {
+    "file": "S07-gazebo-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/gazebo-motion-after-20261029T231203406.png",
+    "stage": "after",
+    "role": "gazebo"
+  },
+  {
+    "file": "S07-rviz-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-after-20261029T231203402.png",
+    "stage": "after",
+    "role": "rviz"
+  },
+  {
+    "file": "S07-scene-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-after-20261029T231203402-viewport-0.png",
+    "stage": "after",
+    "role": "scene"
+  },
+  {
+    "file": "S07-infrared-after.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-after-20261029T231203402-viewport-1.png",
+    "stage": "after",
+    "role": "infrared"
+  },
+  {
+    "file": "S07-gazebo-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/gazebo-motion-history-20261029T231206405.png",
+    "stage": "history",
+    "role": "gazebo"
+  },
+  {
+    "file": "S07-rviz-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-history-20261029T231206402.png",
+    "stage": "history",
+    "role": "rviz"
+  },
+  {
+    "file": "S07-scene-history.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-history-20261029T231206402-viewport-0.png",
+    "stage": "history",
+    "role": "scene"
+  },
+  {
+    "file": "S07-gazebo-empty.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/gazebo-motion-empty-20261029T231202105.png",
+    "stage": "empty",
+    "role": "gazebo"
+  },
+  {
+    "file": "S07-rviz-empty.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-empty-20261029T231202103.png",
+    "stage": "empty",
+    "role": "rviz"
+  },
+  {
+    "file": "S07-scene-empty.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-empty-20261029T231202103-viewport-0.png",
+    "stage": "empty",
+    "role": "scene"
+  },
+  {
+    "file": "S07-infrared-empty.png",
+    "run": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386",
+    "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw04b-S07-20261029T231151181386/figures/rviz-motion-empty-20261029T231202103-viewport-1.png",
+    "stage": "empty",
+    "role": "infrared"
+  }
+]

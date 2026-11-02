@@ -1,0 +1,28 @@
+{
+  "schema_version":"test.sim_flight_initialization_time_cases.v1",
+  "source_step_limit":2500,
+  "live_source_step_limit":2499,
+  "step_ns":4000000,
+  "tolerance_ns":1,
+  "cases":[
+    {"name":"zero","seconds":"0","step":0,"accepted":true,"microseconds":0},
+    {"name":"one_step","seconds":"0.004","step":1,"accepted":true,"microseconds":4000},
+    {"name":"retained_1008_failure","seconds":"4.028","step":1007,"accepted":true,"microseconds":4028000},
+    {"name":"last_sensor_step","seconds":"9.996","step":2499,"accepted":true,"microseconds":9996000},
+    {"name":"physical_endpoint_only","seconds":"10","step":2500,"accepted":true,"microseconds":10000000},
+    {"name":"inside_positive_tolerance","seconds":"4.0280000005","step":1007,"accepted":true,"microseconds":4028000},
+    {"name":"inside_negative_tolerance","seconds":"4.0279999995","step":1007,"accepted":true,"microseconds":4028000},
+    {"name":"outside_positive_tolerance","seconds":"4.0280000015","step":1007,"accepted":false,"microseconds":null},
+    {"name":"outside_negative_tolerance","seconds":"4.0279999985","step":1007,"accepted":false,"microseconds":null},
+    {"name":"wrong_step","seconds":"4.028","step":1006,"accepted":false,"microseconds":null},
+    {"name":"negative","seconds":"-0.004","step":0,"accepted":false,"microseconds":null},
+    {"name":"nan","seconds":"nan","step":0,"accepted":false,"microseconds":null},
+    {"name":"positive_inf","seconds":"inf","step":0,"accepted":false,"microseconds":null},
+    {"name":"negative_inf","seconds":"-inf","step":0,"accepted":false,"microseconds":null},
+    {"name":"step_over_limit","seconds":"10.004","step":2501,"accepted":false,"microseconds":null},
+    {"name":"integer_overflow_domain","seconds":"1e30","step":2500,"accepted":false,"microseconds":null}
+  ],
+  "trajectory":{"records":2501,"first_time_us":0,"last_time_us":10000000,"increment_us":4000},
+  "old_failure":{"raw_step":1008,"source_step":1007,"seconds":4.028,"old_truncated_us":4027999,"required_us":4028000},
+  "runtime_limits":{"steps":2500,"queries":98,"source_seconds":10,"binding_status":"unverified","control_gate_accepted":false}
+}

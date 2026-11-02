@@ -14,15 +14,27 @@ from pymavlink.dialects.v20 import common
 from rosgraph_msgs.msg import Clock
 from uav_fusionmap_msgs.msg import AircraftState
 from ufm_ros_contract import from_ros_state
+from ufm_ros_contract import from_ros_imu
+from uav_fusionmap_msgs.msg import ImuSample
+from sim01_imu_audit import audit_imu_samples
 
 
 def main():
-    run, run_id = Path(sys.argv[1]), sys.argv[2]
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('run')
+    parser.add_argument('run_id')
+    parser.add_argument('--imu-live', action='store_true')
+    args = parser.parse_args()
+    run, run_id = Path(args.run), args.run_id
     rospy.init_node('sim01a_observer', disable_signals=True)
     lock = threading.Lock()
-    errors, source, adapted, clocks = [], {}, {}, []
+    errors, source, adapted, clocks, raw_imu = [], {}, {}, [], {}
     raw_counts, diagnostics = {}, []
-    files = {name: (run / (name + '.jsonl')).open('x') for name in ('mavlink', 'states', 'clock', 'diagnostics')}
+    files = {name: (run / (name + '.jsonl')).open('x') for name in
+             ('mavlink', 'states', 'clock', 'diagnostics')}
+    if args.imu_live:
+        files['imu'] = (run / 'imu.jsonl').open('x')
     start = time.monotonic()
 
     def write(name, value):
@@ -71,6 +83,26 @@ def main():
             if msg.msgid == 0:
                 if common.MAVLink(None).decode(wire).base_mode & 128:
                     errors.append('aircraft armed')
+            if args.imu_live and msg.msgid == 105:
+                parser_mav = common.MAVLink(None)
+                decoded = None
+                for byte in wire:
+                    decoded = parser_mav.parse_char(bytes([byte])) or decoded
+                if decoded is None or decoded.get_msgId() != 105:
+                    errors.append('HIGHRES_IMU raw decode failed')
+                    return
+                if decoded.fields_updated & 63 != 63:
+                    errors.append('HIGHRES_IMU fields_updated incomplete')
+                values = dict(timestamp=int(decoded.time_usec) * 1000,
+                              linear_acceleration=[decoded.xacc, decoded.yacc, decoded.zacc],
+                              angular_velocity=[decoded.xgyro, decoded.ygyro, decoded.zgyro])
+                if not all(math.isfinite(v) for key in ('linear_acceleration', 'angular_velocity')
+                           for v in values[key]):
+                    errors.append('HIGHRES_IMU raw value non-finite')
+                key = 'sim.imu:' + str(decoded.time_usec)
+                if key in raw_imu and raw_imu[key] != values:
+                    errors.append('HIGHRES_IMU sample identity conflict')
+                raw_imu[key] = values
 
     def diagnostic(msg):
         with lock:
@@ -82,18 +114,38 @@ def main():
                 if item['level'] >= 2:
                     errors.append('fatal diagnostic: ' + item['name'] + ': ' + item['message'])
 
+    def receive_imu(msg, channel):
+        with lock:
+            try:
+                sample = from_ros_imu(msg)
+                write('imu', dict(channel=channel, sample=sample))
+                h = sample['header']
+                if h['run_id'] != run_id or h['clock_id'] != 'sim:' + run_id:
+                    errors.append('IMU domain mismatch')
+                target = source_imu if channel == 'source' else adapted_imu
+                key = h['sample_id']
+                if key in target and target[key] != sample:
+                    errors.append('duplicate IMU identity conflict')
+                target[key] = sample
+            except ValueError as exc:
+                errors.append('IMU decode: ' + str(exc))
+
+    source_imu, adapted_imu = {}, {}
     subscribers = [rospy.Subscriber('/uav/sim/state', AircraftState, receive_state, 'source', queue_size=1000),
                    rospy.Subscriber('/uav/sensors/state', AircraftState, receive_state, 'adapted', queue_size=1000),
                    rospy.Subscriber('/clock', Clock, receive_clock, queue_size=1000),
                    rospy.Subscriber('/mavlink/from', Mavlink, raw, queue_size=10000),
                    rospy.Subscriber('/uav/diagnostics', DiagnosticArray, diagnostic, queue_size=1000)]
+    if args.imu_live:
+        subscribers += [rospy.Subscriber('/uav/sim/imu', ImuSample, receive_imu, 'source', queue_size=1000),
+                        rospy.Subscriber('/uav/sensors/imu', ImuSample, receive_imu, 'adapted', queue_size=1000)]
     passed = False
     try:
         while time.monotonic() - start < 150:
             with lock:
                 if errors:
                     break
-                if adapted:
+                if adapted and (not args.imu_live or (len(source_imu) >= 300 and len(adapted_imu) >= 300)):
                     values = list(adapted.values())
                     span = values[-1]['header']['timestamp'] - values[0]['header']['timestamp']
                     if span >= 30000000000 and len(adapted) >= 500:
@@ -131,12 +183,20 @@ def main():
                     errors.append('state exceeds recorded final clock')
             if not raw_counts.get('0') or not raw_counts.get('105') or not raw_counts.get('331'):
                 errors.append('missing raw telemetry type')
+            imu_audit = None
+            if args.imu_live:
+                imu_audit = audit_imu_samples(raw_imu, source_imu, adapted_imu, clocks, run_id)
+                if not imu_audit['passed']:
+                    errors.extend(imu_audit['errors'])
             node_pythons = {d['name']:d['values']['python'] for d in diagnostics if 'python' in d['values']}
             expected = '/home/zxj/anaconda3/envs/Radar-Diffusion/bin/python'
             if len(node_pythons) != 2 or any(value != expected for value in node_pythons.values()):
                 errors.append('node Python interpreter not verified')
-            result = dict(passed=passed and not errors, errors=errors, source_states=len(source),
+            result = dict(passed=passed and not errors, errors=errors, imu_live=args.imu_live,
+                          source_states=len(source),
                           adapted_states=len(adapted), clocks=len(clocks), raw_counts=raw_counts,
+                          source_imu=len(source_imu), adapted_imu=len(adapted_imu),
+                          imu_audit=imu_audit,
                           valid_span_ns=(list(adapted.values())[-1]['header']['timestamp']-
                                          list(adapted.values())[0]['header']['timestamp']) if adapted else 0,
                           first_valid_ns=next(iter(adapted.values()))['header']['timestamp'] if adapted else None,

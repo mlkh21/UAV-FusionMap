@@ -1,0 +1,19 @@
+<launch>
+  <arg name="enabled" default="false" />
+  <arg name="dataset" default="" />
+  <arg name="run_id" default="" />
+  <arg name="clock_id" default="" />
+  <arg name="clock_publisher" default="" />
+  <arg name="recording_directory" default="" />
+  <group if="$(arg enabled)">
+    <param name="use_sim_time" value="true" />
+    <node pkg="uav_fusionmap_terrain" type="terrain_node.py" name="terrain_provider" output="screen">
+      <param name="enabled" value="true" />
+      <param name="dataset" value="$(arg dataset)" />
+      <param name="run_id" value="$(arg run_id)" />
+      <param name="clock_id" value="$(arg clock_id)" />
+      <param name="clock_publisher" value="$(arg clock_publisher)" />
+      <param name="recording_directory" value="$(arg recording_directory)" />
+    </node>
+  </group>
+</launch>

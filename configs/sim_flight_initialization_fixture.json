@@ -1,0 +1,34 @@
+{
+  "schema_version": "sim_flight_initialization_fixture.v1",
+  "profile_id": "sim-flight-initialization-observe-v1",
+  "fixture_only": true,
+  "simulation_only": true,
+  "observation_only": true,
+  "commands_enabled": false,
+  "capture_active": false,
+  "ic": {"latitude_deg":47.458159,"longitude_deg":8.548004,"altitude_reference":"AGL","altitude_m":0.5,"terrain_elevation_m":419.2,"true_airspeed_mps":0.0,"phi_theta_psi_deg":[0.0,0.0,90.0],"gamma_deg":null},
+  "model": {
+    "airframe":1033,"sys_ctrl_alloc":0,"aircraft_model":"Rascal110-JSBSim",
+    "bridge_config":"configs/rascal.xml","mixer":"etc/mixers-sitl/plane_sitl.main.mix",
+    "gear_names":["LEFT_MLG","RIGHT_MLG","TAIL_LG"],
+    "source_units":{"ecef_ft":"ECEF:ft","vel_ned_ftps":"NED:ft/s","vel_ned_mps":"NED:m/s","euler_deg":"NED_FRD:deg","pqr_radps":"FRD:rad/s","pilot_accel_ftps2":"FRD:ft/s^2","pilot_accel_mps2":"FRD:m/s^2","compression_lbf":"lbf","compression_n":"N"},
+    "ft_to_m":0.3048,"lbf_to_n":4.4482216152605
+  },
+  "actuator_channels":[{"name":"rudder","index":2,"scale":-1,"property":"fcs/rudder-cmd-norm"},{"name":"aileron","index":5,"scale":-1,"property":"fcs/aileron-cmd-norm"},{"name":"elevator","index":7,"scale":-1,"property":"fcs/elevator-cmd-norm"},{"name":"throttle","index":4,"scale":1,"property":"fcs/throttle-cmd-norm"}],
+  "time":{"step_ns":4000000,"max_step":2500,"settled_steps":250,"ready_checkpoints":[2000,2500]},
+  "checkpoints":[125,250,500,1000,1500,2000,2500],
+  "topics":["estimator_selector_status","vehicle_imu","estimator_status","estimator_status_flags","estimator_attitude","vehicle_attitude","vehicle_control_mode","actuator_controls_0","actuator_outputs","vehicle_land_detected","estimator_selector_status"],
+  "parameters":[{"name":"SYS_AUTOSTART","kind":"int32","value":1033},{"name":"SYS_CTRL_ALLOC","kind":"int32","value":0},{"name":"SENS_IMU_MODE","kind":"int32","value":0},{"name":"EKF2_ANGERR_INIT","kind":"float32","value":0.1},{"name":"EKF2_MAG_TYPE","kind":"int32","value":0},{"name":"EKF2_HGT_MODE","kind":"int32","value":0},{"name":"EKF2_AID_MASK","kind":"int32","value":1}],
+  "limits": {
+    "header_bytes":262144,"record_bytes":16384,"event_bytes":262144,"raw_bytes":32768,
+    "depth":8,"nodes":8192,"text_bytes":128,"list_items":512,"stream_records":2500,"query_records":128,
+    "stream_bytes":67108864,"query_bytes":16777216,"wire_bytes":16777216,"wire_events":8192,"artifact_bytes":268435456,
+    "build_wall_ns":180000000000,"startup_wall_ns":60000000000,"prepare_wall_ns":60000000000,"session_wall_ns":120000000000,
+    "transaction_wall_ns":1000000000,"client_wall_ns":200000000,"group_wall_ns":400000000,
+    "agl_min_m":-0.05,"agl_max_m":1.0,"roll_max_deg":30.0,"pitch_max_deg":25.0,"horizontal_max_m":2.0,
+    "airspeed_max_mps":5.0,"pilot_accel_max_mps2":98.0665,"pqr_max_radps":2.0,
+    "settled_speed_max_mps":0.5,"settled_gyro_max_radps":0.2617993877991494,
+    "settled_accel_min_mps2":7.84532,"settled_accel_max_mps2":11.76798,
+    "status_age_us":200000,"slow_age_us":1200000,"attitude_age_us":20000,"quaternion_norm_error":0.001
+  }
+}

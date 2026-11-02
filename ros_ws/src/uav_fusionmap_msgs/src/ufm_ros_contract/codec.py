@@ -43,6 +43,59 @@ def _vector(value, size, name, finite=True):
     return result
 
 
+def _confidence(value):
+    if value is not None and (isinstance(value, bool) or not isinstance(value, Real) or
+                              not math.isfinite(value) or not 0 <= value <= 1):
+        raise ValueError('confidence必须为[0,1]有限值或None')
+    return float(value) if value is not None else None
+
+
+def _uncertainty_fields(value):
+    value = value if value is not None else {}
+    status = value.get('status', 'unavailable')
+    _encode(status, UNCERTAINTY, 'uncertainty.status')
+    result = {key: _text(value.get(key, ''), 'uncertainty.' + key,
+                        allow_empty=status == 'unavailable')
+              for key in ('kind', 'unit', 'source')}
+    values = value.get('value')
+    if status == 'unavailable':
+        if values is not None:
+            raise ValueError('不可用uncertainty逻辑值必须为None')
+    else:
+        values = _vector(values, None, 'uncertainty.value')
+        if not values:
+            raise ValueError('available uncertainty must have values')
+        if result['kind'] == 'occupancy_variance' and (len(values) != 1 or values[0] < 0):
+            raise ValueError('occupancy_variance must be one nonnegative value')
+    return dict(result, status=status, value=values)
+
+
+def encode_header(msg, header):
+    """所有业务ROS消息共用同一Header编码与版本检查。"""
+    for key in HEADER_TEXT:
+        setattr(msg, key, _text(header[key], key, allow_empty=(key == 'reason')))
+    if header['schema_version'] != '0.1':
+        raise ValueError('schema_version不支持')
+    timestamp = header['timestamp']
+    if type(timestamp) is not int or not 0 <= timestamp < 2**63:
+        raise ValueError('timestamp必须为非负int64纳秒')
+    msg.timestamp = timestamp
+    msg.source_type = _encode(header['source_type'], SOURCE, 'source_type')
+    msg.status = _encode(header['status'], STATUS, 'status')
+    if header['status'] != 'valid' and not header['reason'].strip():
+        raise ValueError('非valid状态必须给出reason')
+
+
+def decode_header(msg):
+    from uav_fusionmap_msgs.msg import ObservationHeader
+    header = {key: getattr(msg, key) for key in HEADER_TEXT}
+    header.update(timestamp=msg.timestamp,
+                  source_type=_decode(msg.source_type, SOURCE, 'source_type'),
+                  status=_decode(msg.status, STATUS, 'status'))
+    encode_header(ObservationHeader(), header)
+    return header
+
+
 def to_ros_state(state):
     """验证逻辑契约并编码；失败抛ValueError，不修正采样时间或姿态。"""
     try:
@@ -54,18 +107,7 @@ def to_ros_state(state):
 def _to_ros_state(state):
     msg = AircraftState()
     header = state['header']
-    for key in HEADER_TEXT:
-        setattr(msg.header, key, _text(header[key], key, allow_empty=(key == 'reason')))
-    if header['schema_version'] != '0.1':
-        raise ValueError('schema_version不支持')
-    timestamp = header['timestamp']
-    if type(timestamp) is not int or not 0 <= timestamp <= 2**63 - 1:
-        raise ValueError('timestamp必须为非负int64纳秒')
-    msg.header.timestamp = timestamp
-    msg.header.source_type = _encode(header['source_type'], SOURCE, 'source_type')
-    msg.header.status = _encode(header['status'], STATUS, 'status')
-    if header['status'] != 'valid' and not header['reason'].strip():
-        raise ValueError('非valid状态必须给出reason')
+    encode_header(msg.header, header)
     geometry_valid = header['status'] != 'unavailable'
     msg.position = _vector(state['position'], 3, 'position', geometry_valid)
     msg.orientation_xyzw = _vector(state['orientation_xyzw'], 4, 'orientation_xyzw', geometry_valid)
@@ -76,13 +118,11 @@ def _to_ros_state(state):
     msg.velocity_frame_id = _text(state['velocity_frame_id'], 'velocity_frame_id')
     msg.state_source = _encode(state['state_source'], STATE_SOURCE, 'state_source')
     quality = state['quality']
-    confidence = quality['confidence']
+    confidence = _confidence(quality['confidence'])
     msg.quality.confidence_available = confidence is not None
     if confidence is None:
         msg.quality.confidence = 0.0  # 无效槽位；有效性只看标志。
     else:
-        if isinstance(confidence, bool) or not isinstance(confidence, Real) or not 0 <= confidence <= 1:
-            raise ValueError('confidence必须为[0,1]有限值或None')
         msg.quality.confidence = float(confidence)
     uncertainty = quality['uncertainty']
     out = msg.quality.uncertainty
@@ -103,10 +143,7 @@ def _to_ros_state(state):
 def from_ros_state(msg):
     """解码并再次按相同契约验证，恢复显式None语义。"""
     try:
-        header = {key: getattr(msg.header, key) for key in HEADER_TEXT}
-        header.update(timestamp=msg.header.timestamp,
-                      source_type=_decode(msg.header.source_type, SOURCE, 'source_type'),
-                      status=_decode(msg.header.status, STATUS, 'status'))
+        header = decode_header(msg.header)
         quality = msg.quality
         if type(quality.confidence_available) is not bool:
             raise ValueError('confidence_available必须为bool')

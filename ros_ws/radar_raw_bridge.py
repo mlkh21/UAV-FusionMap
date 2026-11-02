@@ -31,6 +31,7 @@ def decode_radar_cloud(cloud, profile, identity):
     spans.sort()
     if any(left[1] > right[0] for left, right in zip(spans, spans[1:])):
         raise ValueError('Radar PointField byte regions overlap')
+    names = [field.name for field in sorted(cloud.fields, key=lambda field: field.offset)]
     try:
         rows = (dict(zip(names, values)) for values in
                 point_cloud2.read_points(cloud, field_names=names, skip_nans=False))

@@ -19,7 +19,7 @@ def unavailable_quality():
 
 
 def decode_source_packet(wire, framing_status=1, sysid=1, compid=1,
-                         norm_tolerance=.001):
+                         norm_tolerance=.001, include_imu_values=False):
     """返回目标样本、非目标None；目标帧损坏/契约错误为ValueError。"""
     if framing_status != 1:
         raise ValueError('invalid_framing')
@@ -46,7 +46,11 @@ def decode_source_packet(wire, framing_status=1, sysid=1, compid=1,
         values = [getattr(msg, k) for k in ('xacc','yacc','zacc','xgyro','ygyro','zgyro')]
         if msg.fields_updated & 63 != 63 or not all(math.isfinite(v) for v in values):
             raise ValueError('invalid_imu_fields')
-        return {'type': 'imu', 'time_usec': msg.time_usec}
+        sample = {'type': 'imu', 'time_usec': msg.time_usec}
+        if include_imu_values:
+            sample['imu_values'] = {'linear_acceleration': values[:3],
+                                    'angular_velocity': values[3:]}
+        return sample
     if (msg.frame_id, msg.child_frame_id, msg.estimator_type) != (1, 12, 8):
         raise ValueError('unsupported_odometry_source_frames')
     position = [msg.x, msg.y, msg.z]

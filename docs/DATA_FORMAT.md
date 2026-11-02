@@ -1,5 +1,9 @@
 # 数据格式与接口语义
 
+2026-10-30补充：独立真实高程预览采用[ufm.elevation.preview.v1静态导出](REPORT_IMPROVEMENTS_20261030.md#2-工具安装与真实高程)，
+包括声明来源/DSM/EGM2008/坐标与原点的metadata，以及同形状east/north/height/valid数组。
+有效位与源no-data保持，位置查询输出valid/no_data/outside及高度或null；不复用或放宽m5_fixture_v1，旧公共消息字段不变。
+
 版本：v0.1；更新日期：2026-10-14；责任角色：system_architect。
 状态：逻辑数据契约已定义；SIM-01A AircraftState的ROS编码已确认并实现，
 其余消息仍是逻辑设计。各项运行验收以EXPERIMENT_LOG为准。
@@ -41,9 +45,59 @@ ROS编码确定后必须保持单位、维度、空值、时间与坐标语义�
 | uncertainty.unit | string | 如m²、rad²、无量纲；协方差混合单位按维度说明 |
 | uncertainty.source | string | 传感器规格、标定估计、模型输出或启发式规则 |
 
+编码和业务入口都拒绝bool、NaN、Inf及越界confidence。`available` uncertainty必须有非空
+kind/unit/source和有限非空value；`unavailable`的value逻辑值为null，ROS数组为空。
+`occupancy_variance`在现有fixture语义下为单个非负值；其他kind不套用未经确认的统一维度
+或阈值。输入质量错误不能被裁剪、补默认值或转成free。
+
 available时数值必须有效且符合该物理量约束；unavailable时value为null。
 概率、confidence与uncertainty含义不同，不定义通用的互相换算公式。
 模型分数未经校准不得标为已校准占据概率误差或位置方差。
+
+2026-10-27已交付[M3合成区间传播提案](M3_SOFTWARE_TRIAL_PLAN_20261027.md)，
+复用上述字段定义显式fixture profile，区分单次输入范围与累计范围来源。
+用户后续继续确认，SW-01已实现仅由测试工具显式调用的区间profile校验，
+kind=`occupancy_probability_interval`、unit=dimensionless、value=[lower,upper]，
+分别使用具名input/output source；不可用value仍为None。输入均值须先确定float32值，
+范围严格包含该值；wire输出的包含关系按nearest-even承载检查，不修补字段。
+这不改变现有通用kind接受范围或定义真实统计置信水平；M2累计质量仍unavailable，
+输入/预期证据见[EXP-20261027-012](../experiments/2026-10-27-m3-fixture-oracle.md)。
+SW-02已实现显式固定M3累计：公开区间对应所声明算术的累计范围，缺少任一有效贡献
+范围则保持unavailable到TTL重启或cell淘汰重建，confidence始终None。
+快照/查询只保留原字段；私有端点L不输出。固定证据见
+[EXP-20261027-013](../experiments/2026-10-27-m3-fixed-map.md)。
+SW-03显式滚动候选已验证范围/缺失状态和均值/原证据时间一起迁移、淘汰及重建；
+空帧覆盖变化不刷新证据，过去覆盖查询不泄漏范围。只增加显式候选类，不新增字段或
+改变默认M1/M2，M3实际ROS仍待SW-04，见
+[EXP-20261027-014](../experiments/2026-10-27-m3-rolling-time.md)。
+SW-04已完成显式M3 ROS与公开收据回放，既有字段承载区间来源、缺失锁存及历史质量。
+应用对自定义transport独立检查confidence与通用uncertainty，识别本区间kind时核对
+dimensionless、双端点、有序概率范围及均值包含关系；wire使用端点的nearest-even
+float32映像，不修改原值、不重分类。非法质量响应返回unavailable；其他合法kind仍保真。
+五类状态、旧入口及清理证据见
+[EXP-20261027-015](../experiments/2026-10-27-m3-ros-handoff.md)，不表示真实覆盖率已校准。
+
+2026-10-28 M4-SW-01在mapping内新增显式fixture注册/输入checker，仅复用现有
+OccupancyObservation/SpatialContext/Uncertainty字段，不新增在线字段或消息。
+注册为独立私有配置，声明方向、run/clock、来源和有效期，不能通过修改header.frame_id
+把odom网格伪装成map。测试预期使用同一固定map网格的MapSnapshot/MapQueryResult，
+SW-01时只验证合同与承载，尚未实现Scene候选；后续候选证据单列如下。
+详见[M4方案](M4_SOFTWARE_TRIAL_PLAN_20261027.md)与
+[EXP-20261028-001](../experiments/2026-10-28-m4-fixture-contract.md)。
+
+M4-SW-02随后实现显式Scene候选，活动M3公开估计经具名固定map←odom注册重索引到
+一套map网格，封存记录与活动视图同一Scene index只有一个owner。概率/质量/原时间
+整条保留或由更新贡献接管，不把累计快照再次融合，不借旧区间填补新missing。
+公开snapshot及query仍沿用本契约字段，index均为Scene格点；coverage是固定包围范围，
+空洞或淘汰区域unknown。目录变化增加Scene revision/私有结构时刻，不刷新贡献时间；
+早于最新贡献/结构的查询unavailable，过TTL stale保留历史quality，注册过期无cell载荷。
+8场景41输入52查询冻结预期和消息序列化证据见
+[EXP-20261028-002](../experiments/2026-10-28-m4-scene-candidate.md)；该轮非M4 ROS或真实注册验收。
+
+M4-SW-04已在实际独立ROS中通过既有OccupancyObservation/MapSnapshot/MapQuery的
+15观测9快照20查询及公开收据回放，Scene index/map身份、五类状态、原时间/历史质量及缺失
+均保真；未新增submap/registration/epoch等公共字段。证据见
+[EXP-20261028-004](../experiments/2026-10-28-m4-ros-handoff.md)，固定合成注册不代替真实坐标验收。
 
 ## 4. RadarFrame
 
@@ -146,6 +200,17 @@ ARS548记录必须保持列表级时间且逐点时间为null；Mid-360记录必
 ImuSample包含header、linear_acceleration[3]、angular_velocity[3]及各自3×3协方差。
 必须声明加速度是比力还是已去重力线加速度；姿态若提供，注明有效性和来源。
 
+2026-10-26可选仿真IMU编码为`uav_fusionmap_msgs/ImuSample`：使用现有
+`ObservationHeader`保留采样纳秒、run/clock/sample身份及来源/状态；
+`acceleration_type=SPECIFIC_FORCE`（0）或`GRAVITY_REMOVED`（1）；
+`linear_acceleration`单位m/s²，`angular_velocity`单位rad/s，协方差均为
+9元素行优先数组并配独立`*_available`标志。本子范围没有可信协方差，逻辑值
+为`None`，编码时`available=false`、数组仅为无效槽位，解码时恢复`None`；
+不得把该槽位解释为零噪声。`calibration_id`标识坐标适配依据；源端为空表示
+尚未适配，适配端仅允许明确的虚拟`sim_pilot_virtual_flu_v1`。当前只验证
+`specific_force`仿真源，未验证真实安装、真实设备时钟/协方差和去重力输出。
+这条IMU旁路不改变SensorBundle字段，也不成为定位或地图业务输入。
+
 AircraftState包含header、position[3]、orientation_xyzw[4]、linear_velocity[3]、
 body_frame_id、velocity_frame_id、state_source和quality。state_source区分ground_truth
 与estimated。position/orientation表示Body在header.frame_id下的位姿；速度必须有明确
@@ -177,6 +242,10 @@ std_msgs/Header。position/velocity编码为float64[3]，orientation_xyzw为floa
 
 confidence=null对应confidence_available=false，数值槽不构成观测；
 uncertainty.value=null对应unavailable和float64[]空数组。kind/unit/source仍保留来源。
+
+2026-10-27契约修复：Header统一检查0.1版本、非负int64采样时间和已定义枚举；
+SpatialContext变换状态和uncertainty状态只接受0/1，其他数值拒绝，不能按非零解释为可用。
+纯业务地图也在修改实例前拒绝不支持的Header，字段与消息版本不变。
 本步拒绝available uncertainty：现有PX4缺完整姿态协方差和速度协方差轴转换，
 缺失量不得补零。有效几何及单位四元数容差0.001均须校验；未知枚举/空身份拒绝。
 
@@ -191,6 +260,109 @@ sim.terminal:<code>:<last_clock_us>，无已知时钟取0；终止几何槽不�
 SceneDescription由simulation提供给sensors：包含header、scene_id、revision、
 几何/障碍物资产引用、物体位姿与有效时间、热属性来源及单位。几何采用m，热属性
 未建模时必须标明功能级占位。资产格式在Phase 1确定，不能推定JSBSim自动提供所有资产。
+
+### 6.2 场景运动推进独立协议（2026-10-29）
+
+SIM-MOTION-SW-01新增独立`uav_fusionmap_sim_scene_msgs`的SceneFrame、SceneCaptureAck及SceneStep，
+当时只冻结并验证离线合同/真实消息线格式；后续[SW-02](SIM_MOTION_SW02_ENGINE_20261029.md)
+已在独立入口实现服务、发布者及推进状态机，旧默认launch不装配这些接口。
+完整字段、逻辑None与规范空槽见[SW-01合同](SIM_MOTION_SW01_CONTRACT_20261029.md)。
+SceneFrame嵌入原AircraftState，但仅在此profile接受scene_world/simulation/ground_truth/valid、
+base_link速度与质心FLU、缺失质量；协议版本1与旧Header 0.1独立，旧字段/codec均保持。
+timestamp严格为step_index×4000000整数纳秒，注册固定jsbsim_cg_to_scene_enu_v1。
+step 0只初始化，正step每25步为采样tick；ACK与成功响应的采样时间精确匹配，失败不得推进。
+响应的has_applied_frame、radar_captured、infrared_captured承载缺失语义，数值0/负z不充当缺失标志。
+单线格式≤4096字节、文本身份≤128 UTF-8字节、reason≤256字节；坏枚举/版本、非有限、
+非规范bool/空槽、错身份、超限和训练监督字段拒绝。没有在旧占据/地形消息中附加这些字段。
+SW-02真实raw测量戳不改写，失败不提交业务clock/state；terminal仍使用旧AircraftState的
+unavailable/terminal:<reason>，不作为SceneFrame几何目标，也不发布TF或恢复已锁定stream。
+
+后续[SW-04A](SIM_MOTION_SW04A_CONTRACT_20261029.md)新增独立测试清单
+`sim_motion_multiscene_fixture.v1`，由simulation离线逻辑校验与tests显式消费。
+它固定9例IC/几何/epoch/故障/预算，沿用上述场景公共协议，不新增公共消息字段，
+不进入SensorBundle/感知forward/mapping；几何oracle仅用于独立评测。
+77组既有场景消息真实字节及36组旧公共消息空观测/查询往返通过，非新增场景运行。
+
+后续[SW-04B](SIM_MOTION_SW04B_ENGINE_20261029.md)在不改上述公共字段下实际装配新case。
+S07几何端点复用标准SetModelState，status_message中的scene_geometry_epoch.v1只记录
+run/epoch/step、整数world前后纳秒、paused、model/collision位置与visual局部位置/box尺寸等基础设施读回。
+在线Radar/IR与占据/查询不携带这些几何诊断或测试oracle。有效零点观测仍不生成free，旧cell证据时间保持。
+
+随后[SW-04C](SIM_MOTION_SW04C_DELIVERY_20261029.md)在同一最终源码上完成9核心/3兼容，
+25份旧定义逐值保持，77组实际场景字节/36组旧公共往返通过。
+S05视场离开产生的合法空帧同样不能刷新旧cell；不强制每个合法运动帧有回波或IR纹理。
+empty阶段、窗口归一化与截图角色属于测试/显示收据，不写入在线业务消息。
+
+[SIM-FLIGHT具体提案](SIM_FLIGHT_DESIGN_20261029.md)仅拟议私有flight/执行器记录合同和
+后续protocol_version=2的独立codec/端点；本轮没有新增/修改公共字段、类型、schema或运行消费方。
+私有执行器mode/armed/16路值缺失须显式不可用，不能以零值冒充已观测disarmed；
+HIL微秒原值、FDM纳秒网格及单调墙钟分开保存，控制诊断不得进入在线SensorBundle/占据消息。
+2026-10-30 [SW-01](SIM_FLIGHT_SW01_CONTRACT_20261030.md#3-私有记录与缺失语义)已实现私有
+sim_flight_fixture.v1、sim_flight_actuator_record.v1及sim_flight_recording.v1的严格JSON/JSONL合同。
+每层精确键集，拒绝训练监督字段；has_actuator=false时载荷/requested及中间墙钟显式null，
+16路保留float32原值，HIL微秒为uint64整数，FDM前后时间与4ms步长各受1ns界。
+记录头含固定observation_only profile/peer/初始属性；连续step、接收序号、属性与终止状态逐流核对。
+绑定仅unverified且控制门固定false，armed记录在observe流中拒绝；无新增公共消息或运行消费方。
+完整字段/资源边界与合成验证见合同，未验证真实MAVLink wire或因果关联。
+随后[SW-02](SIM_FLIGHT_SW02_DIAGNOSTICS_20261030.md)已实际写入同一私有记录schema，
+另保存wire.jsonl原始TCP块的direction/step/wall/length/sent/hex及initial.json/terminal.json诊断。
+这些不是公开dataset或业务消息；只有严格校验通过才生成recording.jsonl，坏/不可表达记录保留并明确失败。
+实际正常250条与断连接126条均has_actuator=false、actuator/requested=null，0不是执行器观测值。
+真实HIL_SENSOR时间逐字节核对，binding_status仍unverified；正向执行器wire/属性链尚无当前run证据。
+后续[DIAG-DESIGN-02](SIM_FLIGHT_DIAG_DESIGN_20261030.md#42-身份时序与预算)拟私有
+sim_flight_uorb_snapshot.v1：本次PX4/daemon身份、检查点/查询序号、原始topic时间/实例、
+单调查询区间、退出码和原始输出/缺失状态分别保存；未实现或新增公共字段。
+native的never published、exit0但无字段和数值0必须分开；打印浮点不替代MAVLink float32位模式，
+逐份查询不具原子同tick含义，绑定和控制门仍不开放。
+随后[SW-02B私有合同](SIM_FLIGHT_SW02B_PROBE_20261030.md#3-私有合同与预算)已实现query/snapshot v1，
+精确键集及完整原生msg字段/实例/整数时间、身份/预算和JSON投影类型校验，未改公共协议。
+唯一有效实际快照三组IMU均492000us；第二条estimator_status空标题仍拒绝，不编码成未发布或0。
+21条流验收未通过；尚无三态诊断事件合同，后续须先设计，旧严格缺失语义保持。
+随后[三态具体设计](SIM_FLIGHT_DIAG_DESIGN03_20261030.md#4-拟议私有事件与校验)已定义拟议
+sim_flight_uorb_diagnostic.v1的精确键集及payload/not_published/payload_unavailable；
+空块fields=null、完整块全字段、单实例无标签编号null，混合块顶层不可用；部分字段仍失败。
+尚未实现/生成新合同或公共字段；与旧snapshot schema交叉拒绝，不回填旧失败或将空块赋零。
+随后[SW-02C](SIM_FLIGHT_SW02C_DIAGNOSTICS_20261030.md#3-独立合同与停止规则)已实现独立私有事件和JSONL，
+新旧schema交叉拒绝；10条实际合法事件为3 payload/6 unavailable/1 not_published。
+第11次原文nan仍按非有限拒绝，不编码为合法浮点、0/null或空块；21条流未完成，公共消息不变。
+显式原生非有限质量的未来表示尚未设计/实现，不能由源码的NaN默认值推定本run全部状态。
+随后[DIAG-DESIGN-04](SIM_FLIGHT_DIAG_DESIGN04_20261030.md#4-新私有事件表示)已定义拟议私有diagnostic.v2：
+新增payload_quality_unavailable及每实例unavailable_fields，只对两白名单比值的准确nan与同块固定源条件合格时，
+以明确原因/原token及对应null隔离；其他非有限仍拒绝。不能只填null或把质量不可用当空正文。
+尚未实现此新codec/公共字段；新旧schema交叉拒绝，原SW-02B/C失败与有限数值合同保持。
+随后[SW-02D合同/实际记录](SIM_FLIGHT_SW02D_QUALITY_20261030.md#3-合同源语义与预算)已实现上述私有v2及严格codec：
+完整同块uint32标志与32位标注一致，vel仅flags & 0x0100000c == 0、pos仅flags & 0x1004 == 0时，
+准确nan可编码对应null和有序unavailable_fields；记录field/native_token/reason三键，原因固定native_ratio_source_not_selected。
+其他字段/变体/错条件非有限仍拒绝；部分字段、坏类型/身份/时间/超限和新旧schema交叉均拒绝。
+21条实际事件逐原文重读通过，8 payload/2 not_published/10 payload_unavailable/1 payload_quality_unavailable；
+12处质量缺失显式记录，diagnostic_collection_complete=true而body_complete/payload_complete=false。
+两个旧v1对旧NaN继续拒绝，公共消息/在线业务合同不变，binding仍unverified且control_gate_accepted=false。
+随后[INIT-DESIGN-01](SIM_FLIGHT_INIT_DESIGN_20261030.md#5-独立合同与观测计划)拟独立私有初始化schema，
+保存FDM前后动力学、AGL/速度/Euler/PQR、pilot比力、支柱WOW/压缩力和原HIL时间，缺包显式null。
+新84项查询不借旧21项封套；地面接触、初始化、姿态与输出链分别判断，不把零属性当执行器观测。
+本轮只有具体设计，未实现新codec/profile或公共消息，在线合同保持。
+随后[INIT-SW-01完整合同](SIM_FLIGHT_INIT_SW01_CONTRACT_20261030.md#3-精确合同)已实现独立fixture/recording/step/
+query/observation/terminal v1及有界JSON/JSONL。fdm.hil_sensor精确保存原time_usec/accel_mps2/gyro_radps，
+与前后动力学/支柱接触及原始HIL时间分开；缺包slot为null，零属性不冒充已观测执行器。
+新84查询使用独立封套，完整原文投影/类型一致、同块两字段准确nan条件隔离，原生未来/倒退时间拒绝。
+私有JSON实际重读通过，公共消息/在线合同及旧v1/quality-v2保持；合成四门通过也只产生unverified/控制false。
+随后[INIT-SW-02实际记录](SIM_FLIGHT_INIT_SW02_PREPARATION_20261030.md)已产生该私有step/wire/原文事件：
+500 step含78真实零包及原四属性，原始float32/整数时间逐包独立核对，绑定仍unverified。
+第30条selector四数组共8处nan不在两比值条件隔离白名单内，严格拒绝、raw保存，合法事件仅29。
+不新增schema或把此nan填null/0/1；期限失败末条超1s仅作为raw失败证据，不当合法正常step。
+随后[selector具体设计](SIM_FLIGHT_INIT_SELECTOR_DESIGN_20261030.md#3-拟议解析规则与缺失表示)拟独立fixture/recording/query/observation：
+9槽比值未见尾部与4槽IMU误差准确nan按field/index/token/reason显式隔离，原84 codec仍严格拒绝。
+拟98项观测与原物理header/step/terminal按同run固定文件组合；原消费IMU时间保持null，非选中槽缺失不填0或改成健康。
+本轮未实施任何新schema/解析规则，下一项只离线合同，历史失败不迁移成合法事件。
+随后[selector SW-01合同](SIM_FLIGHT_INIT_SELECTOR_SW01_CONTRACT_20261030.md#3-精确合同与源检查)已实现上述独立4种私有封套，
+逐槽null/说明与原文投影一一对应；98计划与原物理v1按固定同run文件组合，旧84 codec不改。
+101次新私有JSON往返/两组合成文件通过，非ROS新线格式/实际采集；原消费时间null/控制false，历史失败不回填。
+随后[selector SW-02](SIM_FLIGHT_INIT_SELECTOR_SW02_PREPARATION_20261030.md)实际写59个独立封套，32处selector缺失显式隔离。
+私有组合现允许物理2500成功终态后的末组查询；仅固定PX4 rootfs/etc运行资源链接不作记录输入，其他链接拒绝。
+1008条4027999us原始wire/失败raw保留，网格应4028000而未接纳；不改原物理schema/时间界或历史记录。
+随后[INIT-TIME-SW-01](SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md#3-时间生产与拒绝规则)新增私有time-grid.jsonl来源收据，
+精确sensor_kind/source_step/source_time_s/time_usec四键，原double与发送前生成的整数分别保存；不改既有schema/接收包或历史原戳。
+实际2509条收据与2500 HIL/9 GPS发送字节一一对应；单profile完整准备通过，控制false/绑定unverified。
 
 ## 7. SensorBundle与SpatialContext
 
@@ -267,6 +439,27 @@ unknown单元如保留概率槽，使用0.5占位且不得参与自由/占据融
 
 disabled模式可发N=0且status=unavailable的观测并保留状态上下文。valid的空消息也
 不代表整个网格自由。同一run内sample_id重复交付不得重复累积概率证据。
+
+2026-10-27 M2-SW-01仅复用现有字段生成测试占据：source_type=fixture且
+observed_domain_source=`m2_explicit_inverse_fixture_v1`，显式声明合成逆观测算术语义。
+该domain不是对原placeholder或研究概率的自动转换/校准；缺失/无回波不产生free。
+固定单位变换与calibration_id只是具名合成场景，不是实物外参。SW-01验证输入和
+独立数值预期，记录见
+[EXP-20261027-007](../experiments/2026-10-27-m2-fixture-oracle.md)。
+后续SW-02已实现固定合成网格累计/查询，沿用MapSnapshot/MapQueryResult字段，
+probability为具名试制累计结果、confidence/uncertainty仍不可用；未观测/失效/中性输入
+不刷新证据时间，查询超过min(max_age_ns,配置TTL)为stale。
+这只适用于显式M2候选，不改变M1默认查询行为或声明真实概率校准，见
+[EXP-20261027-008](../experiments/2026-10-27-m2-fixed-map.md)。
+SW-03的显式滚动候选沿用相同字段，重叠cell保留累计概率与原证据时间，移出整体丢弃。
+合法空帧移动窗口可增加revision，header.timestamp仍为最新贡献证据时间；
+内部另记最新覆盖变化时刻，早于该时刻的查询返回unavailable，不以未来窗口回答历史查询。
+上述语义仅在显式M2候选生效，未改M1默认入口；离线验证见
+[EXP-20261027-009](../experiments/2026-10-27-m2-rolling-time.md)。
+SW-04已用现有ROS占据/快照/查询消息通过独立合成运行及公开收据回放，
+应用保持occupied/free/unknown/stale/unavailable与不可用质量语义。
+没有增加公共字段，普通placeholder概率不能自动转成M2逆观测证据，见
+[EXP-20261027-010](../experiments/2026-10-27-m2-ros-handoff.md)。
 
 ## 9. MapSnapshot与MapQuery
 
@@ -369,6 +562,48 @@ grid、resolution、origin、height_unit、no_data_mask和height_uncertainty。
 进入mapping前必须完成到地图坐标的注册；缺少基准时不得融合。
 本节仅定义接入约束，详细栅格编码和融合方法在基础地图验收后确定。
 
+2026-10-28已形成[M5-DESIGN-01具体方案](M5_TERRAIN_PRIOR_DESIGN_20261028.md)：
+后续先评审mapping内部私有离线fixture合同，独立保留高度、no-data、采集时间/运行有效期、
+注册及米制高度质量，不把它们装入占据概率、observed或last_observed_timestamp。
+此处仍为公共接口预留，未冻结新消息/字段。公共ROS/应用地形协议的生产消费、兼容迁移与恢复
+须按方案第7节另审；本轮没有TerrainPrior运行实现或DEM占据融合。
+
+后续M5-SW-01已冻结私有schema `m5_terrain_fixture.v1`，定义row-major中心高程、严格布尔
+no_data_mask、源/目标水平和垂直fixture基准、独立采集/运行时钟、逐样本米制绝对高程区间及注册z平移区间。
+仅内部JSON输入与请求语法校验，无地形查询结果/缓存、公共消息或占据融合。
+精确字段/单位与限制见[SW-01合同](M5_SW01_CONTRACT_20261028.md)；公共TerrainPrior仍为预留。
+
+SW-02已在独立离线候选内部实现`m5_terrain_result.v1`：独立terrain_revision/版本/注册身份、
+米制高程/区间、原采集时间/运行授权/安装时间和valid/unknown/stale/unavailable；
+这不是公共MapQueryResult扩展，原probability/observed/观测时间与ROS字段均不变。
+完整私有字段、有效性和恢复见[SW-02说明](M5_SW02_TERRAIN_CANDIDATE_20261028.md)。
+
+后续M5-IFACE-DESIGN-01已交付[公共合同具体提案](M5_IFACE_DESIGN_20261028.md#3-类型与字段提案)：
+拟新增独立TerrainHeightQuality/Context/QueryResult/Status及TerrainQuery，float64高程/区间、
+明确availability flags、源dataset时间/运行授权/安装/evaluation时间、实例+revision绑定；
+另定义结构化公共dataset/recording提案，不在reason/source字段塞JSON。
+这只是待确认的具体设计，尚未生成.msg/.srv或冻结公共运行字段；旧占据/传感器合同保持。
+
+用户后续明确授权M5-IFACE-SW-01，现已实现独立`uav_fusionmap_terrain_msgs`的4.msg/1.srv，
+其v1字段以源码及[公共合同](M5_IFACE_SW01_CONTRACT_20261028.md)冻结，不扩展任何旧消息。
+公开逻辑对象严格字段/枚举，以None表示缺失；codec验证availability flag及规范空槽、
+float64质量角色/界、int64时间、实例/revision和请求绑定，实际genpy与独立字节往返通过。
+`ufm.terrain.dataset.v1`及`ufm.terrain.recording.v1`已有有界校验/三文件读取，
+记录结构校验不等同执行回放；Provider/ROS服务、客户端与地形显示未实现。
+验证范围与限额见[EXP-20261028-012](../experiments/2026-10-28-m5-interface-contract.md)。
+
+SW-02后续已实际生产/查询上述冻结协议，Provider将已提交dataset元数据投影为Context，
+源采集、安装、请求和evaluation时间分开保留；时钟/域/注册不可用清载荷，no-data或到期不解释为free。
+旧消息字段及私有候选不变，实际ROS与兼容/新run恢复见
+[EXP-20261028-013](../experiments/2026-10-28-m5-provider-ros.md)；记录仍只具结构校验，执行回放/客户端待SW-03。
+
+2026-10-29 SW-03已实际录制并执行`ufm.terrain.recording.v1`，三文件/schema字段不变，
+回放逐事件调用Provider并比对；对外原实例标recorded并另带playback_session_id，不向live流发布。
+应用单组≤16结果固定实例/revision/Context，跨到期状态整组拒绝；本地传输失败为空实例unavailable封套，
+只在应用内部使用，不冒充服务端正式响应。v1只有clock_transport.online，不能表达的来源错误、非法无结果query/
+并发busy标录制incomplete；严格回放拒绝，不加隐藏字段。
+详见[交付合同与边界](M5_IFACE_SW03_DELIVERY_20261029.md)、[实际记录](../experiments/2026-10-29-m5-terrain-delivery.md)。
+
 ## 11. 研究组件映射与兼容性
 
 | 研究实现 | 系统适配要求 |
@@ -469,3 +704,17 @@ SensorBundle、研究forward、定位或地图。私有JSON不表示已冻结公
 配置中的int64纳秒值通过节点本地YAML读取，不经过ROS1参数服务器的32位整数槽；
 仅路径与小整数运行参数通过ROS参数传输。真实设备时间记录仍是独立的
 `device_time_record_v1`，不因仿真schema `0.2`通过而获得真实同步状态。
+
+2026-10-28 SENS-VIS-01独立Gazebo场景复用既有公共字段：Radar原始PointCloud2包含
+`x/y/z/doppler/power`，单位为m、m/s与任意未标定强度；IR Image为320×240的32FC1，
+业务InfraredFrame仍声明`value_unit=fixture_intensity`，不是Kelvin温度。
+场景源AircraftState为`frame_id=scene_world/source_type=simulation/state_source=ground_truth`，
+显式注册后由既有state_adapter转换为odom/derived，state_source不变；默认PX4状态路径不变。
+`calibration_id=gazebo_sensor_scene_mount_v1`仅表示合成安装配置，SensorBundle没有训练监督字段。
+地图仍为fixture占位输出，不把相机热强度或几何真值当成模型质量；详见
+[场景数据链与单位](SENSOR_SCENE_VISUALIZATION.md)。公共ROS消息版本/字段保持不变。
+
+2026-10-29 [SIM-MOTION-SW-03](SIM_MOTION_SW03_DELIVERY_20261029.md)在相同公共字段下
+交接同FDM真值/真实Radar/IR→Bundle→placeholder→M1→公开query/replay。
+新运动模式pose_age_ns=0及radar_ir_delta_ns=0经实际10帧核对；概率仍为fixture占位、质量缺失，
+不因真实动力学/真实渲染而改成model或measured质量证据。失败时未提交tick的raw不生成新占据。

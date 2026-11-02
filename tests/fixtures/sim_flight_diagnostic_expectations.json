@@ -1,0 +1,17 @@
+{
+  "schema_version":"test.sim_flight_diagnostic_expectations.v1",
+  "fixture_only":true,
+  "max_steps":250,
+  "max_source_time_s":1.0,
+  "step_ns":4000000,
+  "initial_agl_m":0.5,
+  "initial_terrain_m":419.2,
+  "initial_geodetic_altitude_m":419.7,
+  "initial_euler_deg":[0.0,0.0,90.0],
+  "allowed_host_tx_ids":[107,113],
+  "control_gate_accepted":false,
+  "binding_status":"unverified",
+  "missing_after_first":"must_not_run_fdm",
+  "normal_terminal":"diagnostic_window_complete",
+  "disconnect_terminal":"peer_closed"
+}

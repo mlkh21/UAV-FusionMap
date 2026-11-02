@@ -6,14 +6,15 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-for relative in ("mapping", "perception", "sensors", "ros_ws"):
+for relative in ("mapping", "perception", "sensors", "simulation", "ros_ws"):
     sys.path.insert(0, str(ROOT / relative))
 
 from ufm_mapping.local_map import SparseLocalMap
 from ufm_perception.placeholder import placeholder_infer
 from ufm_sensors.perf01a_fixture import (build_sensor_bundle, make_fake_infrared,
-                                          make_fake_radar, make_fixture_state,
+                                          make_fake_radar,
                                           validate_bundle)
+from ufm_simulation.perf01a_fixture import make_fixture_state
 from ufm_sensors.state_adapter import adapt_state
 from perf01a_metrics import PerfAggregator, percentile
 
@@ -36,6 +37,17 @@ def valid_bundle(run_id="perf-run", radar_timestamp=100_000_000,
 
 
 class SensorAndPerceptionContractTest(unittest.TestCase):
+    def test_points_in_one_voxel_produce_one_observed_cell(self):
+        bundle = valid_bundle()
+        point = dict(bundle['radar']['points'][0], x=8.01)
+        bundle['radar']['points'].extend([point, dict(point)])
+        observation = placeholder_infer(bundle)
+        self.assertEqual(len(observation['voxels']), 1)
+        self.assertEqual(observation['voxels'][0]['probability'], .9)
+        local_map = SparseLocalMap()
+        self.assertTrue(local_map.update(observation))
+        self.assertEqual(len(local_map.cells), 1)
+
     def test_rotated_translated_state_places_point_in_odom(self):
         state = adapt_state(make_fixture_state("run-a", 1, 100), {
             "odom_origin_policy": "px4_estimator_local_origin",
@@ -122,6 +134,19 @@ class SensorAndPerceptionContractTest(unittest.TestCase):
 
 
 class LocalMapContractTest(unittest.TestCase):
+    def test_invalid_header_is_rejected_without_seeding_map(self):
+        for key, value in (('schema_version', 'unsupported'), ('timestamp', -1),
+                           ('run_id', ''), ('sample_id', ''), ('source_type', 'unknown')):
+            local_map = SparseLocalMap()
+            before = local_map.snapshot()
+            observation = placeholder_infer(valid_bundle())
+            observation['header'][key] = value
+            if key == 'timestamp':
+                observation['context']['reference_timestamp'] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                local_map.update(observation)
+            self.assertEqual(local_map.snapshot(), before)
+
     def test_dedup_unknown_stale_and_run_isolation(self):
         local_map = SparseLocalMap(staleness_limit_ns=50, max_active_cells=2)
         observation = placeholder_infer(valid_bundle())

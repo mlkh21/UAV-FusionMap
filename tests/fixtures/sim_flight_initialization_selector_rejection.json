@@ -1,0 +1,20 @@
+{
+  "schema_version": "test.sim_flight_initialization_selector_rejection.v1",
+  "evidence_run": "flight-init-sw02-normal-20261030T115944038112",
+  "checkpoint": 500,
+  "query_index": 30,
+  "expected_error": "probe_native_float",
+  "raw": {
+    "argv": [
+      "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/build/px4-v1.13.3/bin/px4-listener",
+      "--instance",
+      "0",
+      "estimator_selector_status",
+      "-n",
+      "1"
+    ],
+    "returncode": 0,
+    "stdout": "\nTOPIC: estimator_selector_status\n estimator_selector_status\n    timestamp: 1936000 (0.056000 seconds ago)\n    last_instance_change: 1928000\n    instance_changed_count: 2\n    accel_device_id: 1310996 (Type: 0x14, SIMULATION:2 (0x01))\n    baro_device_id: 6620172 (Type: 0x65, SIMULATION:1 (0x04))\n    gyro_device_id: 1310996 (Type: 0x14, SIMULATION:2 (0x01))\n    mag_device_id: 197388 (Type: 0x03, SIMULATION:1 (0x03))\n    combined_test_ratio: [1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, nan, nan, nan]\n    relative_test_ratio: [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, nan, nan, nan]\n    accumulated_gyro_error: [0.0000, 0.0000, 0.0000, nan]\n    accumulated_accel_error: [0.0000, 0.0000, 0.0000, nan]\n    primary_instance: 1\n    instances_available: 6\n    healthy: [True, True, True, True, True, True, False, False, False]\n    gyro_fault_detected: False\n    accel_fault_detected: False\n\n",
+    "stderr": ""
+  }
+}

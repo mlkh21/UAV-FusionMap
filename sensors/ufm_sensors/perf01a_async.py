@@ -104,13 +104,14 @@ def _validate(profile):
     return profile
 
 
-def load_profile(name='normal', path=None):
+def load_profile(name='normal', path=None, overrides=None):
     """Return a detached, validated defaults + scenarios[name] deep merge."""
     with Path(path or CONFIG_PATH).open() as handle:
         config = yaml.safe_load(handle)
     if config['schema_version'] != 'perf01a.async.v1':
         raise ValueError('unsupported async schema_version')
-    return _validate(_merge(config['defaults'], config['scenarios'][name]))
+    return _validate(_merge(_merge(config['defaults'], config['scenarios'][name]),
+                            overrides or {}))
 
 
 def make_schedule(profile, duration_ns):

@@ -1,0 +1,18 @@
+<launch>
+  <!-- Explicit synthetic inverse-observation trial; existing launch defaults stay latest. -->
+  <arg name="run_id" />
+  <arg name="clock_id" />
+  <arg name="m4_fixture_config" />
+  <arg name="map_audit_directory" default="" />
+  <param name="/perf01a_map_audit_directory" value="$(arg map_audit_directory)" />
+  <param name="use_sim_time" value="true" />
+  <node pkg="uav_fusionmap_mapping" type="perf01a_map_node.py" name="perf01a_mapping"
+        output="screen" required="true">
+    <param name="run_id" value="$(arg run_id)" />
+    <param name="clock_id" value="$(arg clock_id)" />
+    <param name="map_backend" value="m4_fixture" />
+    <param name="m4_fixture_config" value="$(arg m4_fixture_config)" />
+    <param name="rolling_enabled" value="true" />
+    <param name="enable_query" value="true" />
+  </node>
+</launch>

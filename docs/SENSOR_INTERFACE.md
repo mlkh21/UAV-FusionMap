@@ -93,6 +93,11 @@ Radar的`fov_deg`为[水平deg,垂直deg]、`max_range_m`为m、位置/强度噪
 disabled模式仍应发送状态上下文与不可用占据消息，使地图能跟踪运行状态。
 完全断流时，地图通过自身同域时钟/新鲜度检查返回stale或unavailable，不订阅越层数据。
 
+2026-10-27修复：已解码Bundle发生后端异常时发布明确的空unavailable占据；非法版本、
+枚举或不可解码上下文只诊断拒绝。占位感知将同格Radar点聚合为一个0.9体素，
+不把点数当成独立概率证据。状态/IMU接收身份历史限制、淘汰水位及独立无观察器
+启动入口见[运行配置说明](RUNTIME_CONFIGURATION.md)；旧实验启动图默认就绪规则保留。
+
 ## 6. ROS话题与服务候选
 
 以下名称是设计预留，不代表现有接口。ROS1/ROS2和消息类型在环境验证后确定。
@@ -118,6 +123,22 @@ disabled模式仍应发送状态上下文与不可用占据消息，使地图能
 
 节点包装只负责消息转换与调用所属业务模块。ROS传输中的有效标志必须保持逻辑契约
 中的null/unavailable含义。/clock（若所选ROS方案使用）仅承载公共仿真时间。
+
+### Phase 2可选IMU旁路（2026-10-26）
+
+`sim01_state.launch`增加`publish_imu`，默认`false`，不开启时不声明/发布
+`/uav/sim/imu`和`/uav/sensors/imu`，源解码只保留IMU时间用于旧/clock。
+开启时`state_clock_node`从有效HIGHRES_IMU采样六轴，经源时间门控发布
+`/uav/sim/imu`（`body_frd`，`source_type=simulation`）；`state_adapter_node`
+只订阅相邻源的此话题，要求显式`imu_calibration_id=sim_pilot_virtual_flu_v1`，
+对pilot点虚拟FRD→FLU轴变换后以`imu` frame在`/uav/sensors/imu`发布
+`source_type=derived`。两个话题使用`uav_fusionmap_msgs/ImuSample`、队列100。
+同一run、sample_id、原始采样纳秒和时钟域保留；无姿态与安装位置修正。
+重复样本不重复发布，源同时间戳内容冲突/回退触发terminal，缺值/坐标配置
+或clock不覆盖时拒绝；源fault的IMU只发unavailable，不伪造有效读数。
+未知协方差仍unknown。该独立旁路**不进入**SensorBundle、定位权威、perception、
+mapping或训练LiDAR；没有真实设备外参、跨设备时钟或质量验收。
+[实测与限制](../experiments/2026-10-26-phase2-imu-optional-ros.md)。
 
 ### T-14状态兼容镜像（2026-10-14）
 
@@ -195,6 +216,42 @@ free/occupied分类只有在`free_threshold`与`occupied_threshold`成对配置�
 详见[EXP-20261014-011](../experiments/2026-10-14-local-map-rolling.md)。
 仅验证fixture基础平移/偏航/断流，不包含真实状态源、设备时间、正式性能
 和对照试验。
+
+2026-10-27 M2-SW-04增加显式合成候选装配，复用相同OccupancyObservation、MapSnapshot
+及MapQuery，更新/查询仍共用一个实例和锁。节点私有map_backend默认latest，
+m2_fixture仅在显式配置及clock_id齐全时启用，旧入口不自动切换。
+地图业务订阅仍只允许occupancy，公共clock仅属基础设施，不新增状态/传感器/训练旁路。
+独立ROS、公开占据回放、应用五类状态和旧固定/滚动/placeholder兼容通过，见
+[EXP-20261027-010](../experiments/2026-10-27-m2-ros-handoff.md)与
+[运行参数](RUNTIME_CONFIGURATION.md)；正式设备/概率质量及性能未验收。
+
+M3-SW-04沿同一节点/实例/锁增加私有`map_backend=m3_fixture`选择，仅在显式
+`m3_fixture_config`与clock_id满足合同后创建；混用M2/M3配置、缺配置或参数覆盖直接失败。
+默认仍latest，坏输入保留原地图并报告拒绝，不切换后端。没有新增消息、话题或传感器输入。
+公开区间/缺失质量经现有服务交给应用；独立ROS、回放、旧入口兼容与清理通过，见
+[EXP-20261027-015](../experiments/2026-10-27-m3-ros-handoff.md)。
+
+M4-SW-04沿同一节点/实例/锁增加私有`map_backend=m4_fixture`，须完整
+`m4_fixture_config`、绑定的run/clock和rolling_enabled=true；缺配置、混候选或注册错误
+启动失败。Scene导出和应用查询沿用原消息/服务，map查询不隐式接受odom点。
+图审计实际订阅只有occupancy与基础设施clock，没有状态、Radar/IR、LiDAR或训练监督旁路。
+15观测9快照20查询、公开回放、旧入口与清理证据见
+[EXP-20261028-004](../experiments/2026-10-28-m4-ros-handoff.md)；不表示真实感知或机载性能通过。
+
+APP-VIS-01原生RViz只读消费公开snapshot/MapQuery及基础设施clock，输出标准
+`/uav/report/markers`（MarkerArray，queue=1/latch，每次完整状态组）供同一界面显示；
+标准`/uav/report/clicked_point`（PointStamped）仅用于同frame的交互查询，不是控制输入。
+快照接收queue=1，界面4Hz刷新/采样，最多120帧/每帧20000cell，非无损记录或正式性能指标。
+live模式不启动或修改现有业务图；demo明确启动独立合成占据生产者，不依赖训练LiDAR。
+既有业务消息字段不变，生产消费/时钟/恢复说明见[RViz说明](ROS_VISUALIZATION.md)。
+
+SENS-VIS-01显式独立场景新增Gazebo几何Radar/热强度相机的标准PointCloud2/Image输入，
+分别在`/uav/sensors/radar/raw`与`/uav/sensors/infrared/raw`发布；新sensors配对器恢复
+已有RadarFrame/InfraredFrame/SensorBundle语义。只在此模式由Gazebo truth源生成AircraftState，
+既有state_adapter选择scene_ground_truth、具名ENU注册，保留ground_truth且唯一发布动态TF。
+默认PX4入口不变。Radar/IR偏差≤5ms、pose年龄≤10ms，待配对Radar超40ms拒绝，回退时钟锁定run。
+标准RViz直接查看原始载荷，地图可视化仅消费公开snapshot；无训练监督输入或free填充。
+模拟等级、单位、话题、安装及恢复见[场景说明](SENSOR_SCENE_VISUALIZATION.md)。
 
 验收记录包含实际消息、频率、队列/QoS、同步残差、端到端数据年龄、丢帧和异常状态。
 记录回放保留原始时间、frame、run来源和标定版本；换机器不能依赖原绝对路径。
@@ -343,3 +400,124 @@ ARS548的记录只保留检测列表时间；Mid-360的逐点时间必须能回�
 矩阵增加命中前保守free覆盖及回波线段包围盒外假free拒绝检查，私有JSON的`observed_mask`只接受
 布尔值。见[EXP-20261015-001](../experiments/2026-10-15-iface01-sens-train-audit.md)；
 不声明设备时钟已映射或真实硬件已接入。
+
+### 独立地形公共接口具体提案（2026-10-28，仅设计）
+
+[M5-IFACE-DESIGN-01](M5_IFACE_DESIGN_20261028.md)拟由mapping独立Provider提供
+`/uav/terrain/v1/query`及`/uav/terrain/v1/status`，application只读消费；ros_ws仅薄包装，
+没有已实现的新服务/话题。拟议节点仅订阅公共clock，不接Radar/IR/state/定位或训练监督，
+默认旧启动不包含它，旧MapQuery/MapSnapshot与SensorBundle不变。
+生产消费、启动顺序、墙钟心跳/超时、版本绑定、错误/恢复和记录上限见具体方案；
+实际新增消息/节点/客户端/显示须按明确方案确认，不能把本段名称写成已运行ROS接口。
+
+后续M5-IFACE-SW-01已按用户明确授权生成独立4.msg/1.srv，并实现
+[公开逻辑/codec/dataset/recording合同](M5_IFACE_SW01_CONTRACT_20261028.md)。
+本轮仅实际线格式与离线结构验证，不注册上列服务/话题，不新增发布者、订阅者或launch；
+Provider/clock/状态/服务运行及客户端/RViz分别留给SW-02/03。
+旧消息/包依赖与运行入口保持，默认占据链不导入地形；运行验证证据不能由类型存在代替。
+
+后续SW-02已实现独立`uav_fusionmap_terrain`节点，显式terrain_fixture.launch启用时才注册
+`/uav/terrain/v1/query`并发布latched、queue=1的`/uav/terrain/v1/status`，默认enabled=false。
+只订阅认可唯一发布者的`/clock`，核对master图/callerid并以墙钟检查1s接收期限；2Hz目标心跳不跟随sim暂停。
+没有公共安装端点、TF或传感器/定位/训练旁路；每次服务审计来源，忙时无缓存载荷。
+具体域绑定、序号、安装/到期/reset/服务错误和恢复见[运行说明](M5_IFACE_SW02_PROVIDER_20261028.md)，
+实际ROS/旧占据兼容与清理见[EXP-20261028-013](../experiments/2026-10-28-m5-provider-ros.md)。
+客户端服务期限、迟到处理、公共执行回放与RViz地形仍未验证，属SW-03。
+
+2026-10-29 SW-03已验证上述软件路径，见[交付说明](M5_IFACE_SW03_DELIVERY_20261029.md)。
+新增默认关闭terrain_rviz_fixture.launch，标准`/uav/terrain/v1/markers`只读公开status/query，
+历史显示另发`/uav/terrain/recorded/markers`并标recorded；不发布TF或读取地形输入旁路。
+服务发现2s/调用1s墙钟期限、状态1.5s期限、单未完成worker和迟到丢弃已检查；底层阻塞调用不宣称取消。
+Provider的recording_directory默认空，显式开启才create-only录制；v1不能表达的错误明确incomplete。
+实际服务阻塞/消失、实例切换、四图像素及旧场景兼容见
+[EXP-20261029-001](../experiments/2026-10-29-m5-terrain-delivery.md)，不代表真实设备/DEM或正式资源验收。
+
+### 场景推进协议及显式引擎入口（2026-10-29）
+
+[SIM-MOTION-SW-01](SIM_MOTION_SW01_CONTRACT_20261029.md)已生成独立2.msg/1.srv及严格codec，
+由simulation SceneStep服务消费SceneFrame，经受控Gazebo实际采样后接SceneCaptureAck；
+ACK只携带身份/时刻/发布完成状态，不携带Radar点、IR图或地图结果。
+[SW-02](SIM_MOTION_SW02_ENGINE_20261029.md)已在独立sim_motion_gate_run入口实测
+`/uav/scene/step`服务、`/uav/scene/frame_applied`镜像和`/uav/scene/capture_ack`。
+元数据通过同进程公开SceneFrame邮箱同步安装，避免话题先后竞争；ACK仍经真实ROS回路，
+绑定/gazebo发布者、run/clock/step/kind及实际采样时间。mailbox不交换raw载荷或地图业务。
+唯一clock/source为/sim_motion_host，Gazebo clock显式进诊断域，动态TF仍为state_adapter。
+真值terminal非几何传播并清空/锁定SceneStream；旧默认估计/静态入口与字段保持。
+新模式当前只验证引擎采样门，不代表SensorBundle、感知地图或新运动窗口已验收，后者待SW-03。
+
+后续[SW-03](SIM_MOTION_SW03_DELIVERY_20261029.md)已接实际Bundle/placeholder/M1/查询与独立回放。
+新运动入口显式开启require_exact_pose，必须收到同tick状态才配对；旧静态默认仍为≤10ms历史pose。
+原5ms IR和40ms配对期限不变，失败tick不提交clock/state、未来raw不能成为Bundle。
+原生RViz停钟3s清空并关闭Radar/IR显示，地图显示为历史unavailable；这不改变MapQuery显式时间语义。
+
+2026-10-29 [SW-04B](SIM_MOTION_SW04B_ENGINE_20261029.md)新增显式multiscene ROS入口。
+只有S07注册`/uav/scene/geometry_epoch`（标准gazebo_msgs/SetModelState），与SceneStep共用事务锁，
+仅在已完成step100/225且暂停/无pending时移动唯一obstacle_wall并读回几何/时间。
+响应status_message为scene_geometry_epoch.v1诊断JSON，不承载raw、占据或地图业务；
+默认旧入口不注册此端点。真实空域/切换/中途ACK故障已定向通过；原生/完整矩阵待SW-04C。
+
+随后[SW-04C](SIM_MOTION_SW04C_DELIVERY_20261029.md)同源码9核心/3兼容、S05/S07原生阶段图通过；
+S09拒绝本轮实际S08旧run/clock。empty为原生截图请求阶段，不是新传感器/业务话题或协议枚举。
+新视图使用单帧IR归一化范围，32FC1原始值/采集戳、Bundle、地图与旧入口语义保持。
+
+[SIM-FLIGHT具体提案](SIM_FLIGHT_DESIGN_20261029.md)拟后续独立/uav/flight/scene/* v2端点，
+明确0—30s全源准备记录、30.1—40s固定采样窗口；准备期没有raw不是valid空观测，也不解释为free。
+本轮只是设计，没有创建这些端点、改订阅图、扩展v1窗口或发送命令；直接下一项只做私有离线合同。
+2026-10-30 [SW-01私有合同](SIM_FLIGHT_SW01_CONTRACT_20261030.md)已离线实现并通过回归，
+没有创建新topic/service、Provider或客户端，40s采样表不代表实际传感器运行。
+下一项SW-02只采≤1秒/250步原始HIL/属性/FDM诊断，不发heartbeat/arm/manual/参数写，
+不把ground .5m源接到旧Gazebo v1；新v2观察链仍留SW-03。缺包/准备期不能解释为free。
+随后[SW-02实际诊断](SIM_FLIGHT_SW02_DIAGNOSTICS_20261030.md)只启loopback TCP HIL和私有FIFO，
+没有新增ROS topic/service或Gazebo/RViz显示。实际host TX仅HIL_SENSOR，未主动发命令；
+PX4自身发来的COMMAND_LONG/HEARTBEAT只按RX保存。两例执行器0包，不能解释为disarmed或free。
+下一步先追踪未就绪依赖并交最小补证方案，v2/长窗实际运行继续受前置门禁约束。
+后续[最小补证方案](SIM_FLIGHT_DIAG_DESIGN_20261030.md)只拟在125/250步读取本次PX4的九类uORB快照，
+使用现有AF_UNIX daemon客户端并核对PID/start_ticks/socket所有权；不增加ROS话题/服务或控制发送。
+listener固定n=1且不传-i/-r，否则可能在暂停源时等待新消息；查询计入原墙钟界。
+本轮未实现/执行此观察，原1s/250步、未知/缺失语义和研究后端边界保持。
+随后[SW-02B](SIM_FLIGHT_SW02B_PROBE_20261030.md)已实际通过本次PID/start_ticks/socket核对后查询，
+仅第一条积分IMU有效；第二条estimator_status有六实例标题而无载荷，退出码0仍严格拒绝并清理。
+没有执行余下19次或创建ROS端点，21查询未验收；旧两诊断与消息兼容通过。
+下一项只设计空实例诊断，不把查询成功退出、advertised或缺失变成状态/控制/空闲许可。
+随后[DIAG-DESIGN-03](SIM_FLIGHT_DIAG_DESIGN03_20261030.md#5-新显式运行期限与报告)已交付拟议
+--uorb-diagnostics独立模式与继续/停止规则；保留--uorb-probe原行为，禁止自动fallback。
+原21次白名单/1s/250步及墙钟界保持，三态仅记录诊断，不发布新业务状态或放行控制。
+本轮未实现/执行该新模式；实际完整采集与载荷状态留SW-02C验证。
+随后[SW-02C](SIM_FLIGHT_SW02C_DIAGNOSTICS_20261030.md)已新增并执行显式--uorb-diagnostics，
+125步九topic完成；250步第11次状态含nan严格停止，未执行其余10次/三参数，无新ROS端点或控制命令。
+原--uorb-probe和默认两例保持兼容，21次采集仍未通过；原生非有限质量字段隔离留下一具体设计，不静默fallback。
+随后[两字段隔离设计](SIM_FLIGHT_DIAG_DESIGN04_20261030.md#5-显式模式预算与报告)拟独立--uorb-quality-diagnostics，
+与原两个模式互斥，无自动fallback；原21次白名单/1s/250步及墙钟/资源界保持，无新增flags查询或控制发送。
+新模式/私有v2尚未实现或执行，完整采集与状态质量分开验收，不将隔离结果接入在线状态/地图链。
+随后[SW-02D](SIM_FLIGHT_SW02D_QUALITY_20261030.md)已实现并实际执行显式--uorb-quality-diagnostics，
+21次原白名单查询/三参数读回和身份/期限/原文重读通过，未新增flags查询、ROS端点或参数写。
+同实例条件合格的两比值显式标质量不可用；采集完整不等于正文/载荷可用，旧模式/失败保持。
+六flags已读样本tilt/yaw未对齐、selected姿态缺失、执行器0包，控制门关闭；
+下一项仅设计初始化准备条件，不扩窗或启动控制，不让诊断结果代替AircraftState权威。
+随后[INIT-DESIGN-01](SIM_FLIGHT_INIT_DESIGN_20261030.md)区分pilot IMU输入、PX4积分/低通和地面接触/land样本，
+拟新私有准备记录与84项固定查询；不新增ROS端点、AircraftState或TF。下一项INIT-SW-01只做离线合同，
+实际准备留INIT-SW-02，状态/输出缺失仍不可用，不放行控制或把诊断接入在线地图。
+随后[INIT-SW-01](SIM_FLIGHT_INIT_SW01_CONTRACT_20261030.md)已实现私有离线校验，固定84项listener/show的
+argv/本run身份/时序/原文/布局合同；本轮没有daemon客户端或活socket核对，实际执行留INIT-SW-02。
+typed参数/四态缺失、PX4 land与JSBSim接触分别保留；没有新ROS话题、TF或在线输入，控制门false。
+随后[INIT-SW-02](SIM_FLIGHT_INIT_SW02_PREPARATION_20261030.md)实际执行owned daemon的固定listener/show，
+七参数读回通过；第30次selector含nan拒绝，30 raw/29合法事件，完整采集未通过。
+78真实零执行器由原PX4回传，本仓仍未发heartbeat/模式/arm/manual/参数写；无ROS端点/状态权威变化。
+下一项仅selector槽位来源/身份设计，不把原文中的primary/healthy或缺失槽位当控制准入。
+随后[selector设计](SIM_FLIGHT_INIT_SELECTOR_DESIGN_20261030.md#5-98项查询与关联就绪判定)拟每组前后增加sensors_status_imu，
+总98项只读listener/show；按gyro/accel各自四槽ID关联主设备，不用EKF实例号代替设备槽。
+两表只能提供观测一致性，消费消息身份未验证；选中误差缺失/关联不明不就绪。仅设计，无新查询或在线输入。
+随后[selector SW-01](SIM_FLIGHT_INIT_SELECTOR_SW01_CONTRACT_20261030.md#4-查询时序关联与四门)已实现98计划/原文纯解析与关联，
+主实例1/gyro槽2/accel槽0独立合成通过；原owned daemon客户端/84入口保持，无新实际查询/参数写/ROS端点。
+新增表仅私有诊断，不进入SensorBundle/定位/地图；未就绪/不健康/不一致不会因采集完整而放行。
+随后[selector SW-02](SIM_FLIGHT_INIT_SELECTOR_SW02_PREPARATION_20261030.md)已执行同run owned daemon 59项实际只读查询，
+局部500/1000就绪但未到双末检查点；1008条HIL发送端微秒截断Run前拒绝，32缺失槽不再阻断采集。
+无新在线传感器输入/定位/ROS端点或控制命令；下一项隔离发送端量化不允许改写收到的包/旧原戳。
+随后[INIT-TIME-SW-01](SIM_FLIGHT_INIT_TIME_SW01_DELIVERY_20261030.md)已在新源副本的HIL/GPS发送点按当前源step/原1ns界生成整数微秒，
+原传感器更新/载荷/查询链保持；完整98实际查询和双末检查点准备通过，不让私有收据进入SensorBundle/定位/map。
+无新ROS端点/控制发送，后续SW-03A只定义离线公共v2与端点合同，实际长窗装配另验。
+
+2026-10-30报告演示新增显式`parameterized_v1` Radar配置，见[参数与实际验证](REPORT_IMPROVEMENTS_20261030.md#3-radar与场景参数)。
+在同一Gazebo几何命中后按距离检测概率漏检，再加入距离/方位/俯仰/Doppler误差和点数预算。
+采集时间、原始PointCloud2字段、Doppler正向和任意强度语义保持；质量继续unavailable，不把工程σ当实物校准。
+无回波不生成free，在线仍只有Radar/IR；缺省旧配置不启用该模型。

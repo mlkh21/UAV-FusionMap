@@ -1,0 +1,41 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Enabled: true
+  Global Options:
+    Background Color: 29; 35; 38
+    Fixed Frame: map
+    Frame Rate: 30
+  Displays:
+    - Class: rviz/Grid
+      Name: Metric Grid
+      Enabled: true
+      Cell Size: 2
+      Plane Cell Count: 160
+      Color: 63; 76; 79
+      Alpha: 0.35
+    - Class: rviz/MarkerArray
+      Name: Terrain / public fixture prior
+      Enabled: true
+      Marker Topic: /uav/terrain/v1/markers
+      Queue Size: 1
+  Tools:
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 25
+      Focal Point: {X: 112, Y: 178, Z: 7}
+      Pitch: 0.5
+      Yaw: 0.8
+      Near Clip Distance: 0.01
+      Target Frame: <Fixed Frame>
+    Saved: []
+Window Geometry:
+  Width: 1200
+  Height: 800

@@ -1,25 +1,5 @@
-"""PERF-01-A ROS薄包装共享工具。"""
-import time
+"""旧导入路径的兼容入口；实现统一由ROS契约包维护。"""
+from ufm_ros_contract import to_ros_state as state_message
+from ufm_ros_contract.perf01a_ros import publish_perf_event
 
-from uav_fusionmap_msgs.msg import PerfEvent
-from ufm_ros_contract import to_ros_state
-
-
-def publish_perf_event(publisher, run_id, parent_sample_id, stage, business_timestamp,
-                       metric_value_ns=0, status="valid", reason=""):
-    event = PerfEvent()
-    event.run_id = run_id
-    event.parent_sample_id = parent_sample_id
-    event.sample_id = "%s:perf:%s:%d" % (parent_sample_id, stage, time.monotonic_ns())
-    event.stage = stage
-    event.monotonic_ns = time.monotonic_ns()
-    event.metric_value_ns = max(0, int(metric_value_ns))
-    event.business_timestamp = int(business_timestamp)
-    event.clock_id = "sim:" + run_id
-    event.status = status
-    event.reason = reason
-    publisher.publish(event)
-
-
-def state_message(state):
-    return to_ros_state(state)
+__all__ = ['publish_perf_event', 'state_message']

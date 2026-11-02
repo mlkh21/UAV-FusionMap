@@ -3,7 +3,7 @@ project(uav_fusionmap_msgs)
 find_package(catkin REQUIRED COMPONENTS message_generation)
 catkin_python_setup()
 add_message_files(FILES
-  ObservationHeader.msg Uncertainty.msg Quality.msg AircraftState.msg
+  ObservationHeader.msg Uncertainty.msg Quality.msg AircraftState.msg ImuSample.msg
   RadarPoint.msg RadarFrame.msg InfraredFrame.msg SpatialContext.msg SensorBundle.msg
   OccupancyVoxel.msg OccupancyObservation.msg MapCell.msg MapSnapshot.msg PerfEvent.msg
   MapQueryResult.msg)

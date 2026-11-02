@@ -6,6 +6,7 @@
 /.codex/
 
 # ROS构建输出；首选位置为.runtime/ros。
+/build/
 /ros_ws/build/
 /ros_ws/devel/
 /ros_ws/install/
@@ -18,6 +19,4 @@
 __pycache__/
 *.py[cod]
 
-# 实验测试脚本及记录
-experiments/
-tests/
+# 测试源码和小型实验记录需要进入逐文件提交审查；运行产物统一位于.runtime。

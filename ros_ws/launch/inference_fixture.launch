@@ -1,0 +1,17 @@
+<launch>
+  <arg name="run_id" />
+  <arg name="duration_s" default="10.0" />
+  <arg name="mode" default="placeholder" />
+  <arg name="start_mapping" default="true" />
+  <arg name="map_config" default="$(env UFM_ROOT)/configs/local_map_fixture.yaml" />
+  <param name="ufm_local_map_config" value="$(arg map_config)" />
+  <param name="ufm_diagnostics_enabled" value="false" />
+  <param name="perf01a_require_observers" value="false" />
+  <include file="$(env UFM_ROOT)/ros_ws/launch/perf01a_placeholder.launch">
+    <arg name="run_id" value="$(arg run_id)" />
+    <arg name="duration_s" value="$(arg duration_s)" />
+    <arg name="mode" value="$(arg mode)" />
+    <arg name="enable_query" value="true" />
+    <arg name="start_mapping" value="$(arg start_mapping)" />
+  </include>
+</launch>

@@ -1,0 +1,39 @@
+{
+  "schema_version": "test.m5.iface.expectations.v1",
+  "provider_instance_id": "terrain-instance-a",
+  "integer_probe": 9007199254740993,
+  "float64_probe": [12.649999999999999, 13.350000000000001],
+  "context": {
+    "terrain_id": "m5-terrain-fixture", "dataset_version": "fixture-20261028-v1", "tile_id": "tile-0",
+    "profile": "m5_fixture_v1", "product_kind": "DTM", "source_kind": "fixture", "evidence_role": "prior",
+    "source_ref": "configs/m5_terrain_fixture.yaml", "run_id": "m5-fixture", "clock_id": "sim:m5-fixture",
+    "acquisition_ns": 10, "publication_ns": 20, "precision_ns": 1,
+    "source_clock_id": "dataset:m5-fixture", "dataset_epoch": "fixture-epoch-0",
+    "source_horizontal_crs_id": "fixture:terrain_xy_v1", "source_frame": "terrain_fixture", "source_axis_order": ["x", "y"],
+    "source_vertical_datum_id": "fixture:terrain_height_zero_v1", "source_height_type": "local_height",
+    "vertical_operation": "fixed_translation_fixture_v1", "required_grids": [],
+    "target_horizontal_crs_id": "fixture:map_xy_v1", "target_vertical_datum_id": "fixture:map_height_zero_v1",
+    "target_frame": "map", "length_unit": "m", "rows": 2, "columns": 2,
+    "affine": [100, 2, 0, 200, 0, -2], "sample_anchor": "center",
+    "map_origin_xy": [110, 176], "map_resolution_xy": [2, 2],
+    "registration_id": "m5-fixture-terrain-to-map-v1", "registration_source": "fixture", "horizontal_alignment": "exact_fixture_v1",
+    "T_map_terrain": [1, 0, 0, 10, 0, 1, 0, -20, 0, 0, 1, 3, 0, 0, 0, 1],
+    "registration_valid_interval_ns": [0, 300],
+    "registration_quality": {"status": "available", "kind": "height_offset_interval", "value": [2.9, 3.1], "unit": "m", "source": "fixture_registration_bound_v1"},
+    "eligibility_policy": "fixture_run_authorization_v1", "eligibility_valid_interval_ns": [100, 200], "installed_timestamp": 100
+  },
+  "samples": [
+    {"point_xy": [111, 179], "source_index": [0, 0], "source_xy": [101, 199], "height": 13, "status": "valid", "reason": "", "sample_interval": [9.75, 10.25], "map_interval": [12.649999999999999, 13.350000000000001]},
+    {"point_xy": [113, 179], "source_index": [0, 1], "source_xy": [103, 199], "height": 14, "status": "valid", "reason": "", "sample_interval": [10.75, 11.25], "map_interval": [13.649999999999999, 14.350000000000001]},
+    {"point_xy": [111, 177], "source_index": [1, 0], "source_xy": [101, 197], "height": null, "status": "unknown", "reason": "no_data", "sample_interval": null, "map_interval": null},
+    {"point_xy": [113, 177], "source_index": [1, 1], "source_xy": [103, 197], "height": 1, "status": "valid", "reason": "", "sample_interval": [-2.25, -1.75], "map_interval": [0.6499999999999999, 1.35]}
+  ],
+  "query_status": {"valid": 0, "unknown": 1, "stale": 2, "unavailable": 3},
+  "quality_status": {"unavailable": 0, "available": 1},
+  "state": {"disabled": 0, "waiting_clock": 1, "empty": 2, "current": 3, "expired": 4, "unavailable": 5, "locked": 6},
+  "install_outcome": {"none": 0, "installed": 1, "idempotent": 2, "rejected": 3},
+  "old_query_fields": ["map_id", "frame_id", "run_id", "clock_id", "query_timestamp", "point", "max_age_ns"],
+  "old_query_types": ["string", "string", "string", "string", "int64", "float64[3]", "int64"],
+  "old_result_fields": ["map_id", "revision", "run_id", "clock_id", "frame_id", "query_timestamp", "point", "index", "index_available", "status", "reason", "probability", "probability_available", "confidence", "confidence_available", "uncertainty", "observed", "last_observed_timestamp", "last_observed_timestamp_available"],
+  "old_bundle_fields": ["header", "radar", "infrared", "state", "context", "calibration_id", "radar_ir_delta_ns", "pose_age_ns"]
+}

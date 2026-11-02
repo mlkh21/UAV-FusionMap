@@ -1,0 +1,12 @@
+# 采样时间与身份保留在ObservationHeader；无协方差时available=false，数组为无效槽位。
+uint8 SPECIFIC_FORCE=0
+uint8 GRAVITY_REMOVED=1
+ObservationHeader header
+uint8 acceleration_type
+float64[3] linear_acceleration
+float64[3] angular_velocity
+bool acceleration_covariance_available
+float64[9] acceleration_covariance
+bool angular_velocity_covariance_available
+float64[9] angular_velocity_covariance
+string calibration_id

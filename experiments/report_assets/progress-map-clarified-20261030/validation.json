@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "python": "/home/zxj/anaconda3/envs/Radar-Diffusion/bin/python",
+  "pdf_pages": 16,
+  "docx_pages_metadata": 16,
+  "embedded_figures": 9,
+  "tables": 2,
+  "text_blocks": 84,
+  "docx_text_matches": true,
+  "pdf_text_present": true,
+  "original_image_bytes_equal": true,
+  "local_links_valid": 563,
+  "overstated_sentence_removed": true,
+  "business_runs_started": false
+}

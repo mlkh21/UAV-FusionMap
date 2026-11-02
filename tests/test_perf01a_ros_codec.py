@@ -1,5 +1,6 @@
 """真实ROS消息往返保留采样时间、质量与变换，不启动master。"""
 import io
+import copy
 import unittest
 
 from test_perf01a_contract import valid_bundle
@@ -19,6 +20,30 @@ def roundtrip(value, encode, decode):
 
 
 class CodecTest(unittest.TestCase):
+    def test_unknown_transform_and_uncertainty_enums_are_rejected(self):
+        observation = placeholder_infer(valid_bundle())
+        for field in ('T_mapping_source_status', 'T_mapping_body_status'):
+            for value in (2, 255):
+                msg = to_ros_occupancy(observation)
+                setattr(msg.context, field, value)
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    from_ros_occupancy(msg)
+        msg = to_ros_occupancy(observation)
+        msg.context.pose_uncertainty.status = 255
+        with self.assertRaises(ValueError):
+            from_ros_occupancy(msg)
+
+    def test_unsupported_schema_rejected_on_both_sides(self):
+        observation = placeholder_infer(valid_bundle())
+        msg = to_ros_occupancy(observation)
+        msg.header.schema_version = 'unsupported'
+        with self.assertRaises(ValueError):
+            from_ros_occupancy(msg)
+        invalid = copy.deepcopy(observation)
+        invalid['header']['schema_version'] = 'unsupported'
+        with self.assertRaises(ValueError):
+            to_ros_occupancy(invalid)
+
     def test_infrared_decode_borrow_is_opt_in(self):
         msg = to_ros_infrared(valid_bundle()['infrared'])
         detached = from_ros_infrared(msg)

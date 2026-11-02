@@ -9,8 +9,8 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from mavros.mavlink import convert_to_bytes
 from mavros_msgs.msg import Mavlink
 from rosgraph_msgs.msg import Clock
-from uav_fusionmap_msgs.msg import AircraftState
-from ufm_ros_contract import to_ros_state
+from uav_fusionmap_msgs.msg import AircraftState, ImuSample
+from ufm_ros_contract import to_ros_state, to_ros_imu
 from ufm_ros_contract.audit import PublicationAudit
 from ufm_simulation.mavlink_source import decode_source_packet
 from ufm_simulation.source_timeline import SourceTimeline
@@ -19,12 +19,16 @@ from ufm_simulation.source_timeline import SourceTimeline
 def main():
     rospy.init_node('state_clock')
     run_id = rospy.get_param('~run_id')
+    publish_imu = rospy.get_param('~publish_imu', False)
+    if type(publish_imu) is not bool:
+        raise ValueError('publish_imu must be bool')
     warmup = rospy.get_param('~warmup_stable_sim_ns')
     if isinstance(warmup, str) and warmup.isdecimal():
         warmup = int(warmup)
     if type(warmup) is not int:
         raise ValueError('warmup_stable_sim_ns必须为整数纳秒或十进制字符串')
     timeline = SourceTimeline(run_id, warmup_stable_sim_ns=warmup,
+                              emit_imu=publish_imu,
                               **{key: rospy.get_param('~' + key) for key in (
         'startup_timeout_wall_s', 'pending_limit',
         'pending_timeout_wall_s', 'source_timeout_wall_s')})
@@ -32,6 +36,7 @@ def main():
     tolerance = rospy.get_param('~quaternion_norm_tolerance')
     clock_pub = rospy.Publisher('/clock', Clock, queue_size=100)
     state_pub = rospy.Publisher('/uav/sim/state', AircraftState, queue_size=100)
+    imu_pub = rospy.Publisher('/uav/sim/imu', ImuSample, queue_size=100) if publish_imu else None
     diag_pub = rospy.Publisher('/uav/diagnostics', DiagnosticArray, queue_size=20)
     lock = threading.RLock()
     audit = PublicationAudit(rospy.get_param('~audit_path', ''))
@@ -63,6 +68,10 @@ def main():
                 msg = to_ros_state(event['state'])
                 state_pub.publish(msg)
                 record('/uav/sim/state', msg)
+            elif event['type'] == 'imu':
+                msg = to_ros_imu(event['imu'])
+                imu_pub.publish(msg)
+                record('/uav/sim/imu', msg)
             else:
                 diagnostic(event['reason'], DiagnosticStatus.ERROR if timeline.phase == 'FAULT' else DiagnosticStatus.WARN)
 
@@ -72,7 +81,8 @@ def main():
                 return
             try:
                 sample = decode_source_packet(convert_to_bytes(msg), msg.framing_status,
-                                              sysid, compid, tolerance)
+                                              sysid, compid, tolerance,
+                                              include_imu_values=publish_imu)
                 if sample is not None:
                     publish(timeline.consume(sample, time.monotonic()))
             except ValueError as exc:

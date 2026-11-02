@@ -1,0 +1,29 @@
+{
+  "schema_version":"test.sim_flight_initialization_cases.v1",
+  "run_id":"initialization-offline-01",
+  "checkpoints":[125,250,500,1000,1500,2000,2500],
+  "last_hil_us":[496000,996000,1996000,3996000,5996000,7996000,9996000],
+  "fdm_after_s":[0.5,1.0,2.0,4.0,6.0,8.0,10.0],
+  "topic_order":["estimator_selector_status","vehicle_imu","estimator_status","estimator_status_flags","estimator_attitude","vehicle_attitude","vehicle_control_mode","actuator_controls_0","actuator_outputs","vehicle_land_detected","estimator_selector_status"],
+  "parameter_order":["SYS_AUTOSTART","SYS_CTRL_ALLOC","SENS_IMU_MODE","EKF2_ANGERR_INIT","EKF2_MAG_TYPE","EKF2_HGT_MODE","EKF2_AID_MASK"],
+  "parameter_tokens":["1033","0","0","0.1000","0","0","1"],
+  "parameter_indices":[1,2,3,4,5,6,7],
+  "topic_query_indices":[8,18,19,29,30,40,41,51,52,62,63,73,74,84],
+  "units_probe":{"raw_ft":[1.0,-2.0,3.0],"meters":[0.3048,-0.6096,0.9144],"raw_lbf":-2.0,"newtons":-8.896443230521},
+  "kinematics_reference":{"sim_time_s":0.0,"agl_m":0.5,"asl_m":419.7023513542861,"geodetic_altitude_m":419.7000006360564,"terrain_m":419.20000063462794,"ecef_ft":[100.0,200.0,300.0],"vel_ned_ftps":[0.0,0.0,0.0],"vel_ned_mps":[0.0,0.0,0.0],"euler_deg":[0.0,0.0,90.0],"pqr_radps":[0.0,0.0,0.0],"pilot_accel_ftps2":[0.0,0.0,-32.17404855643044],"pilot_accel_mps2":[0.0,0.0,-9.80665],"true_airspeed_mps":0.0},
+  "ground_reference":[{"name":"LEFT_MLG","wow":true,"compression_lbf":1.0,"compression_n":4.4482216152605},{"name":"RIGHT_MLG","wow":true,"compression_lbf":1.0,"compression_n":4.4482216152605},{"name":"TAIL_LG","wow":false,"compression_lbf":0.0,"compression_n":0.0}],
+  "step_reference":{
+    "schema_version":"sim_flight_initialization_step.v1","run_id":"initialization-offline-01","clock_id":"sim:initialization-offline-01","profile_id":"sim-flight-initialization-observe-v1",
+    "step_index":1,"source_step":0,"hil_sensor_time_us":0,"has_actuator":false,"actuator":null,"reason":"preparation_no_actuator",
+    "properties":{"before":[0.0,0.0,0.0,0.0],"requested":null,"after":[0.0,0.0,0.0,0.0]},
+    "fdm":{"ran":true,"result":true,"sim_time_before_s":0.0,"sim_time_after_s":0.004,"hil_sensor":{"time_usec":0,"accel_mps2":[0.0,0.0,-9.80665],"gyro_radps":[0.0,0.0,0.0]}},
+    "wall":{"hil_sent_ns":1000000,"actuator_received_ns":null,"properties_applied_ns":null,"fdm_finished_ns":1000100},
+    "binding_status":"unverified","control_gate_accepted":false
+  },
+  "expected_summaries":{
+    "missing":{"records":2500,"fdm_successes":2500,"missing_actuators":2500,"actuator_observations":0,"input_settled":true,"output_chain_observed":false,"binding_status":"unverified","control_gate_accepted":false},
+    "ready":{"collection_complete":true,"input_settled":true,"initialization_ready":true,"output_chain_observed":true,"passed":true,"binding_status":"unverified","control_gate_accepted":false},
+    "unavailable":{"collection_complete":true,"input_settled":true,"initialization_ready":false,"output_chain_observed":false,"passed":false,"binding_status":"unverified","control_gate_accepted":false}
+  },
+  "independent_case_groups":["N01-query-time-order","N02-step-boundary","N03-schema-crossover","N04-units-agl","N05-pre-post","N06-ground-vs-land","N07-missing-null","N08-zero-actuator","N09-drop-armed-peer","N10-four-states","N11-mask-token","N12-malformed","N13-typed-parameters","N14-query-count","N15-no-old-envelope","N16-contiguous-settle","N17-tilt-yaw","N18-primary-device-age","N19-health-pose-output","N20-zero-is-not-binding","N21-hard-end","N22-time-bytes","N23-json-identity-supervision","N24-failure-new-run"]
+}

@@ -1,0 +1,77 @@
+Preferences:
+  PromptSaveOnExit: false
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded: []
+Visualization Manager:
+  Class: ""
+  Enabled: true
+  Global Options:
+    Background Color: 35; 39; 42
+    Fixed Frame: odom
+    Frame Rate: 20
+  Displays:
+    - Class: rviz/Grid
+      Name: Metric grid (unobserved is unknown)
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 50
+      Color: 100; 110; 112
+      Alpha: 0.3
+      Reference Frame: <Fixed Frame>
+    - Class: rviz/PointCloud2
+      Name: Radar point cloud
+      Enabled: true
+      Topic: /uav/sensors/radar/raw
+      Queue Size: 2
+      Style: Flat Squares
+      Size (m): 0.08
+      Size (Pixels): 3
+      Color Transformer: AxisColor
+      Position Transformer: XYZ
+      Axis: Z
+      Autocompute Value Bounds: true
+      Decay Time: 0
+      Alpha: 1
+    - Class: rviz/Image
+      Name: IR intensity (fixture)
+      Enabled: true
+      Image Topic: /uav/sensors/infrared/raw
+      Transport Hint: raw
+      Queue Size: 2
+      Normalize Range: true
+      Min Value: 0
+      Max Value: 1
+    - Class: rviz/MarkerArray
+      Name: Placeholder map (Radar-only)
+      Enabled: true
+      Marker Topic: /uav/visual/map
+      Queue Size: 1
+    - Class: rviz/TF
+      Name: Explicit sensor frames
+      Enabled: true
+      Show Axes: true
+      Show Names: true
+      Show Arrows: false
+      Marker Scale: 0.5
+      Frame Timeout: 3
+  Tools:
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 36
+      Focal Point: {X: 10, Y: 0, Z: 1.5}
+      Pitch: 0.65
+      Yaw: 0.9
+      Near Clip Distance: 0.01
+      Target Frame: <Fixed Frame>
+    Saved: []
+Window Geometry:
+  Width: 1400
+  Height: 900

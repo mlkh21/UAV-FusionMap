@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "pdf_pages": 17,
+  "reference_pdf_pages": 14,
+  "previous_pdf_pages": 15,
+  "docx_text_blocks": 195,
+  "embedded_figures": 9,
+  "all_pdf_text_present": true,
+  "source_copies_equal": true,
+  "local_links_valid": 39,
+  "full_regression_tests": 1090,
+  "repeated_raw_radar_ir_messages_equal": 20,
+  "real_elevation_source_query_checks": 49,
+  "native_and_legacy_runs_passed": true,
+  "owned_processes_cleaned": true
+}

@@ -2,70 +2,47 @@
 
 这里仅负责公共消息序列化，不实现同步、感知或地图算法；消息中的业务时间保持原值。
 """
-from .codec import from_ros_state, to_ros_state
-
-
-SOURCE = {"simulation": 0, "measured": 1, "fixture": 2, "model": 3, "derived": 4}
-STATUS = {"valid": 0, "degraded": 1, "unavailable": 2}
-STATE_SOURCE = {"ground_truth": 0, "estimated": 1}
-REVERSE_SOURCE = {value: key for key, value in SOURCE.items()}
-REVERSE_STATUS = {value: key for key, value in STATUS.items()}
-REVERSE_STATE_SOURCE = {value: key for key, value in STATE_SOURCE.items()}
+from .codec import (from_ros_state, to_ros_state, encode_header, decode_header,
+                    UNCERTAINTY, _encode, _decode, _confidence, _uncertainty_fields)
 
 
 def _header(msg, value):
-    msg.schema_version = value["schema_version"]
-    msg.timestamp = int(value["timestamp"])
-    msg.clock_id = value["clock_id"]
-    msg.run_id = value["run_id"]
-    msg.sample_id = value["sample_id"]
-    msg.frame_id = value["frame_id"]
-    msg.source_type = SOURCE[value["source_type"]]
-    msg.status = STATUS[value["status"]]
-    msg.reason = value.get("reason", "")
+    encode_header(msg, value)
 
 
 def _header_dict(msg):
-    return dict(schema_version=msg.schema_version, timestamp=msg.timestamp,
-                clock_id=msg.clock_id, run_id=msg.run_id, sample_id=msg.sample_id,
-                frame_id=msg.frame_id, source_type=REVERSE_SOURCE[msg.source_type],
-                status=REVERSE_STATUS[msg.status], reason=msg.reason)
+    return decode_header(msg)
 
 
 def _quality(msg, value):
     quality = value or {}
-    confidence = quality.get("confidence")
+    confidence = _confidence(quality.get("confidence"))
     msg.confidence_available = confidence is not None
     msg.confidence = float(confidence) if confidence is not None else 0.0
-    uncertainty = quality.get("uncertainty", {})
-    msg.uncertainty.status = 1 if uncertainty.get("status") == "available" else 0
-    msg.uncertainty.kind = uncertainty.get("kind", "")
-    msg.uncertainty.value = list(uncertainty.get("value") or [])
-    msg.uncertainty.unit = uncertainty.get("unit", "")
-    msg.uncertainty.source = uncertainty.get("source", "")
+    _uncertainty(msg.uncertainty, quality.get('uncertainty'))
 
 
 def _quality_dict(msg):
-    return dict(confidence=float(msg.confidence) if msg.confidence_available else None,
-                uncertainty=dict(status="available" if msg.uncertainty.status else "unavailable",
-                                  kind=msg.uncertainty.kind,
-                                  value=list(msg.uncertainty.value) if msg.uncertainty.status else None,
-                                  unit=msg.uncertainty.unit, source=msg.uncertainty.source))
+    return dict(confidence=_confidence(msg.confidence if msg.confidence_available else None),
+                uncertainty=_uncertainty_dict(msg.uncertainty))
 
 
 def _uncertainty(msg, value):
-    value = value or {}
-    msg.status = 1 if value.get("status") == "available" else 0
-    msg.kind = value.get("kind", "")
-    msg.value = list(value.get("value") or [])
-    msg.unit = value.get("unit", "")
-    msg.source = value.get("source", "")
+    value = _uncertainty_fields(value)
+    msg.status = _encode(value['status'], UNCERTAINTY, 'uncertainty.status')
+    msg.kind = value['kind']
+    msg.value = value['value'] if value['value'] is not None else []
+    msg.unit = value['unit']
+    msg.source = value['source']
 
 
 def _uncertainty_dict(msg):
-    return dict(status="available" if msg.status else "unavailable",
+    status = _decode(msg.status, UNCERTAINTY, 'uncertainty.status')
+    if status == 'unavailable' and len(msg.value) != 0:
+        raise ValueError('unavailable uncertainty must have no values')
+    return _uncertainty_fields(dict(status=status,
                 kind=msg.kind, value=list(msg.value) if msg.status else None,
-                unit=msg.unit, source=msg.source)
+                unit=msg.unit, source=msg.source))
 
 
 def to_ros_radar(value):
@@ -127,9 +104,11 @@ def to_ros_context(value):
     msg.mapping_frame_id = value["mapping_frame_id"]
     msg.source_frame_id = value["source_frame_id"]
     msg.T_mapping_source = list(value["T_mapping_source"])
-    msg.T_mapping_source_status = 1 if value["T_mapping_source_status"] == "available" else 0
+    msg.T_mapping_source_status = _encode(value['T_mapping_source_status'], UNCERTAINTY,
+                                          'T_mapping_source_status')
     msg.T_mapping_body = list(value["T_mapping_body"])
-    msg.T_mapping_body_status = 1 if value["T_mapping_body_status"] == "available" else 0
+    msg.T_mapping_body_status = _encode(value['T_mapping_body_status'], UNCERTAINTY,
+                                        'T_mapping_body_status')
     msg.calibration_id = value["calibration_id"]
     msg.state_source = value["state_source"]
     _uncertainty(msg.pose_uncertainty, value.get("pose_uncertainty"))
@@ -140,9 +119,11 @@ def from_ros_context(msg):
     return dict(reference_timestamp=msg.reference_timestamp, clock_id=msg.clock_id,
                 mapping_frame_id=msg.mapping_frame_id, source_frame_id=msg.source_frame_id,
                 T_mapping_source=list(msg.T_mapping_source),
-                T_mapping_source_status="available" if msg.T_mapping_source_status else "unavailable",
+                T_mapping_source_status=_decode(msg.T_mapping_source_status, UNCERTAINTY,
+                                                'T_mapping_source_status'),
                 T_mapping_body=list(msg.T_mapping_body),
-                T_mapping_body_status="available" if msg.T_mapping_body_status else "unavailable",
+                T_mapping_body_status=_decode(msg.T_mapping_body_status, UNCERTAINTY,
+                                              'T_mapping_body_status'),
                 calibration_id=msg.calibration_id, state_source=msg.state_source,
                 pose_uncertainty=_uncertainty_dict(msg.pose_uncertainty))
 
@@ -177,8 +158,9 @@ def to_ros_occupancy(value):
         out.x, out.y, out.z = voxel["index"]
         out.probability = voxel["probability"]
         out.observed = bool(voxel.get("observed", False))
-        out.confidence_available = voxel.get("confidence") is not None
-        out.confidence = voxel.get("confidence") or 0.0
+        confidence = _confidence(voxel.get('confidence'))
+        out.confidence_available = confidence is not None
+        out.confidence = confidence if confidence is not None else 0.0
         _uncertainty(out.uncertainty, voxel.get("uncertainty"))
         msg.voxels.append(out)
     msg.resolution, msg.shape, msg.origin = list(value["resolution"]), list(value["shape"]), list(value["origin"])
@@ -191,7 +173,7 @@ def from_ros_occupancy(msg):
     return dict(header=_header_dict(msg.header),
                 voxels=[dict(index=[v.x, v.y, v.z], probability=v.probability,
                              observed=v.observed,
-                             confidence=v.confidence if v.confidence_available else None,
+                             confidence=_confidence(v.confidence if v.confidence_available else None),
                              uncertainty=_uncertainty_dict(v.uncertainty)) for v in msg.voxels],
                 resolution=list(msg.resolution), shape=list(msg.shape), origin=list(msg.origin),
                 context=from_ros_context(msg.context), observed_domain_source=msg.observed_domain_source)
@@ -208,8 +190,9 @@ def to_ros_snapshot(value):
         out.probability = cell["probability"]
         out.observed = cell["observed"]
         out.last_observed_timestamp = cell["last_observed_timestamp"]
-        out.confidence_available = cell.get("confidence") is not None
-        out.confidence = cell.get("confidence") or 0.0
+        confidence = _confidence(cell.get('confidence'))
+        out.confidence_available = confidence is not None
+        out.confidence = confidence if confidence is not None else 0.0
         _uncertainty(out.uncertainty, cell.get("uncertainty"))
         msg.cells.append(out)
     msg.resolution, msg.shape, msg.origin, msg.coverage = list(value["resolution"]), list(value["shape"]), list(value["origin"]), list(value["coverage"])
@@ -221,7 +204,7 @@ def from_ros_snapshot(msg):
     return dict(header=_header_dict(msg.header), map_id=msg.map_id, revision=msg.revision,
                 cells=[dict(index=[c.x, c.y, c.z], probability=c.probability,
                             observed=c.observed, last_observed_timestamp=c.last_observed_timestamp,
-                            confidence=c.confidence if c.confidence_available else None,
+                            confidence=_confidence(c.confidence if c.confidence_available else None),
                             uncertainty=_uncertainty_dict(c.uncertainty))
                        for c in msg.cells], resolution=list(msg.resolution), shape=list(msg.shape),
                 origin=list(msg.origin), coverage=list(msg.coverage), source_types=list(msg.source_types))

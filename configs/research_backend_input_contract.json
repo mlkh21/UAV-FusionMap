@@ -1,0 +1,16 @@
+{
+  "schema_version": "research_backend_input_contract_v1",
+  "input": "SensorBundle",
+  "required_top_level": ["header", "radar", "infrared", "state", "context"],
+  "forbidden_recursive_keys": [
+    "lidar", "training_lidar", "target", "occupancy_target", "observed_mask",
+    "supervision", "lidar_points", "lidar_voxels"
+  ],
+  "lidar_forward": false,
+  "target_forward": false,
+  "observed_mask_forward": false,
+  "radar_frame": "radar",
+  "infrared_frame": "thermal_optical",
+  "model_grid_frame": "model_lidar",
+  "coordinate_contract_required": true
+}

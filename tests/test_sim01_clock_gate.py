@@ -17,6 +17,30 @@ def state(ns=10, sample_id=None, terminal=None):
 
 
 class ClockGateTest(unittest.TestCase):
+    def test_identity_history_is_bounded_and_retired_input_cannot_revive(self):
+        gate = StateClockGate('run', pending_limit=1, identity_history_limit=4)
+        for ns in range(200):
+            now = ns * .001
+            gate.consume_clock(ns, now)
+            self.assertEqual(gate.consume_state(state(ns), now), [state(ns)])
+            self.assertLessEqual(gate.identity_count, 4)
+        self.assertEqual(gate.consume_state(state(0), .2), [])
+        recent = state(199)
+        recent['position'][0] = 7.
+        with self.assertRaisesRegex(ValueError, 'conflict'):
+            gate.consume_state(recent, .21)
+        terminal = state(0, 'terminal:bounded', 'reset')
+        self.assertEqual(gate.consume_state(terminal, .22), [terminal])
+
+    def test_timed_out_identity_remains_rejected_after_history_eviction(self):
+        gate = StateClockGate('run', identity_history_limit=2)
+        gate.consume_state(state(10), 0.)
+        gate.poll_timeout(.5)
+        gate.consume_state(state(20), .6)
+        gate.consume_state(state(30), .7)
+        self.assertEqual(gate.consume_state(state(10), .8), [])
+        self.assertEqual(gate.consume_clock(30, .9), [state(20), state(30)])
+
     def test_state_before_clock_and_clock_before_state(self):
         gate = StateClockGate("run")
         self.assertEqual(gate.consume_state(state(), 0.), [])

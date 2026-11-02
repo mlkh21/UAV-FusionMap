@@ -127,3 +127,22 @@ def adapt_state(state, frames_config, norm_tolerance=.001):
     result = _target_state(state)
     result.update(position=position, linear_velocity=velocity, orientation_xyzw=orientation)
     return result
+
+
+def adapt_scene_ground_truth(state, registration_id):
+    """Explicit scene-world ENU truth; retain source, including non-geometric terminal."""
+    _validate_header(state['header'])
+    if registration_id != 'gazebo_scene_world_enu_identity_v1':
+        raise ValueError('explicit scene ENU registration required')
+    if (state['header']['frame_id'] != 'scene_world' or state['state_source'] != 'ground_truth' or
+            state['body_frame_id'] != 'base_link' or state['velocity_frame_id'] != 'base_link'):
+        raise ValueError('expected Gazebo scene ground truth ENU/FLU state')
+    if state['header']['status'] == 'unavailable' and state['header']['reason'].startswith('terminal:'):
+        return _target_state(state)
+    if state['header']['status'] != 'valid':
+        raise ValueError('unavailable scene state is not a geometric observation')
+    _vector(state['position'], 3, 'scene position')
+    _vector(state['linear_velocity'], 3, 'scene body velocity')
+    q = _vector(state['orientation_xyzw'], 4, 'scene orientation')
+    if abs(sum(v*v for v in q) - 1) > .001:raise ValueError('invalid scene orientation')
+    return _target_state(state)

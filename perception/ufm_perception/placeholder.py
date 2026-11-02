@@ -2,6 +2,8 @@
 import copy
 import math
 
+from .input_contract import validate_transform
+
 
 def _header(bundle, sample_id, status="valid", reason=""):
     source = bundle["header"]
@@ -9,6 +11,19 @@ def _header(bundle, sample_id, status="valid", reason=""):
                 clock_id=source["clock_id"], run_id=source["run_id"],
                 sample_id=sample_id, frame_id="odom", source_type="fixture",
                 status=status, reason=reason)
+
+
+def grid_origin(bundle, resolution, shape, origin, rolling_grid=False):
+    """Configured odom lattice, optionally shifted around the observation-time body."""
+    if not rolling_grid:
+        return tuple(origin)
+    body = bundle['context']['T_mapping_body']
+    result = tuple(float(origin[axis]) + math.floor(
+        (body[4*axis+3] - origin[axis] - shape[axis]*resolution[axis]/2) /
+        resolution[axis] + .5) * resolution[axis] for axis in range(3))
+    if any(not math.isfinite(value) for value in result):
+        raise ValueError('invalid moving observation grid origin')
+    return result
 
 
 def placeholder_infer(bundle, resolution=(0.5, 0.5, 0.5),
@@ -40,27 +55,11 @@ def placeholder_infer(bundle, resolution=(0.5, 0.5, 0.5),
             any(value <= 0 for value in resolution) or
             any(int(value) != value or value <= 0 for value in shape)):
         raise ValueError("invalid occupancy grid geometry")
-    if len(transform) != 16 or any(not math.isfinite(value) for value in transform):
-        raise ValueError("invalid radar to odom transform")
-    if any(abs(a-b) > 1e-9 for a, b in zip(transform[12:], (0, 0, 0, 1))):
-        raise ValueError("radar transform must be homogeneous")
-    for row in range(3):
-        for col in range(3):
-            dot = sum(transform[4*row+k] * transform[4*col+k] for k in range(3))
-            if abs(dot - (1.0 if row == col else 0.0)) > 1e-6:
-                raise ValueError("radar transform rotation must be orthonormal")
-    if rolling_grid:
-        body = context["T_mapping_body"]
-        if len(body) != 16 or any(not math.isfinite(value) for value in body):
-            raise ValueError("invalid observation-time body transform")
-        if any(abs(a-b) > 1e-9 for a, b in zip(body[12:], (0, 0, 0, 1))):
-            raise ValueError("body transform must be homogeneous")
-        origin = tuple(float(origin[axis]) + math.floor(
-            (body[4*axis+3] - origin[axis] - shape[axis]*resolution[axis]/2) /
-            resolution[axis] + .5) * resolution[axis] for axis in range(3))
-        if any(not math.isfinite(value) for value in origin):
-            raise ValueError("invalid moving observation grid origin")
+    validate_transform(transform)
+    validate_transform(context['T_mapping_body'])
+    origin = grid_origin(bundle, resolution, shape, origin, rolling_grid)
     voxels = []
+    indices = set()
     for point in bundle["radar"]["points"]:
         radar_point = (point["x"], point["y"], point["z"], 1.0)
         coordinates = [sum(transform[4 * axis + col] * radar_point[col] for col in range(4))
@@ -69,11 +68,12 @@ def placeholder_infer(bundle, resolution=(0.5, 0.5, 0.5),
                                   resolution[axis])) for axis in range(3))
         if any(index[axis] < 0 or index[axis] >= int(shape[axis]) for axis in range(3)):
             continue
+        if index in indices:
+            continue
+        indices.add(index)
         voxels.append(dict(index=list(index), probability=0.9, observed=True,
                            confidence=None, uncertainty=dict(status="unavailable",
                            kind="", value=None, unit="", source="fixture placeholder")))
-    if len({tuple(item["index"]) for item in voxels}) != len(voxels):
-        raise ValueError("duplicate occupancy voxel")
     return dict(header=_header(bundle, "perception.occupancy:" + bundle["header"]["sample_id"]),
                 voxels=voxels, resolution=list(resolution), shape=[int(value) for value in shape],
                 origin=[float(value) for value in origin], context=context,

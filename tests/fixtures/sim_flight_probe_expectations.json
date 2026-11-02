@@ -1,0 +1,19 @@
+{
+  "schema_version":"test.sim_flight_probe_expectations.v1",
+  "fixture_only":true,
+  "checkpoints":[125,250],
+  "topics":["vehicle_imu","estimator_status","estimator_status_flags","estimator_attitude","estimator_selector_status","vehicle_attitude","vehicle_control_mode","actuator_controls_0","actuator_outputs"],
+  "parameters":{"SYS_AUTOSTART":1033,"SYS_CTRL_ALLOC":0,"SENS_IMU_MODE":0},
+  "query_count":21,
+  "query_tail_topic":["--instance","0","vehicle_imu","-n","1"],
+  "query_tail_parameter":["--instance","0","show","SYS_CTRL_ALLOC"],
+  "limits":{"client_ns":200000000,"group_ns":400000000,"raw_bytes":32768,"record_bytes":262144,"records":32,"files_bytes":8388608},
+  "missing_text":"never published\n",
+  "missing_result":{"observed":false,"reason":"not_published","value":null},
+  "attitude_text":"\nTOPIC: vehicle_attitude\n vehicle_attitude\n    timestamp: 496000 (0.000000 seconds ago)\n    timestamp_sample: 492000 (4000 us before timestamp)\n    q: [1.0000, 0.0000, 0.0000, 0.0000] (Roll: 0.0 deg, Pitch: 0.0 deg, Yaw: 0.0 deg)\n    delta_q_reset: [1.0000, 0.0000, 0.0000, 0.0000]\n    quat_reset_counter: 0\n",
+  "attitude_result":{"observed":true,"reason":"","value":{"instances":[{"instance":0,"fields":{"timestamp":496000,"timestamp_sample":492000,"q":[1.0,0.0,0.0,0.0],"delta_q_reset":[1.0,0.0,0.0,0.0],"quat_reset_counter":0}}]}},
+  "parameter_text":"Symbols: x = used, + = saved, * = unsaved\nx   SYS_CTRL_ALLOC [123,456] : 0\n\n 100/1000 parameters used.\n",
+  "parameter_result":{"observed":true,"reason":"","value":{"integer":0}},
+  "binding_status":"unverified",
+  "control_gate_accepted":false
+}

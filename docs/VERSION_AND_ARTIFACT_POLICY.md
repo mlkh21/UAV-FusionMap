@@ -9,8 +9,8 @@
 不复制研究数据、权重、环境或结果到主仓。第三方飞控/仿真源码仅作为固定版本的
 运行依赖保存在.runtime，不成为主仓业务源码。
 
-继续使用feature/engineering-initialization；尚无首次提交，未跟踪文件不能据此视为
-可由Git恢复。首次提交须核对实际文件清单后另按授权执行，不使用git add .。
+继续使用feature/engineering-initialization；已有首次提交4bd0c33，后续未提交文件不能据此
+视为可由Git恢复。后续提交须核对实际文件清单后另按授权执行，不使用git add .。
 首次候选清单为根AGENTS/README/PROJECT_STATUS/.gitignore、各模块AGENTS和现有目录
 占位、docs工程文档、algorithms来源登记及experiments内的小型Markdown验证记录。
 SIM-00A新增的环境配置、命令环境入口与构建说明亦纳入逐文件候选审查；
@@ -26,6 +26,8 @@ main仅承载验收基线，develop承载已检查的集成，feature/*承载任
 [根.gitignore](../.gitignore)仅排除明确的本机目录：.runtime中的生成资产、原有.codex
 会话配置，以及ros_ws常见构建输出。不使用*.json、*.yaml、data或models等宽泛规则
 隐藏后续接口配置或模型描述。`.runtime/CATKIN_IGNORE`保留为可提交的边界标记。
+2026-10-27纠正整目录忽略tests/和experiments/的偏差；测试源码和小型Markdown实验
+记录恢复为可见候选，Python缓存仍忽略。变成可见候选不等于已经提交或具备独立备份。
 
 catkin隔离标记先于依赖源码填充建立，防止外层catkin_ws扫描嵌套第三方包。
 忽略规则不删除文件，也不保护已经被Git跟踪的文件；每次提交仍需检查索引。

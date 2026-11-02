@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(uav_fusionmap_sim_scene_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation uav_fusionmap_msgs)
+catkin_python_setup()
+add_message_files(FILES SceneFrame.msg SceneCaptureAck.msg)
+add_service_files(FILES SceneStep.srv)
+generate_messages(DEPENDENCIES uav_fusionmap_msgs)
+catkin_package(CATKIN_DEPENDS message_runtime uav_fusionmap_msgs)

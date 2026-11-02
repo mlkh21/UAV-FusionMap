@@ -129,6 +129,8 @@ class WrapperHarness:
         from ufm_sensors import perf01a_async, perf01a_fixture
         self.business = perf01a_async
         self.fixture = perf01a_fixture
+        from ufm_simulation import perf01a_fixture as simulation_fixture
+        self.fixture_state = simulation_fixture.make_fixture_state
         self.profile = perf01a_async.load_profile()
         self.params['/perf01a_async_profile'] = self.profile
         self.load('ufm_ros_contract.perf01a_ros', Path(contract.__path__[0]) / 'perf01a_ros.py')
@@ -184,7 +186,7 @@ class AsyncWrapperTest(unittest.TestCase):
             h.profile['pairing_policy'] = 'exact'
             node = h.matcher_module.Matcher()
             node.receive_clock(ClockMessage(100 * MS))
-            node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 100 * MS)))
+            node.receive_state(encode(h.fixture_state('r', 0, 100 * MS)))
             node.receive_radar(encode(h.fixture.make_fake_radar('r', 0, 100 * MS)))
             node.receive_infrared(encode(h.fixture.make_fake_infrared('r', 0, 100 * MS)))
             h.tick(node, MS)
@@ -289,7 +291,7 @@ class AsyncWrapperTest(unittest.TestCase):
             with self.subTest(order=order), WrapperHarness() as h:
                 node = h.matcher_module.Matcher()
                 node.receive_clock(ClockMessage(100 * MS))
-                node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 100 * MS)))
+                node.receive_state(encode(h.fixture_state('r', 0, 100 * MS)))
                 h.tick(node, MS)
                 # The callback records 141ms, but the worker has not run again.
                 h.wall.ns = 2 * MS
@@ -308,7 +310,7 @@ class AsyncWrapperTest(unittest.TestCase):
             with self.subTest(poll_first=poll_first), WrapperHarness() as h:
                 node = h.matcher_module.Matcher()
                 node.receive_clock(ClockMessage(100 * MS))
-                node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 100 * MS)))
+                node.receive_state(encode(h.fixture_state('r', 0, 100 * MS)))
                 node.receive_radar(encode(h.fixture.make_fake_radar('r', 0, 100 * MS)))
                 h.tick(node, MS)
                 node.receive_clock(ClockMessage(141 * MS))
@@ -332,7 +334,7 @@ class AsyncWrapperTest(unittest.TestCase):
                 node.receive_clock(ClockMessage(140 * MS + 1))
                 if poll_first:
                     h.tick(node, 2 * MS)
-                node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 100 * MS)))
+                node.receive_state(encode(h.fixture_state('r', 0, 100 * MS)))
                 h.tick(node, 3 * MS)
                 self.assertEqual([d['reason'] for d in node.decisions], ['pose_unavailable'])
                 self.assertEqual(h.publishers['/uav/sensors/bundle'].rows, [])
@@ -346,11 +348,11 @@ class AsyncWrapperTest(unittest.TestCase):
             node.receive_radar(encode(old))
             h.tick(node, 500 * MS)
             self.assertEqual([d['reason'] for d in node.decisions], ['wall_timeout'])
-            node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 0)))
+            node.receive_state(encode(h.fixture_state('r', 0, 0)))
             node.receive_infrared(encode(h.fixture.make_fake_infrared('r', 0, 0)))
             node.receive_radar(encode(old))
             node.receive_clock(ClockMessage(100 * MS))
-            node.receive_state(encode(h.fixture.make_fixture_state('r', 1, 100 * MS)))
+            node.receive_state(encode(h.fixture_state('r', 1, 100 * MS)))
             node.receive_infrared(encode(h.fixture.make_fake_infrared('r', 1, 100 * MS)))
             node.receive_radar(encode(h.fixture.make_fake_radar('r', 1, 100 * MS)))
             node.receive_clock(ClockMessage(140 * MS))
@@ -365,7 +367,7 @@ class AsyncWrapperTest(unittest.TestCase):
             h.profile['radar_capacity'] = 1
             node = h.matcher_module.Matcher()
             node.receive_clock(ClockMessage(101 * MS))
-            node.receive_state(encode(h.fixture.make_fixture_state('r', 0, 100 * MS)))
+            node.receive_state(encode(h.fixture_state('r', 0, 100 * MS)))
             node.receive_infrared(encode(h.fixture.make_fake_infrared('r', 0, 100 * MS)))
             old = h.fixture.make_fake_radar('r', 0, 100 * MS)
             node.receive_radar(encode(old))

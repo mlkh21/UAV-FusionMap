@@ -1,0 +1,24 @@
+{
+  "schema_version":"test.sim_flight_expectations.v1",
+  "fixture_only":true,
+  "live_executed":false,
+  "ic":{"latitude_deg":47.458159,"longitude_deg":8.548004,"altitude_reference":"AGL","altitude_m":0.5,"terrain_elevation_m":419.2,"true_airspeed_mps":0.0,"phi_theta_psi_deg":[0.0,0.0,90.0],"gamma_deg":null},
+  "channels":[{"name":"rudder","index":2,"scale":-1,"property":"fcs/rudder-cmd-norm"},{"name":"aileron","index":5,"scale":-1,"property":"fcs/aileron-cmd-norm"},{"name":"elevator","index":7,"scale":-1,"property":"fcs/elevator-cmd-norm"},{"name":"throttle","index":4,"scale":1,"property":"fcs/throttle-cmd-norm"}],
+  "mapping_probes":[
+    {"id":"zero","controls":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"properties":[0,0,0,0]},
+    {"id":"asymmetric_float32","controls":[0,0,-0.25,0,0.6000000238418579,0.30000001192092896,0,-0.20000000298023224,0,0,0,0,0,0,0,0],"properties":[0.25,-0.30000001192092896,0.20000000298023224,0.6000000238418579]},
+    {"id":"bounds","controls":[0,0,-1,0,1,1,0,-1,0,0,0,0,0,0,0,0],"properties":[1,-1,1,1]}
+  ],
+  "manual_reference":{"x":-178,"pitch_limit_deg":45.0,"pitch_offset_deg":0.0,"pitch_setpoint_deg":8.01},
+  "capture_reference":{"first_step":7525,"last_step":10000,"count":100,"first_timestamp_ns":30100000000,"last_timestamp_ns":40000000000,"step_7500_is_capture":false},
+  "limits":{"header_bytes":262144,"record_bytes":16384,"depth":8,"nodes":8192,"text_bytes":128,"list_items":512,"stream_records":12288,"control_log_bytes":67108864},
+  "record_reference":{
+    "schema_version":"sim_flight_actuator_record.v1","run_id":"flight-offline-01","clock_id":"sim:flight-offline-01",
+    "step_index":1,"source_step":0,"hil_sensor_time_us":0,"has_actuator":false,"actuator":null,
+    "binding_status":"unverified","reason":"actuator_not_received",
+    "properties":{"before":[0,0,0,0],"requested":null,"after":[0,0,0,0]},
+    "fdm":{"ran":true,"result":true,"sim_time_before_s":0.0,"sim_time_after_s":0.004},
+    "wall":{"hil_sent_ns":10,"actuator_received_ns":null,"properties_applied_ns":null,"fdm_finished_ns":20}
+  },
+  "stream_reference":{"records":2,"actuator_observations":1,"missing_actuators":1,"fdm_successes":2,"last_step":2,"last_receive_sequence":1,"control_gate_accepted":false}
+}

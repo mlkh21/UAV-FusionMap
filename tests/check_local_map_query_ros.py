@@ -4,6 +4,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -59,6 +60,7 @@ def main():
     parser.add_argument('run', type=Path)
     parser.add_argument('run_id')
     parser.add_argument('--mode', choices=('enabled', 'disabled', 'unclassified'), default='enabled')
+    parser.add_argument('--application-client', action='store_true')
     args = parser.parse_args()
     rospy.init_node('local_map_query_checker', disable_signals=True)
     snapshots, events, queries, checks, errors, clocks = [], [], [], [], [], []
@@ -71,6 +73,7 @@ def main():
     publisher = rospy.Publisher('/uav/perception/occupancy', OccupancyObservation, queue_size=100)
     clock_publisher = rospy.Publisher('/clock', Clock, queue_size=100)
     published = []
+    application_results = []
 
     def require(condition, name):
         checks.append(dict(name=name, passed=bool(condition)))
@@ -200,6 +203,43 @@ def main():
                     and snapshots[-1]['source_types'] == ['fixture'], 'snapshot observed domain and sources')
             if args.mode == 'unclassified':
                 require(result['reason'] == 'classification_thresholds_unconfigured', 'no guessed thresholds')
+            if args.application_client:
+                root = Path(__file__).resolve().parents[1]
+                sys.path.insert(0, str(root / 'application'))
+                from ufm_application import MapQueryClient, QueryTransportError
+                def transport(fields):
+                    try:
+                        return from_ros_query_result(service(MapQueryRequest(**fields)).result)
+                    except rospy.ServiceException as exc:
+                        raise QueryTransportError(str(exc)) from exc
+                client = MapQueryClient(transport)
+                for expected, changes in (('occupied', {}), ('free', dict(point=[4.25, .25, .25])),
+                        ('unknown', dict(point=[2.25, .25, .25])),
+                        ('stale', dict(query_timestamp=251 * MS)),
+                        ('unavailable', dict(clock_id='foreign'))):
+                    fields = dict(map_id='perf01a-local', frame_id='odom', run_id=args.run_id,
+                        clock_id='sim:' + args.run_id, query_timestamp=200 * MS,
+                        point=[8.25, .25, .25], max_age_ns=50 * MS)
+                    fields.update(changes)
+                    raw = transport(fields)
+                    response = client.query(**fields)
+                    application_results.append(dict(request=fields, result=response))
+                    require(response == raw and response['status'] == expected,
+                            'application preserves public query ' + expected)
+                command = [sys.executable, str(root / 'ros_ws/map_query_client.py'),
+                    '--run-id', args.run_id, '--clock-id', 'sim:' + args.run_id,
+                    '--timestamp-ns', str(200 * MS), '--max-age-ns', str(50 * MS),
+                    '--point', '8.25', '.25', '.25']
+                for missing in (False, True):
+                    reply = subprocess.run(command + (['--service', '/uav/map/query_missing']
+                        if missing else []), capture_output=True, text=True, timeout=8.)
+                    payload = json.loads(reply.stdout)
+                    application_results.append(dict(cli=True, service_missing=missing, result=payload))
+                    require(reply.returncode == int(missing) and payload['status'] == (
+                        'unavailable' if missing else 'occupied'), 'standalone application CLI ' + str(missing))
+                    if missing:
+                        require(payload['probability'] is None and not payload['observed'],
+                                'missing service is not free')
         import rosgraph
         system = rosgraph.Master(rospy.get_name()).getSystemState()
         with (args.run / 'graph.json').open('x') as handle:
@@ -216,11 +256,13 @@ def main():
         rospy.signal_shutdown('query fixture finished')
         with (args.run / 'receipts.json').open('x') as handle:
             json.dump(dict(published=published, snapshots=snapshots, queries=queries, clocks=clocks,
+                           application_results=application_results,
                            events=[dict(sample_id=e.sample_id, status=e.status, reason=e.reason) for e in events]),
                       handle, indent=2)
         report = dict(passed=not errors and all(c['passed'] for c in checks), mode=args.mode,
                       python=sys.executable, checks=checks, errors=errors,
                       snapshot_count=len(snapshots), query_count=len(queries), published_count=len(published))
+        report['application_result_count'] = len(application_results)
         with (args.run / 'validation.json').open('x') as handle:
             json.dump(report, handle, indent=2)
         print(json.dumps(report), flush=True)

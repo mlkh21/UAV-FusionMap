@@ -1,5 +1,6 @@
 """Single-point map query ROS encoding; no map cache or classification logic."""
 from .perf01a_codec import _uncertainty, _uncertainty_dict
+from .codec import _confidence
 
 
 STATUS = {'occupied': 0, 'free': 1, 'unknown': 2, 'stale': 3, 'unavailable': 4}
@@ -26,9 +27,10 @@ def to_ros_query_result(value):
     message.index_available = value['index'] is not None
     message.index = list(value['index']) if message.index_available else [0, 0, 0]
     for key in ('probability', 'confidence', 'last_observed_timestamp'):
-        available = value[key] is not None
+        field = _confidence(value[key]) if key == 'confidence' else value[key]
+        available = field is not None
         setattr(message, key + '_available', available)
-        setattr(message, key, value[key] if available else 0)
+        setattr(message, key, field if available else 0)
     _uncertainty(message.uncertainty, value['uncertainty'])
     return message
 
@@ -44,4 +46,5 @@ def from_ros_query_result(message):
                   uncertainty=_uncertainty_dict(message.uncertainty))
     for key in ('probability', 'confidence', 'last_observed_timestamp'):
         result[key] = getattr(message, key) if getattr(message, key + '_available') else None
+    result['confidence'] = _confidence(result['confidence'])
     return result

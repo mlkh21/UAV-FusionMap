@@ -1,0 +1,14 @@
+{
+  "schema_version": "test.m5.provider.expectations.v1",
+  "initial_state": "waiting_clock",
+  "cases": [
+    {"clock": 99, "query": 99, "status": "unavailable", "reason": "terrain_unavailable"},
+    {"clock": 100, "query": 100, "status": "valid", "reason": "", "height": 13},
+    {"clock": 100, "query": 101, "status": "unavailable", "reason": "query_ahead_of_clock"},
+    {"clock": 200, "query": 100, "status": "stale", "reason": "terrain_expired", "height": 13},
+    {"clock": 300, "query": 100, "status": "unavailable", "reason": "registration_unavailable"}
+  ],
+  "failure_reasons": ["request_domain_mismatch", "clock_unavailable", "clock_transport_unavailable", "provider_instance_mismatch", "revision_mismatch", "query_before_terrain_activation", "clock_reset_new_run_required", "terrain_busy"],
+  "new_run_required": ["registration_changed_new_run_required", "version_capacity_new_run_required"],
+  "ros_scope": "single explicit startup dataset, clock only, no public installation endpoint"
+}

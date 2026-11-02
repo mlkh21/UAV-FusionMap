@@ -4,6 +4,12 @@ import time
 from uav_fusionmap_msgs.msg import PerfEvent
 
 
+def perf_publisher(rospy):
+    if not rospy.get_param('/ufm_diagnostics_enabled', True):
+        return None
+    return rospy.Publisher('/uav/perf/events', PerfEvent, queue_size=500)
+
+
 class PerfTrace:
     """先保存时间戳，业务发布完成后再发送旁路事件。"""
     def __init__(self, enabled):
@@ -30,6 +36,8 @@ class PerfTrace:
 
 def publish_perf_event(publisher, run_id, parent_sample_id, stage, business_timestamp,
                        metric_value_ns=0, status="valid", reason="", monotonic_ns=None):
+    if publisher is None:
+        return
     event = PerfEvent()
     event.run_id = run_id
     event.parent_sample_id = parent_sample_id

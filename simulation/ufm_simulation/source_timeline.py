@@ -9,9 +9,11 @@ from .mavlink_source import timestamp_ns, unavailable_quality
 class SourceTimeline:
     def __init__(self, run_id, warmup_stable_sim_ns=10_000_000_000,
                  startup_timeout_wall_s=60., pending_limit=100,
-                 pending_timeout_wall_s=.5, source_timeout_wall_s=2.):
+                 pending_timeout_wall_s=.5, source_timeout_wall_s=2., emit_imu=False):
         if not isinstance(run_id, str) or not run_id.strip():
             raise ValueError('run_id_required')
+        if type(emit_imu) is not bool:
+            raise ValueError('invalid_emit_imu')
         if type(pending_limit) is not int or pending_limit < 1:
             raise ValueError('invalid_pending_limit')
         if type(warmup_stable_sim_ns) is not int or warmup_stable_sim_ns <= 0:
@@ -20,6 +22,7 @@ class SourceTimeline:
             if not math.isfinite(value) or value <= 0:
                 raise ValueError('invalid_timeout')
         self.run_id = run_id
+        self.emit_imu = emit_imu
         self.phase = 'PREPARING'
         self.last_clock_ns = None
         self.counters = Counter()
@@ -35,6 +38,7 @@ class SourceTimeline:
         self._pending = []
         self._seen = OrderedDict()
         self._last_state = None
+        self._last_imu_values = None
 
     def _touch(self, now):
         if not math.isfinite(now) or (self._wall is not None and now < self._wall):
@@ -61,7 +65,15 @@ class SourceTimeline:
             'linear_velocity': [0., 0., 0.], 'body_frame_id': 'body_frd',
             'velocity_frame_id': 'body_frd', 'state_source': 'estimated',
             'quality': unavailable_quality()}
-        return [self._diagnostic(code), {'type': 'state', 'state': terminal}]
+        events = [self._diagnostic(code), {'type': 'state', 'state': terminal}]
+        if self.emit_imu:
+            events.append({'type': 'imu', 'imu': {
+                'header': dict(terminal['header'], sample_id='sim.imu.terminal:%s:%d' % (code, ns//1000),
+                               frame_id='body_frd'),
+                'acceleration_type': 'specific_force', 'linear_acceleration': [0.] * 3,
+                'angular_velocity': [0.] * 3, 'acceleration_covariance': None,
+                'angular_velocity_covariance': None, 'calibration_id': ''}})
+        return events
 
     def poll_timeout(self, now):
         self._touch(now)
@@ -120,16 +132,40 @@ class SourceTimeline:
         kind = sample.get('type')
         if kind == 'imu':
             ns = timestamp_ns(sample['time_usec'])
+            if self.emit_imu:
+                values = sample.get('imu_values')
+                if not isinstance(values, dict) or any(
+                        not isinstance(values.get(key), (list, tuple)) or len(values[key]) != 3 or
+                        not all(isinstance(v, (int, float)) and math.isfinite(v) for v in values[key])
+                        for key in ('linear_acceleration', 'angular_velocity')):
+                    raise ValueError('imu_values_required')
             if self.last_clock_ns is not None:
                 if ns < self.last_clock_ns:
                     return events + self._fault('imu_regression_or_reordering')
                 if ns == self.last_clock_ns:
+                    if self.emit_imu and values != self._last_imu_values:
+                        return events + self._fault('imu_sample_identity_conflict')
                     self.counters['duplicate_imu'] += 1
                     return events
             self.last_clock_ns = ns
+            if self.emit_imu:
+                self._last_imu_values = copy.deepcopy(values)
             self._last_receive['imu'] = receive_monotonic
             self.counters['accepted_imu'] += 1
-            return events + [{'type': 'clock', 'timestamp': ns}] + self._release()
+            output = [{'type': 'clock', 'timestamp': ns}]
+            if self.emit_imu:
+                output.append({'type': 'imu', 'imu': {
+                    'header': {'schema_version': '0.1', 'timestamp': ns,
+                               'clock_id': 'sim:' + self.run_id, 'run_id': self.run_id,
+                               'sample_id': 'sim.imu:%d' % sample['time_usec'],
+                               'frame_id': 'body_frd', 'source_type': 'simulation',
+                               'status': 'valid', 'reason': ''},
+                    'acceleration_type': 'specific_force',
+                    'linear_acceleration': list(values['linear_acceleration']),
+                    'angular_velocity': list(values['angular_velocity']),
+                    'acceleration_covariance': None, 'angular_velocity_covariance': None,
+                    'calibration_id': ''}})
+            return events + output + self._release()
         if kind != 'odometry':
             raise ValueError('unsupported_sample_type')
         state = sample['state']

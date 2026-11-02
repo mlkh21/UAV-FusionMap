@@ -1,0 +1,41 @@
+{
+  "run_id": "sim-motion-sw03-20261029T161731864328",
+  "scope": "native functional JSBSim truth / Radar / IR / placeholder M1; no controlled flight",
+  "images": [
+    {
+      "file": "scene-before.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/gazebo-motion-before-20261029T161740460.png",
+      "capture_receipt": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/gazebo-before.json",
+      "stage": "before",
+      "view": "gazebo"
+    },
+    {
+      "file": "scene-after.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/gazebo-motion-after-20261029T161746240.png",
+      "capture_receipt": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/gazebo-after.json",
+      "stage": "after",
+      "view": "gazebo"
+    },
+    {
+      "file": "rviz-before.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-motion-before-20261029T161740402.png",
+      "capture_receipt": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-before.json",
+      "stage": "before",
+      "view": "rviz"
+    },
+    {
+      "file": "rviz-after.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-motion-after-20261029T161746302.png",
+      "capture_receipt": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-after.json",
+      "stage": "after",
+      "view": "rviz"
+    },
+    {
+      "file": "rviz-history.png",
+      "source": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-motion-history-20261029T161749203.png",
+      "capture_receipt": "/home/zxj/catkin_ws/src/UAV-FusionMap/.runtime/runs/sim-motion-sw03-20261029T161731864328/figures/rviz-history.json",
+      "stage": "history",
+      "view": "rviz"
+    }
+  ]
+}

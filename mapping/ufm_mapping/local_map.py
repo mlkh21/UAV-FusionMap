@@ -4,6 +4,35 @@
 """
 import copy
 import math
+from numbers import Real
+
+
+def _validate_quality(voxel):
+    """纯业务入口同样拒绝坏质量；不依赖ROS承载或静默修正数值。"""
+    confidence = voxel.get('confidence')
+    if confidence is not None and (isinstance(confidence, bool) or
+            not isinstance(confidence, Real) or not math.isfinite(confidence) or
+            not 0 <= confidence <= 1):
+        raise ValueError('confidence must be None or finite [0,1]')
+    uncertainty = voxel.get('uncertainty')
+    if uncertainty is None:
+        return
+    status, values = uncertainty.get('status'), uncertainty.get('value')
+    if status == 'unavailable':
+        if values is not None:
+            raise ValueError('unavailable uncertainty must have no values')
+    elif status == 'available':
+        if any(not isinstance(uncertainty.get(key), str) or not uncertainty[key].strip()
+               for key in ('kind', 'unit', 'source')):
+            raise ValueError('available uncertainty requires kind, unit and source')
+        if (not isinstance(values, (list, tuple)) or not values or
+                any(isinstance(value, bool) or not isinstance(value, Real) or
+                    not math.isfinite(value) for value in values)):
+            raise ValueError('available uncertainty requires finite nonempty values')
+        if uncertainty['kind'] == 'occupancy_variance' and (len(values) != 1 or values[0] < 0):
+            raise ValueError('occupancy_variance must be one nonnegative value')
+    else:
+        raise ValueError('unknown uncertainty status')
 
 
 class SparseLocalMap:
@@ -52,6 +81,20 @@ class SparseLocalMap:
 
     def update(self, observation):
         header = observation["header"]
+        if header.get('schema_version') != '0.1':
+            raise ValueError('unsupported occupancy schema_version')
+        if (type(header.get('timestamp')) is not int or
+                not 0 <= header['timestamp'] < 2**63):
+            raise ValueError('occupancy timestamp must be non-negative int64')
+        if any(not isinstance(header.get(key), str) or not header[key].strip()
+               for key in ('run_id', 'clock_id', 'sample_id', 'frame_id')):
+            raise ValueError('occupancy identity fields must be non-empty strings')
+        if header.get('source_type') not in ('simulation', 'measured', 'fixture', 'model', 'derived'):
+            raise ValueError('unknown occupancy source_type')
+        if (header.get('status') not in ('valid', 'degraded', 'unavailable') or
+                not isinstance(header.get('reason'), str) or
+                (header['status'] != 'valid' and not header['reason'].strip())):
+            raise ValueError('invalid occupancy status or reason')
         if self._run_id is not None and (header["run_id"], header["clock_id"]) != (
                 self._run_id, self._clock_id):
             raise ValueError("map run or clock domain changed")
@@ -105,17 +148,17 @@ class SparseLocalMap:
                 raise ValueError("body transform must be finite")
             if any(abs(a-b) > 1e-9 for a, b in zip(body[12:], (0, 0, 0, 1))):
                 raise ValueError("body transform must be homogeneous")
+            for row in range(3):
+                for col in range(3):
+                    dot = sum(body[4*row+k] * body[4*col+k] for k in range(3))
+                    if abs(dot - (1.0 if row == col else 0.0)) > 1e-6:
+                        raise ValueError("body transform rotation must be orthonormal")
+            determinant = (body[0]*(body[5]*body[10] - body[6]*body[9]) -
+                           body[1]*(body[4]*body[10] - body[6]*body[8]) +
+                           body[2]*(body[4]*body[9] - body[5]*body[8]))
+            if abs(determinant - 1) > 1e-6:
+                raise ValueError("body transform must be a proper rotation")
             if self.rolling_enabled:
-                for row in range(3):
-                    for col in range(3):
-                        dot = sum(body[4*row+k] * body[4*col+k] for k in range(3))
-                        if abs(dot - (1.0 if row == col else 0.0)) > 1e-6:
-                            raise ValueError("body transform rotation must be orthonormal")
-                determinant = (body[0]*(body[5]*body[10] - body[6]*body[9]) -
-                               body[1]*(body[4]*body[10] - body[6]*body[8]) +
-                               body[2]*(body[4]*body[9] - body[5]*body[8]))
-                if abs(determinant - 1) > 1e-6:
-                    raise ValueError("body transform must be a proper rotation")
                 relative_body = tuple((body[4*axis+3] - self._anchor_origin[axis] -
                                        self.shape[axis]*self.resolution[axis]/2) /
                                       self.resolution[axis] for axis in range(3))
@@ -141,6 +184,7 @@ class SparseLocalMap:
             probability = float(voxel["probability"])
             if not math.isfinite(probability) or not 0 <= probability <= 1:
                 raise ValueError("invalid occupancy probability")
+            _validate_quality(voxel)
             if not voxel.get("observed", False) or header["status"] != "valid":
                 continue
             if self.rolling_enabled:
